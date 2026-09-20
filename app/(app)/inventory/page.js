@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Plus, ArrowUpCircle, ArrowDownCircle, Loader2, ScanLine, BarChart2, TrendingUp, TrendingDown, ChevronDown, ChevronUp, Upload, Pencil } from "lucide-react";
+import { Search, Plus, ArrowUpCircle, ArrowDownCircle, Loader2, ScanLine, BarChart2, TrendingUp, TrendingDown, ChevronDown, ChevronUp, Upload, Pencil, BookOpen } from "lucide-react";
 import { useShop } from "@/components/ShopContext";
 import CategoryChip from "@/components/CategoryChip";
 import AddItemModal from "@/components/AddItemModal";
@@ -10,6 +10,7 @@ import AdjustStockModal from "@/components/AdjustStockModal";
 import EditPriceModal from "@/components/EditPriceModal";
 import ScanBillModal from "@/components/ScanBillModal";
 import BulkImportModal from "@/components/BulkImportModal";
+import CatalogPickerModal from "@/components/CatalogPickerModal";
 import { nextCode } from "@/lib/inventoryHelpers";
 import { rupee } from "@/lib/format";
 import { fetchShopItems, flattenShopProduct } from "@/lib/products";
@@ -48,6 +49,7 @@ function InventoryPageInner() {
   const [showScanBill, setShowScanBill] = useState(false);
   const [showInsights, setShowInsights] = useState(false);
   const [showBulkImport, setShowBulkImport] = useState(false);
+  const [showCatalogPicker, setShowCatalogPicker] = useState(false);
 
   // Supports a "?add=1" deep link (e.g. from the dashboard's empty-stock
   // state) that jumps straight into the add-item flow.
@@ -190,6 +192,13 @@ function InventoryPageInner() {
             className="ks-btn-outline flex items-center gap-1.5"
           >
             <BarChart2 size={15} /> Insights {showInsights ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+          </button>
+          <button
+            onClick={() => setShowCatalogPicker(true)}
+            className="ks-btn-outline flex items-center gap-1.5"
+            title="Add common Indian grocery items instantly"
+          >
+            <BookOpen size={15} /> Catalogue
           </button>
           <button
             onClick={() => setShowBulkImport(true)}
@@ -352,6 +361,13 @@ function InventoryPageInner() {
       {showBulkImport && (
         <BulkImportModal
           onClose={() => { setShowBulkImport(false); load(); }}
+          onImport={addItem}
+          nextCode={() => nextCode(items)}
+        />
+      )}
+      {showCatalogPicker && (
+        <CatalogPickerModal
+          onClose={() => { setShowCatalogPicker(false); load(); }}
           onImport={addItem}
           nextCode={() => nextCode(items)}
         />
