@@ -325,7 +325,7 @@ function AdminPageInner() {
         </div>
         <span className="font-bold text-sm">Platform Admin</span>
         <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: "var(--accent-soft-bg)", color: "var(--accent)" }}>
-          SabStore
+          Nammalekka
         </span>
         <button
           onClick={handleSignOut}

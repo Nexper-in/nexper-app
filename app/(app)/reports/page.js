@@ -204,7 +204,7 @@ function ReportsPageInner() {
       ) : !isPro(activeShop) ? (
         <UpgradePrompt
           feature="GSTR-1 filing export"
-          description="The rate-wise summary on the left tab is free. The upload-ready JSON file for the GST Offline Tool is part of SabStore Pro."
+          description="The rate-wise summary on the left tab is free. The upload-ready JSON file for the GST Offline Tool is part of Nammalekka Pro."
         />
       ) : (
         <div className="space-y-4">

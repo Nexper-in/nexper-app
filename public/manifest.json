@@ -1,6 +1,6 @@
 {
-  "name": "SabStore",
-  "short_name": "SabStore",
+  "name": "Nammalekka",
+  "short_name": "Nammalekka",
   "description": "Billing, inventory, and udhaar for local shops",
   "start_url": "/billing",
   "display": "standalone",

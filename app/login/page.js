@@ -96,8 +96,8 @@ export default function LoginPage() {
     <main className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-6">
-          <Image src="/logo-mark.svg" alt="SabStore" width={56} height={56} className="rounded-2xl mb-3" priority />
-          <h1 className="ks-display text-2xl font-bold">SabStore</h1>
+          <Image src="/logo-mark.svg" alt="Nammalekka" width={56} height={56} className="rounded-2xl mb-3" priority />
+          <h1 className="ks-display text-2xl font-bold">Nammalekka</h1>
           <p className="text-sm text-muted mt-1 text-center">
             Billing, inventory &amp; udhaar for your shop
           </p>

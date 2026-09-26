@@ -25,7 +25,7 @@ export default function UpgradePage() {
     setSaving(true);
     try {
       await updateActiveShop({ plan });
-      showToast(plan === "pro" ? "Switched to SabStore Pro" : "Switched to Free plan");
+      showToast(plan === "pro" ? "Switched to Nammalekka Pro" : "Switched to Free plan");
     } catch (err) {
       showToast(err.message, "err");
     } finally {
@@ -37,7 +37,7 @@ export default function UpgradePage() {
     <div className="pt-6 pb-10 max-w-2xl">
       <div className="mb-5">
         <h1 className="ks-display font-bold text-xl flex items-center gap-2">
-          <Sparkles size={20} style={{ color: "var(--gold)" }} /> SabStore Pro
+          <Sparkles size={20} style={{ color: "var(--gold)" }} /> Nammalekka Pro
         </h1>
         <p className="text-sm mt-0.5" style={{ color: "var(--text-secondary)" }}>
           Everything you need to run the counter is free, forever. Pro is for shops ready to grow past one till.
