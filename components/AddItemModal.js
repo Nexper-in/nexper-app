@@ -315,26 +315,6 @@ export default function AddItemModal({ items, onClose, onAdd }) {
           </div>
         </Field>
 
-        <Field label="Photo URL (optional)">
-          <div className="flex items-center gap-2.5">
-            {form.image_url && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={form.image_url}
-                alt=""
-                className="w-10 h-10 rounded-lg object-cover shrink-0"
-                onError={(e) => { e.target.style.display = "none"; }}
-              />
-            )}
-            <input
-              className="ks-input"
-              value={form.image_url}
-              onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-              placeholder="Paste an image link"
-            />
-          </div>
-        </Field>
-
         <Field label="Category">
           <input
             className="ks-input"
