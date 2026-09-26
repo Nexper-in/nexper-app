@@ -22,12 +22,14 @@ import {
   ClipboardList,
   SlidersHorizontal,
   FileBarChart2,
+  Sparkles,
 } from "lucide-react";
 import { useShop } from "@/components/ShopContext";
 import ShopTypeIcon from "@/components/ShopTypeIcon";
 import SyncStatusBadge from "@/components/SyncStatusBadge";
 import { shopTypeInfo } from "@/lib/shopTypes";
 import { greeting, displayName, initials } from "@/lib/format";
+import { isPro } from "@/lib/pricing";
 
 const NAV_ITEMS = [
   { href: "/dashboard", key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -38,8 +40,8 @@ const NAV_ITEMS = [
   { href: "/dayclose", key: "dayclose", label: "Day Close", icon: Calculator },
   { href: "/expenses", key: "expenses", label: "Expenses", icon: Wallet2 },
   { href: "/cashbook", key: "cashbook", label: "Cashbook", icon: BookOpen },
-  { href: "/suppliers", key: "suppliers", label: "Suppliers", icon: Truck },
-  { href: "/purchase-orders", key: "purchase_orders", label: "Purchase orders", icon: ClipboardList },
+  { href: "/suppliers", key: "suppliers", label: "Suppliers", icon: Truck, pro: true },
+  { href: "/purchase-orders", key: "purchase_orders", label: "Purchase orders", icon: ClipboardList, pro: true },
   { href: "/reports", key: "reports", label: "Reports", icon: FileBarChart2 },
   // Gated on the same "inventory" permission as the main Inventory page —
   // batches (FIFO/expiry) and barcode printing are inventory-adjacent,
@@ -109,6 +111,14 @@ export default function Sidebar({ onOpenSettings, onNavigate }) {
       >
         <Icon size={17} />
         {item.label}
+        {item.pro && !isPro(activeShop) && (
+          <span
+            className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0"
+            style={{ background: "var(--gold-soft)", color: "var(--gold)" }}
+          >
+            PRO
+          </span>
+        )}
         {item.href === "/inventory" && lowStockCount > 0 && (
           <span className="ml-auto inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#E5484D] text-white text-[10px] font-bold">
             {lowStockCount}
@@ -171,6 +181,16 @@ export default function Sidebar({ onOpenSettings, onNavigate }) {
           </div>
         )}
         <div className="ks-mono text-[10px] ks-sidebar-muted px-3.5 pb-2">{todayStr()}</div>
+        {isOwner && !isPro(activeShop) && (
+          <Link
+            href="/upgrade"
+            onClick={() => onNavigate?.()}
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold mb-1"
+            style={{ background: "var(--gold-soft)", color: "var(--gold)" }}
+          >
+            <Sparkles size={17} /> Upgrade to Pro
+          </Link>
+        )}
         {isOwner && (
           <button
             onClick={onOpenSettings}

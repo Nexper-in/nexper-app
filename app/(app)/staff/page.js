@@ -8,14 +8,19 @@ import AddStaffModal from "@/components/AddStaffModal";
 import EditStaffModal from "@/components/EditStaffModal";
 import StaffCreatedModal from "@/components/StaffCreatedModal";
 import Modal from "@/components/ui/Modal";
+import UpgradePrompt from "@/components/UpgradePrompt";
 import { MODULES } from "@/lib/modules";
+import { isPro } from "@/lib/pricing";
+
+const FREE_STAFF_LIMIT = 1;
 
 export default function StaffPage() {
-  const { supabase, activeShopId, currentMember, isOwner, callStaffApi, showToast } = useShop();
+  const { supabase, activeShopId, activeShop, currentMember, isOwner, callStaffApi, showToast } = useShop();
   const router = useRouter();
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
+  const [showStaffUpgrade, setShowStaffUpgrade] = useState(false);
   const [editing, setEditing] = useState(null);
   const [created, setCreated] = useState(null); // { name, staffCode, pin }
   const [removing, setRemoving] = useState(null);
@@ -92,7 +97,10 @@ export default function StaffPage() {
           Workers sign in with a staff code and PIN — from the login screen&apos;s &quot;Staff sign in&quot; tab — and only see
           the sections you allow.
         </p>
-        <button onClick={() => setShowAdd(true)} className="ks-btn-primary flex items-center gap-1.5 shrink-0">
+        <button
+          onClick={() => (!isPro(activeShop) && staff.length >= FREE_STAFF_LIMIT ? setShowStaffUpgrade(true) : setShowAdd(true))}
+          className="ks-btn-primary flex items-center gap-1.5 shrink-0"
+        >
           <Plus size={16} /> Add staff member
         </button>
       </div>
@@ -175,6 +183,14 @@ export default function StaffPage() {
       </div>
 
       {showAdd && <AddStaffModal onClose={() => setShowAdd(false)} onAdd={handleAdd} />}
+      {showStaffUpgrade && (
+        <Modal title="Add staff member" onClose={() => setShowStaffUpgrade(false)}>
+          <UpgradePrompt
+            feature="More than 1 staff login"
+            description="The free plan includes you plus 1 staff member. Upgrade to add more."
+          />
+        </Modal>
+      )}
       {editing && <EditStaffModal member={editing} onClose={() => setEditing(null)} onSave={handleSave} />}
       {created && (
         <StaffCreatedModal name={created.name} staffCode={created.staffCode} pin={created.pin} onClose={() => setCreated(null)} />

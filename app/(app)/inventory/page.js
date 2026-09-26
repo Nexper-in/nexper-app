@@ -11,6 +11,9 @@ import EditPriceModal from "@/components/EditPriceModal";
 import ScanBillModal from "@/components/ScanBillModal";
 import BulkImportModal from "@/components/BulkImportModal";
 import CatalogPickerModal from "@/components/CatalogPickerModal";
+import UpgradePrompt from "@/components/UpgradePrompt";
+import Modal from "@/components/ui/Modal";
+import { isPro } from "@/lib/pricing";
 import { nextCode } from "@/lib/inventoryHelpers";
 import { rupee } from "@/lib/format";
 import { fetchShopItems, flattenShopProduct } from "@/lib/products";
@@ -38,7 +41,7 @@ export default function InventoryPage() {
 
 function InventoryPageInner() {
   const router = useRouter();
-  const { supabase, activeShopId, showToast, runQueued } = useShop();
+  const { supabase, activeShopId, activeShop, showToast, runQueued } = useShop();
   const [items, setItems] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -50,6 +53,7 @@ function InventoryPageInner() {
   const [showInsights, setShowInsights] = useState(false);
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [showCatalogPicker, setShowCatalogPicker] = useState(false);
+  const [showScanUpgrade, setShowScanUpgrade] = useState(false);
 
   // Supports a "?add=1" deep link (e.g. from the dashboard's empty-stock
   // state) that jumps straight into the add-item flow.
@@ -208,7 +212,7 @@ function InventoryPageInner() {
             <Upload size={15} /> Import
           </button>
           <button
-            onClick={() => setShowScanBill(true)}
+            onClick={() => (isPro(activeShop) ? setShowScanBill(true) : setShowScanUpgrade(true))}
             className="ks-btn-outline flex items-center gap-1.5"
             title="Scan supplier bill to auto-update stock"
           >
@@ -398,6 +402,14 @@ function InventoryPageInner() {
           onClose={() => setShowScanBill(false)}
           onDone={() => { setShowScanBill(false); load(); }}
         />
+      )}
+      {showScanUpgrade && (
+        <Modal title="Scan bill" onClose={() => setShowScanUpgrade(false)}>
+          <UpgradePrompt
+            feature="Supplier bill scanning"
+            description="Photograph a supplier's paper bill and let SabStore read it — items and quantities update automatically instead of typing them in."
+          />
+        </Modal>
       )}
     </div>
   );

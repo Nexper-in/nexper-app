@@ -1,12 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Mic, ScanLine, ChevronDown } from "lucide-react";
+import { Loader2, Mic, ScanLine, ChevronDown, Lock } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import Field from "@/components/ui/Field";
 import { nextCode } from "@/lib/inventoryHelpers";
+import { useShop } from "@/components/ShopContext";
+import { isPro } from "@/lib/pricing";
 
 export default function AddItemModal({ items, onClose, onAdd }) {
+  const { activeShop } = useShop();
+  const pro = isPro(activeShop);
   const [form, setForm] = useState({
     name: "",
     hindi_name: "",
@@ -313,6 +317,39 @@ export default function AddItemModal({ items, onClose, onAdd }) {
               <Mic size={13} />
             </button>
           </div>
+        </Field>
+
+        <Field label={
+          <span className="flex items-center gap-1.5">
+            Photo URL (optional)
+            {!pro && (
+              <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "var(--gold-soft)", color: "var(--gold)" }}>
+                <Lock size={9} /> PRO
+              </span>
+            )}
+          </span>
+        }>
+          {pro ? (
+            <div className="flex items-center gap-2.5">
+              {form.image_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={form.image_url}
+                  alt=""
+                  className="w-10 h-10 rounded-lg object-cover shrink-0"
+                  onError={(e) => { e.target.style.display = "none"; }}
+                />
+              )}
+              <input
+                className="ks-input"
+                value={form.image_url}
+                onChange={(e) => setForm({ ...form, image_url: e.target.value })}
+                placeholder="Paste an image link"
+              />
+            </div>
+          ) : (
+            <input className="ks-input opacity-50 cursor-not-allowed" disabled placeholder="Upgrade to Pro to add product photos" />
+          )}
         </Field>
 
         <Field label="Category">

@@ -12,7 +12,7 @@ import ModuleGuard from "@/components/ModuleGuard";
 
 export default function SuppliersPage() {
   return (
-    <ModuleGuard module="suppliers">
+    <ModuleGuard module="suppliers" proOnly proLabel="Suppliers">
       <SuppliersPageInner />
     </ModuleGuard>
   );

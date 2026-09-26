@@ -53,7 +53,7 @@ const STATUS_META = {
 
 export default function PurchaseOrdersPage() {
   return (
-    <ModuleGuard module="purchase_orders">
+    <ModuleGuard module="purchase_orders" proOnly proLabel="Purchase Orders">
       <POPageInner />
     </ModuleGuard>
   );

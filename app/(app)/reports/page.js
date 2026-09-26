@@ -7,6 +7,8 @@ import { fetchShopItems } from "@/lib/products";
 import { rupee } from "@/lib/format";
 import { computeGstSummary, summaryToCsv, buildGstr1Json, downloadFile } from "@/lib/gstReport";
 import ModuleGuard from "@/components/ModuleGuard";
+import UpgradePrompt from "@/components/UpgradePrompt";
+import { isPro } from "@/lib/pricing";
 
 export default function ReportsPage() {
   return (
@@ -199,6 +201,11 @@ function ReportsPageInner() {
             <Download size={15} /> Download CSV
           </button>
         </div>
+      ) : !isPro(activeShop) ? (
+        <UpgradePrompt
+          feature="GSTR-1 filing export"
+          description="The rate-wise summary on the left tab is free. The upload-ready JSON file for the GST Offline Tool is part of SabStore Pro."
+        />
       ) : (
         <div className="space-y-4">
           <div className="ks-card p-4 text-sm" style={{ color: "var(--text-secondary)" }}>
