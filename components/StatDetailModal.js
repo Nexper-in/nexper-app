@@ -16,8 +16,10 @@ export default function StatDetailModal({ mode, items, todaysBills, stockValue, 
     (todaysBills || []).forEach((b) =>
       (b.items || []).forEach((line) => {
         const item = items.find((i) => i.id === line.shop_product_id);
-        const cost = item ? item.cost_price ?? 0 : 0;
-        const profit = (line.price - cost) * line.qty;
+        // No purchase price on record — exclude rather than assume zero
+        // cost, which would count the whole sale as profit.
+        if (!item || item.cost_price == null) return;
+        const profit = (line.price - item.cost_price) * line.qty;
         const cur = map.get(line.shop_product_id) || { name: line.name, code: line.code, profit: 0 };
         cur.profit += profit;
         map.set(line.shop_product_id, cur);

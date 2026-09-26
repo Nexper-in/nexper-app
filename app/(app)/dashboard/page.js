@@ -83,8 +83,10 @@ export default function DashboardPage() {
     return todaysBills.reduce((sum, b) => {
       const billProfit = (b.items || []).reduce((s, line) => {
         const current = items.find((i) => i.id === line.shop_product_id);
-        const cost = current ? current.cost_price ?? 0 : 0;
-        return s + (line.price - cost) * line.qty;
+        // No purchase price on record — exclude rather than assume zero
+        // cost, which would count the whole sale as profit.
+        if (!current || current.cost_price == null) return s;
+        return s + (line.price - current.cost_price) * line.qty;
       }, 0);
       return sum + billProfit;
     }, 0);
