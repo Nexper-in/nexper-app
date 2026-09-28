@@ -1,4 +1,4 @@
--- Migrates an existing SabStore project from shop-scoped items/suppliers
+-- Migrates an existing Nexper project from shop-scoped items/suppliers
 -- to the shared owner-level catalog (products/shop_products,
 -- suppliers/shop_suppliers). Run this in the Supabase SQL editor.
 --

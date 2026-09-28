@@ -1,7 +1,7 @@
 -- 006: Platform admin
 --
 -- A platform admin is separate from shop owner/staff — it's a global
--- role, not scoped to any shop, for managing SabStore itself (every
+-- role, not scoped to any shop, for managing Nexper itself (every
 -- owner, every shop) rather than one owner's own business. Modeled as
 -- a table of admin user ids rather than a hardcoded email, so admin
 -- access can be granted to more than one person later just by

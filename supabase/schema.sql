@@ -620,7 +620,7 @@ grant execute on function adjust_stock(uuid, uuid, text, numeric, text, text, da
 -- =========================================================
 -- Platform admin — see migrations/006_platform_admin.sql for the full
 -- explanation. Separate from shop owner/staff; a global role for
--- managing SabStore itself, not scoped to any shop.
+-- managing Nexper itself, not scoped to any shop.
 -- =========================================================
 
 create table platform_admins (

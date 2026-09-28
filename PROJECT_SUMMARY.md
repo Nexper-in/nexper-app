@@ -1,4 +1,4 @@
-# SabStore — Project Summary
+# Nexper — Project Summary
 
 Current state of the build, as of 2026-09-04. `PROJECT_BRIEF.md` and
 `README.md` describe the original plan; this file describes what actually
@@ -6,7 +6,7 @@ exists now, since the two have diverged (most notably the shared-catalog
 data model, the staff/roles system, and the vendor-payables features
 below, none of which were in the original brief).
 
-**Note — architecture pivot (2026-09-04): one owner, one shop.** SabStore
+**Note — architecture pivot (2026-09-04): one owner, one shop.** Nexper
 originally let one owner account run several shops (a shop switcher, an
 "Add shop" flow, a combined multi-store dashboard — see the note below
 this one). That's been reversed: each owner now gets exactly **one** shop,
@@ -35,8 +35,8 @@ migration, rather than assuming.
 Note: the multi-store combined dashboard and vendor payables were
 originally scoped as a separate app ("Store Manager", its own spec —
 see git history around 2026-09-01 for `app-summary.md`) before being
-folded into SabStore's own owner dashboard instead, on the reasoning
-that SabStore already had the login and multi-shop model these features
+folded into Nexper's own owner dashboard instead, on the reasoning
+that Nexper already had the login and multi-shop model these features
 needed. The multi-store dashboard piece was later removed entirely by
 the pivot above; vendor payables (Suppliers) is shop-scoped regardless
 of the owner model and was unaffected.
