@@ -48,7 +48,7 @@ export async function POST(request) {
   }
   if (!staffCode) return NextResponse.json({ error: "Couldn't generate a unique staff code — try again" }, { status: 500 });
 
-  const email = `staff-${staffCode.toLowerCase()}@workers.nammalekka.internal`;
+  const email = `staff-${staffCode.toLowerCase()}@workers.nexper.internal`;
 
   const { data: created, error: createError } = await admin.auth.admin.createUser({
     email,

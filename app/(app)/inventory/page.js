@@ -407,7 +407,7 @@ function InventoryPageInner() {
         <Modal title="Scan bill" onClose={() => setShowScanUpgrade(false)}>
           <UpgradePrompt
             feature="Supplier bill scanning"
-            description="Photograph a supplier's paper bill and let Nammalekka read it — items and quantities update automatically instead of typing them in."
+            description="Photograph a supplier's paper bill and let Nexper read it — items and quantities update automatically instead of typing them in."
           />
         </Modal>
       )}

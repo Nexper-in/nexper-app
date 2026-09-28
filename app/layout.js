@@ -1,7 +1,7 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Nammalekka",
+  title: "Nexper",
   description: "Billing, inventory, and udhaar for local shops of any kind",
 };
 
@@ -18,7 +18,7 @@ export default function RootLayout({ children }) {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         {/* black-translucent = iOS status bar overlays content, letting our topbar fill edge-to-edge */}
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="Nammalekka" />
+        <meta name="apple-mobile-web-app-title" content="Nexper" />
         <meta name="format-detection" content="telephone=no" />
         <link rel="apple-touch-icon" href="/logo-mark.svg" />
       </head>

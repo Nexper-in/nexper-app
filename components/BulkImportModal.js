@@ -63,7 +63,7 @@ export default function BulkImportModal({ onClose, onImport, nextCode }) {
     const blob = new Blob([TEMPLATE_CSV], { type: "text/csv" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = "nammalekka_items_template.csv";
+    a.download = "nexper_items_template.csv";
     a.click();
   }
 

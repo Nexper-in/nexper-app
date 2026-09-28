@@ -1,6 +1,6 @@
 {
-  "name": "Nammalekka",
-  "short_name": "Nammalekka",
+  "name": "Nexper",
+  "short_name": "Nexper",
   "description": "Billing, inventory, and udhaar for local shops",
   "start_url": "/billing",
   "display": "standalone",

@@ -9,7 +9,7 @@ import { callApi } from "@/lib/apiClient";
 
 const ShopContext = createContext(null);
 
-const ACTIVE_SHOP_KEY = "nammalekka.activeShopId";
+const ACTIVE_SHOP_KEY = "nexper.activeShopId";
 
 export function ShopProvider({ children }) {
   const [supabase] = useState(() => createClient());
