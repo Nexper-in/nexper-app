@@ -3,17 +3,7 @@
 import { useState } from "react";
 import { Check, Loader2, Sparkles } from "lucide-react";
 import { useShop } from "@/components/ShopContext";
-import { PRO_PRICING, PRO_FEATURES, isPro } from "@/lib/pricing";
-
-const FREE_FEATURES = [
-  "Billing — search, barcode scan, voice entry",
-  "Inventory with MRP pricing anchor & stock alerts",
-  "Udhaar (credit) tracking + UPI QR collection",
-  "Day Close, Expenses, Cashbook",
-  "Bulk import & Indian product catalogue",
-  "GST summary report + CSV export",
-  "1 staff login (plus you, the owner)",
-];
+import { PRO_PRICING, PRO_FEATURES, FREE_FEATURES, isPro } from "@/lib/pricing";
 
 export default function UpgradePage() {
   const { activeShop, updateActiveShop, showToast } = useShop();

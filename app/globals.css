@@ -122,6 +122,8 @@
   --sidebar-border: rgba(255, 255, 255, 0.10);
 }
 
+html { scroll-behavior: smooth; }
+
 body {
   font-family: var(--font-body);
   color: var(--text-primary);
@@ -291,8 +293,32 @@ body {
 /* Main content offset matches the taller topbar */
 .ks-main { padding-top: calc(56px + env(safe-area-inset-top, 0px)); }
 
-/* Bottom of page: clear the iOS home-indicator bar */
-.ks-page-bottom-safe { padding-bottom: max(64px, calc(16px + env(safe-area-inset-bottom, 0px))); }
+/* Bottom of page: clear the mobile tab bar and the iOS home-indicator bar */
+.ks-page-bottom-safe { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+
+/* Mobile tab bar — thumb-reach navigation; the drawer still holds every page. */
+.ks-bottom-nav {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 25;
+  display: flex; align-items: flex-end; justify-content: space-around;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -4px 16px rgba(16, 24, 40, 0.06);
+  padding: 4px 4px calc(4px + env(safe-area-inset-bottom, 0px));
+}
+.ks-bottom-tab {
+  flex: 1; min-width: 0; min-height: 52px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  font-size: 10.5px; font-weight: 600; color: var(--text-secondary);
+  background: none; border: 0; -webkit-tap-highlight-color: transparent;
+}
+.ks-bottom-tab.active { color: var(--accent); }
+.ks-bottom-fab {
+  width: 52px; height: 52px; border-radius: 999px; margin-top: -24px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent); color: var(--accent-contrast);
+  border: 3px solid var(--bg-surface);
+  box-shadow: 0 6px 16px rgba(91, 44, 219, 0.4);
+}
 
 /* Sidebar drawer: extend into the notch area on iPhone */
 .ks-sidebar-wrap {
@@ -307,6 +333,8 @@ body {
 .ks-page-pad { padding-left: 16px; padding-right: 16px; }
 .ks-billing-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
 @media (min-width: 1024px) {
+  .ks-bottom-nav { display: none; }
+  .ks-page-bottom-safe { padding-bottom: 64px; }
   .ks-mobile-bar { display: none; }
   .ks-mobile-overlay { display: none; }
   .ks-sidebar-wrap {

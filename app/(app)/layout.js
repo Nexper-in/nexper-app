@@ -5,6 +5,7 @@ import { Menu, Loader2, WifiOff, RefreshCw } from "lucide-react";
 import AuthGuard from "@/components/AuthGuard";
 import { ShopProvider, useShop } from "@/components/ShopContext";
 import Sidebar from "@/components/Sidebar";
+import BottomNav from "@/components/BottomNav";
 import { AddShopOnboarding } from "@/components/ShopOnboarding";
 import StoreSettingsModal from "@/components/StoreSettingsModal";
 import Toast from "@/components/ui/Toast";
@@ -120,6 +121,8 @@ function AppShell({ children }) {
       <div className={`ks-no-print ks-sidebar-wrap${sidebarOpen ? " open" : ""}`}>
         <Sidebar onOpenSettings={() => setShowStoreSettings(true)} onNavigate={() => setSidebarOpen(false)} />
       </div>
+
+      <BottomNav onMore={() => setSidebarOpen(true)} />
 
       {showStoreSettings && <StoreSettingsModal onClose={() => setShowStoreSettings(false)} />}
 

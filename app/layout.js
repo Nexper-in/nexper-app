@@ -1,13 +1,35 @@
 import "./globals.css";
+import { SITE } from "@/lib/site";
 
 export const metadata = {
-  title: "Nexper",
-  description: "Billing, inventory, and udhaar for local shops of any kind",
+  metadataBase: new URL(SITE.url),
+  applicationName: SITE.name,
+  title: {
+    default: `${SITE.name} — ${SITE.tagline}`,
+    template: `%s · ${SITE.name}`,
+  },
+  description: SITE.description,
+  icons: {
+    apple: "/icons/apple-touch-icon.png",
+  },
+  openGraph: {
+    type: "website",
+    siteName: SITE.name,
+    locale: "en_IN",
+    url: "/",
+    title: `${SITE.name} — ${SITE.tagline}`,
+    description: SITE.description,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${SITE.name} — ${SITE.tagline}`,
+    description: SITE.description,
+  },
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en-IN">
       <head>
         {/* Viewport — viewport-fit=cover lets content reach behind iPhone notch/Dynamic Island */}
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
@@ -20,7 +42,6 @@ export default function RootLayout({ children }) {
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Nexper" />
         <meta name="format-detection" content="telephone=no" />
-        <link rel="apple-touch-icon" href="/logo-mark.svg" />
       </head>
       <body>{children}</body>
     </html>

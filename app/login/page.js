@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabaseClient";
 
@@ -19,6 +20,11 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [checkingSession, setCheckingSession] = useState(true);
+
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get("mode");
+    if (requested === "signup" || requested === "staff") setMode(requested);
+  }, []);
 
   useEffect(() => {
     supabase.auth
@@ -96,8 +102,10 @@ export default function LoginPage() {
     <main className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-6">
-          <Image src="/logo-mark.svg" alt="Nexper" width={56} height={56} className="rounded-2xl mb-3" priority />
-          <h1 className="ks-display text-2xl font-bold">Nexper</h1>
+          <Link href="/" className="flex flex-col items-center" aria-label="Nexper home">
+            <Image src="/logo-mark.svg" alt="Nexper" width={56} height={56} className="rounded-2xl mb-3" priority />
+            <h1 className="ks-display text-2xl font-bold">Nexper</h1>
+          </Link>
           <p className="text-sm text-muted mt-1 text-center">
             Billing, inventory &amp; udhaar for your shop
           </p>
@@ -267,6 +275,18 @@ export default function LoginPage() {
             </button>
           </p>
         )}
+
+        <p className="text-center text-[11px] text-muted mt-6">
+          By continuing you agree to our{" "}
+          <Link href="/terms" className="underline">
+            Terms
+          </Link>{" "}
+          and{" "}
+          <Link href="/privacy" className="underline">
+            Privacy policy
+          </Link>
+          .
+        </p>
       </div>
     </main>
   );
