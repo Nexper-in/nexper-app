@@ -1,4 +1,7 @@
-# Shop Manager — build scaffold
+# Nexper (nexper.in) — build scaffold
+
+> The app has moved well past this scaffold. See `PROJECT_SUMMARY.md` for what
+> actually exists today; the text below is the original plan.
 
 This is a starting skeleton for turning the working prototype
 (`reference/kirana-store-app.jsx`) into a real, deployed multi-shop billing
