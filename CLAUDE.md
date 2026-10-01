@@ -136,6 +136,24 @@ politely when it is missing (show "needs the latest database update"), because
 the app can be deployed before the SQL is run. Current pending list is in
 `PROJECT_ABDUL.md`.
 
+## Security rules
+
+- `SECURITY.md` has the last review and what is still open. Keep it current.
+- A database function that runs as its owner (`security definer`) must check
+  the caller inside, set `search_path`, and be granted explicitly. Postgres
+  grants new functions to everyone by default: revoke from `public`/`anon`
+  (migration 028 shows how).
+- Anything that calls the Anthropic API or the service-role key lives in
+  `app/api/**` and starts with the sign-in check (`lib/aiGuard.js`,
+  `lib/supabaseAdmin.js`). Never import `supabaseAdmin` in a client component.
+- Never put user text into HTML you build yourself (print windows,
+  `document.write`, `dangerouslySetInnerHTML`): escape it.
+- Don't send shop data (UPI IDs, amounts, customers) to third-party services.
+  QR codes are made in the browser.
+- Headers and CSP are in `next.config.js`. A new outside host (script, font,
+  API) must be added there on purpose.
+- `npm test`, `npm audit --omit=dev` must pass.
+
 ## Before you push
 
 - `npx next build` and `npm run check:i18n` must pass.

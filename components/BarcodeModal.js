@@ -44,8 +44,12 @@ export default function BarcodeModal({ item, onClose }) {
   function printBarcode() {
     const svg = svgRef.current?.outerHTML;
     if (!svg) return;
+    // The item name is user data: escape it before it goes into the print
+    // window's HTML (an item named "</title><script>…" must not run).
+    const safeName = String(item.name).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
     const win = window.open("", "_blank", "width=400,height=300");
-    win.document.write(`<!DOCTYPE html><html><head><title>Barcode – ${item.name}</title><style>body{margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#fff}svg{max-width:100%}</style></head><body>${svg}</body></html>`);
+    if (!win) return;
+    win.document.write(`<!DOCTYPE html><html><head><title>Barcode – ${safeName}</title><style>body{margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#fff}svg{max-width:100%}</style></head><body>${svg}</body></html>`);
     win.document.close();
     win.focus();
     win.print();

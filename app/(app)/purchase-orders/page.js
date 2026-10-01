@@ -153,7 +153,7 @@ function POPageInner() {
   async function sendOnWhatsApp(po) {
     const phone = suppliers.find((s) => s.id === po.supplier_id)?.phone || "";
     const text = purchaseOrderText({ shopName: activeShop?.name, supplierName: po.supplier_name, lines: po.items || [], expectedDate: po.expected_date, notes: po.notes });
-    window.open(phone ? whatsappLink(phone, text) : `https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+    window.open(phone ? whatsappLink(phone, text) : `https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
     if (po.status === "draft") await updateStatus(po, "sent");
   }
 

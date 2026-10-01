@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { readJson, serverError, isWeakPin } from "@/lib/apiSafe";
 import { randomInt } from "crypto";
 import { createAdminClient, getRequestUser } from "@/lib/supabaseAdmin";
 import { MODULES } from "@/lib/modules";
@@ -20,9 +21,13 @@ export async function POST(request) {
   const caller = await getRequestUser(request);
   if (!caller) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
 
-  const { shopId, name, pin, permissions } = await request.json();
-  if (!shopId || !name?.trim() || !pin || String(pin).length < 6) {
+  const { shopId, name, pin, permissions } = await readJson(request);
+  if (!shopId || typeof shopId !== "string" || typeof name !== "string" || !name.trim() || name.length > 80 || !pin || String(pin).length < 6 || String(pin).length > 72) {
     return NextResponse.json({ error: "Shop, name, and a 6+ digit PIN are required" }, { status: 400 });
+  }
+
+  if (isWeakPin(pin)) {
+    return NextResponse.json({ error: "That PIN is too easy to guess. Avoid 123456 or 111111." }, { status: 400 });
   }
 
   const admin = createAdminClient();
@@ -33,7 +38,7 @@ export async function POST(request) {
     .eq("shop_id", shopId)
     .eq("user_id", caller.id)
     .maybeSingle();
-  if (membershipError) return NextResponse.json({ error: membershipError.message }, { status: 500 });
+  if (membershipError) return serverError(membershipError, "api");
   if (!membership || membership.role !== "owner") {
     return NextResponse.json({ error: "Only the shop owner can add staff" }, { status: 403 });
   }
@@ -56,7 +61,7 @@ export async function POST(request) {
     email_confirm: true,
     user_metadata: { full_name: name.trim(), is_staff: true },
   });
-  if (createError) return NextResponse.json({ error: createError.message }, { status: 400 });
+  if (createError) return NextResponse.json({ error: "Couldn't create that staff account." }, { status: 400 });
 
   const { data: member, error: memberError } = await admin
     .from("shop_members")
@@ -72,7 +77,7 @@ export async function POST(request) {
     .single();
   if (memberError) {
     await admin.auth.admin.deleteUser(created.user.id);
-    return NextResponse.json({ error: memberError.message }, { status: 500 });
+    return serverError(memberError, "api");
   }
 
   return NextResponse.json({ member, staffCode });

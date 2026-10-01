@@ -146,7 +146,7 @@ export function BillPanel({ vm, wide, alwaysDetails }) {
           </p>
           <div className="grid grid-cols-2 gap-2 mt-4">
             <button
-              onClick={() => window.open(whatsappLink(lastBill.customer_phone, billMessageText(lastBill, activeShop?.name, activeShop?.gstin, activeShop?.whatsapp_group_url)), "_blank")}
+              onClick={() => window.open(whatsappLink(lastBill.customer_phone, billMessageText(lastBill, activeShop?.name, activeShop?.gstin, activeShop?.whatsapp_group_url)), "_blank", "noopener,noreferrer")}
               disabled={!lastBill.customer_phone}
               className="flex items-center justify-center gap-1.5 text-sm py-2.5 rounded-xl font-semibold disabled:opacity-40"
               style={{ background: "#25D366", color: "#fff" }}

@@ -681,5 +681,6 @@
   "Upload-ready file for the GST Offline Tool, not just the on-screen summary.": "GST ಆಫ್‌ಲೈನ್ ಟೂಲ್‌ಗೆ ಅಪ್‌ಲೋಡ್ ಮಾಡಬಹುದಾದ ಫೈಲ್, ಕೇವಲ ಪರದೆಯ ಸಾರಾಂಶವಲ್ಲ.",
   "Workers sign in with a staff code and PIN — from the login screen's \"Staff sign in\" tab — and only see the sections you allow.": "ಕೆಲಸಗಾರರು ಸ್ಟಾಫ್ ಕೋಡ್ ಮತ್ತು PIN ನೊಂದಿಗೆ ಲಾಗಿನ್ ಸ್ಕ್ರೀನ್‌ನ \"Staff sign in\" ಟ್ಯಾಬ್‌ನಿಂದ ಸೈನ್ ಇನ್ ಮಾಡುತ್ತಾರೆ, ನೀವು ಅನುಮತಿಸಿದ ಭಾಗಗಳನ್ನು ಮಾತ್ರ ನೋಡುತ್ತಾರೆ.",
   "a GSTR-1 JSON file in the format the government's GST Offline Utility accepts, so you or your CA can upload it instead of retyping every invoice. It covers your B2C rate-wise sales and an HSN-wise summary.": "ಸರ್ಕಾರದ GST Offline Utility ಒಪ್ಪುವ ಸ್ವರೂಪದಲ್ಲಿ GSTR-1 JSON ಫೈಲ್, ಇದರಿಂದ ನೀವು ಅಥವಾ ನಿಮ್ಮ CA ಪ್ರತಿ ಇನ್‌ವಾಯ್ಸ್ ಅನ್ನು ಮತ್ತೆ ಟೈಪ್ ಮಾಡದೆ ಅಪ್‌ಲೋಡ್ ಮಾಡಬಹುದು. ಇದರಲ್ಲಿ ನಿಮ್ಮ B2C ದರವಾರು ಮಾರಾಟ ಮತ್ತು HSN ವಾರು ಸಾರಾಂಶ ಇರುತ್ತದೆ.",
-  "🧾 No bills yet — generate one from the \"New Bill\" tab.": "🧾 ಇನ್ನೂ ಬಿಲ್‌ಗಳಿಲ್ಲ — \"New Bill\" ಟ್ಯಾಬ್‌ನಿಂದ ರಚಿಸಿ."
+  "🧾 No bills yet — generate one from the \"New Bill\" tab.": "🧾 ಇನ್ನೂ ಬಿಲ್‌ಗಳಿಲ್ಲ — \"New Bill\" ಟ್ಯಾಬ್‌ನಿಂದ ರಚಿಸಿ.",
+  "Sign-in didn't finish. Please try again.": "ಸೈನ್-ಇನ್ ಪೂರ್ಣಗೊಳ್ಳಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
 }

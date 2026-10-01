@@ -94,7 +94,7 @@ export default function OffersPage() {
 
   async function sendOnWhatsApp() {
     if (!message) return;
-    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
     await logPost();
   }
 
@@ -162,7 +162,7 @@ export default function OffersPage() {
             <div className="flex gap-2">
               <input className="ks-input" inputMode="tel" placeholder={t("Customer's phone number")} value={invitePhone} onChange={(e) => setInvitePhone(e.target.value)} />
               <button
-                onClick={() => window.open(whatsappLink(invitePhone, groupInviteText(activeShop?.name, savedUrl)), "_blank")}
+                onClick={() => window.open(whatsappLink(invitePhone, groupInviteText(activeShop?.name, savedUrl)), "_blank", "noopener,noreferrer")}
                 disabled={invitePhone.replace(/\D/g, "").length < 10}
                 className="shrink-0 flex items-center gap-1.5 text-sm font-semibold px-4 rounded-xl text-white disabled:opacity-40"
                 style={{ background: "#25D366" }}
@@ -253,7 +253,7 @@ export default function OffersPage() {
                     {new Date(p.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                   </p>
                 </div>
-                <button onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(p.message)}`, "_blank")} aria-label={t("Send again")} className="w-8 h-8 rounded-full flex items-center justify-center text-white shrink-0" style={{ background: "#25D366" }}>
+                <button onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(p.message)}`, "_blank", "noopener,noreferrer")} aria-label={t("Send again")} className="w-8 h-8 rounded-full flex items-center justify-center text-white shrink-0" style={{ background: "#25D366" }}>
                   <Send size={13} />
                 </button>
                 <button onClick={() => removePost(p.id)} aria-label={t("Delete")} className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: "var(--bg-surface-alt)", color: "var(--text-secondary)" }}>

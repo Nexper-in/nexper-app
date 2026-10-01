@@ -28,7 +28,7 @@ export function TodayHero({ vm }) {
             {displayName(user) ? `, ${displayName(user)}` : ""}
           </p>
           <button
-            onClick={() => window.open(whatsappLink("", dailyReportText(activeShop?.name || "Store", todaysBills, items)), "_blank")}
+            onClick={() => window.open(whatsappLink("", dailyReportText(activeShop?.name || "Store", todaysBills, items)), "_blank", "noopener,noreferrer")}
             className="ks-hero-btn w-8 h-8 flex items-center justify-center shrink-0"
             aria-label={t("Share today's report on WhatsApp")}
             title={t("Share today's report")}

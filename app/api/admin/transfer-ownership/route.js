@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { readJson, serverError } from "@/lib/apiSafe";
 import { requireAdmin, logAdminAction } from "@/lib/supabaseAdmin";
 
 // Reassigns a shop's owner to a different existing member. See
@@ -9,7 +10,7 @@ export async function POST(request) {
   const { caller, admin, error, status } = await requireAdmin(request);
   if (error) return NextResponse.json({ error }, { status });
 
-  const { shopId, newOwnerUserId } = await request.json();
+  const { shopId, newOwnerUserId } = await readJson(request);
   if (!shopId || !newOwnerUserId) {
     return NextResponse.json({ error: "shopId and newOwnerUserId are required" }, { status: 400 });
   }

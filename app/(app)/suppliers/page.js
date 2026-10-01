@@ -203,7 +203,7 @@ function SuppliersPageInner() {
                       </button>
                       {s.phone && (
                         <button
-                          onClick={() => window.open(whatsappLink(s.phone, `Hi ${s.name}, `), "_blank")}
+                          onClick={() => window.open(whatsappLink(s.phone, `Hi ${s.name}, `), "_blank", "noopener,noreferrer")}
                           className="text-xs px-2.5 py-1.5 rounded-full font-semibold flex items-center gap-1 text-white"
                           style={{ background: "#25D366" }}
                         >

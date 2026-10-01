@@ -68,7 +68,7 @@ export default function CreditDesktop({ vm }) {
                           {t("Record payment")}
                         </button>
                         <button
-                          onClick={() => window.open(whatsappLink(c.phone, creditReminderText(activeShop?.name, c.name, c.balance)), "_blank")}
+                          onClick={() => window.open(whatsappLink(c.phone, creditReminderText(activeShop?.name, c.name, c.balance)), "_blank", "noopener,noreferrer")}
                           className="text-xs px-2.5 py-1.5 rounded-full font-semibold flex items-center gap-1 text-white"
                           style={{ background: "#25D366" }}
                         >

@@ -1,5 +1,6 @@
 "use client";
 
+import { clearLocalData } from "@/lib/clearLocalData";
 import { applyTheme, readTheme } from "@/lib/theme";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -123,6 +124,7 @@ function AdminPageInner() {
       if (!active) return;
       if (!isAdmin) {
         await supabase.auth.signOut();
+    await clearLocalData();
         router.replace("/admin/login");
         return;
       }
@@ -136,6 +138,7 @@ function AdminPageInner() {
 
   async function handleSignOut() {
     await supabase.auth.signOut();
+    await clearLocalData();
     router.replace("/admin/login");
   }
 

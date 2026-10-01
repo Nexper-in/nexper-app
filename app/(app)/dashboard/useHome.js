@@ -183,7 +183,7 @@ export function useHome() {
       sub: `${t("Owes {amt}", { amt: rupee(c.balance) })}${c.days > 0 ? ` · ${t("{n}d", { n: c.days })}` : ""}`,
       action: t("Remind"),
       actionIcon: MessageCircle,
-      onClick: () => window.open(whatsappLink(c.phone, creditReminderText(activeShop?.name, c.name, c.balance)), "_blank"),
+      onClick: () => window.open(whatsappLink(c.phone, creditReminderText(activeShop?.name, c.name, c.balance)), "_blank", "noopener,noreferrer"),
     })),
   ];
   const TONE = {

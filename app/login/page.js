@@ -37,7 +37,9 @@ export default function LoginPage() {
     const requested = new URLSearchParams(window.location.search).get("mode");
     if (requested === "signup" || requested === "staff") setMode(requested);
     const oauthError = new URLSearchParams(window.location.search).get("error");
-    if (oauthError) setError(oauthError);
+    // Never print text taken from the address bar: anyone could craft a link
+    // with a fake "call this number" message. Show our own wording instead.
+    if (oauthError) setError(t("Sign-in didn't finish. Please try again."));
   }, []);
 
   useEffect(() => {

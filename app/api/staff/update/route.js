@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { readJson, serverError, isWeakPin } from "@/lib/apiSafe";
 import { createAdminClient, getRequestUser } from "@/lib/supabaseAdmin";
 import { MODULES } from "@/lib/modules";
 import { isRateLimited, requestIp } from "@/lib/rateLimit";
@@ -15,10 +16,13 @@ export async function POST(request) {
     return NextResponse.json({ error: "Too many attempts — wait a minute and try again" }, { status: 429 });
   }
 
-  const { memberId, name, permissions, newPin } = await request.json();
+  const { memberId, name, permissions, newPin } = await readJson(request);
   if (!memberId) return NextResponse.json({ error: "memberId is required" }, { status: 400 });
-  if (newPin && String(newPin).length < 6) {
+  if (newPin && (String(newPin).length < 6 || String(newPin).length > 72)) {
     return NextResponse.json({ error: "PIN must be at least 6 digits" }, { status: 400 });
+  }
+  if (newPin && isWeakPin(newPin)) {
+    return NextResponse.json({ error: "That PIN is too easy to guess. Avoid 123456 or 111111." }, { status: 400 });
   }
 
   const admin = createAdminClient();
@@ -28,7 +32,7 @@ export async function POST(request) {
     .select("id, shop_id, user_id, role")
     .eq("id", memberId)
     .maybeSingle();
-  if (targetError) return NextResponse.json({ error: targetError.message }, { status: 500 });
+  if (targetError) return serverError(targetError, "api");
   if (!target) return NextResponse.json({ error: "Staff member not found" }, { status: 404 });
   if (target.role === "owner") return NextResponse.json({ error: "Can't edit the shop owner here" }, { status: 400 });
 
@@ -48,12 +52,12 @@ export async function POST(request) {
 
   if (Object.keys(updates).length > 0) {
     const { error: updateError } = await admin.from("shop_members").update(updates).eq("id", memberId);
-    if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
+    if (updateError) return serverError(updateError, "api");
   }
 
   if (newPin) {
     const { error: pinError } = await admin.auth.admin.updateUserById(target.user_id, { password: String(newPin) });
-    if (pinError) return NextResponse.json({ error: pinError.message }, { status: 500 });
+    if (pinError) return serverError(pinError, "api");
   }
 
   return NextResponse.json({ ok: true });

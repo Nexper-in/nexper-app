@@ -1,5 +1,6 @@
 "use client";
 
+import { clearLocalData } from "@/lib/clearLocalData";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, LogOut, Moon, Settings, Sun } from "lucide-react";
@@ -35,6 +36,7 @@ export default function AccountMenu({ onOpenSettings }) {
 
   async function handleSignOut() {
     await supabase.auth.signOut();
+    await clearLocalData();
     router.replace("/login");
   }
 

@@ -103,7 +103,7 @@ function HistoryPageInner() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            window.open(whatsappLink(b.customer_phone, billMessageText(b, activeShop?.name, activeShop?.gstin, activeShop?.whatsapp_group_url)), "_blank");
+                            window.open(whatsappLink(b.customer_phone, billMessageText(b, activeShop?.name, activeShop?.gstin, activeShop?.whatsapp_group_url)), "_blank", "noopener,noreferrer");
                           }}
                           className="text-xs px-2.5 py-1.5 rounded-full font-semibold flex items-center gap-1 text-white"
                           style={{ background: "#25D366" }}

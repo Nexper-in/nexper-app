@@ -49,7 +49,7 @@ export default function CreditMobile({ vm }) {
                   {t("Record payment")}
                 </button>
                 <button
-                  onClick={() => window.open(whatsappLink(c.phone, creditReminderText(activeShop?.name, c.name, c.balance)), "_blank")}
+                  onClick={() => window.open(whatsappLink(c.phone, creditReminderText(activeShop?.name, c.name, c.balance)), "_blank", "noopener,noreferrer")}
                   className="flex-1 text-xs py-2.5 rounded-full font-semibold flex items-center justify-center gap-1 text-white"
                   style={{ background: "#25D366" }}
                 >

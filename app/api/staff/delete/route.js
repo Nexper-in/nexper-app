@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { readJson, serverError } from "@/lib/apiSafe";
 import { createAdminClient, getRequestUser } from "@/lib/supabaseAdmin";
 
 // Removes a staff member entirely — deletes their shop_members row and
@@ -8,7 +9,7 @@ export async function POST(request) {
   const caller = await getRequestUser(request);
   if (!caller) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
 
-  const { memberId } = await request.json();
+  const { memberId } = await readJson(request);
   if (!memberId) return NextResponse.json({ error: "memberId is required" }, { status: 400 });
 
   const admin = createAdminClient();
@@ -18,7 +19,7 @@ export async function POST(request) {
     .select("id, shop_id, user_id, role")
     .eq("id", memberId)
     .maybeSingle();
-  if (targetError) return NextResponse.json({ error: targetError.message }, { status: 500 });
+  if (targetError) return serverError(targetError, "api");
   if (!target) return NextResponse.json({ error: "Staff member not found" }, { status: 404 });
   if (target.role === "owner") return NextResponse.json({ error: "Can't remove the shop owner" }, { status: 400 });
 
@@ -33,10 +34,10 @@ export async function POST(request) {
   }
 
   const { error: deleteRowError } = await admin.from("shop_members").delete().eq("id", memberId);
-  if (deleteRowError) return NextResponse.json({ error: deleteRowError.message }, { status: 500 });
+  if (deleteRowError) return serverError(deleteRowError, "api");
 
   const { error: deleteUserError } = await admin.auth.admin.deleteUser(target.user_id);
-  if (deleteUserError) return NextResponse.json({ error: deleteUserError.message }, { status: 500 });
+  if (deleteUserError) return serverError(deleteUserError, "api");
 
   return NextResponse.json({ ok: true });
 }

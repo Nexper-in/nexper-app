@@ -4,14 +4,61 @@ const withPWA = require("@ducanh2912/next-pwa").default({
   aggressiveFrontEndNavCaching: true,
   reloadOnOnline: false,
   disable: process.env.NODE_ENV === "development",
+  // Shop data comes from Supabase. Never keep those responses in the browser's
+  // cache storage: after sign-out on a shared phone they would still be readable.
+  extendDefaultRuntimeCaching: true,
+  workboxOptions: {
+    runtimeCaching: [
+      { urlPattern: ({ url }) => /\.supabase\.(co|in)$/.test(url.hostname) || url.pathname.startsWith("/api/"), handler: "NetworkOnly" },
+    ],
+  },
 });
+
+const isDev = process.env.NODE_ENV === "development";
+
+// Where the app is allowed to connect: itself and the Supabase project.
+let supabaseOrigin = "";
+try {
+  supabaseOrigin = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin;
+} catch {}
+const connect = ["'self'", supabaseOrigin, supabaseOrigin.replace("https://", "wss://")].filter(Boolean).join(" ");
+
+// Content Security Policy. 'unsafe-inline' for scripts is needed by Next.js's
+// own inline bootstrap and the theme script; everything else is locked down:
+// no plugins, no framing, forms and base URL only to this site, and network
+// calls only to this site and Supabase.
+const csp = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "img-src 'self' data: blob: https:",
+  `connect-src ${connect}${isDev ? " ws://localhost:*" : ""}`,
+  "worker-src 'self' blob:",
+  "manifest-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  "upgrade-insecure-requests",
+].join("; ");
+
+const securityHeaders = [
+  { key: "Content-Security-Policy", value: csp },
+  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  // Camera and microphone are used by barcode scanning and voice billing.
+  { key: "Permissions-Policy", value: "camera=(self), microphone=(self), geolocation=(), payment=(), usb=()" },
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+];
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  images: {
-    remotePatterns: [
-      { protocol: "https", hostname: "**" },
-    ],
+  poweredByHeader: false,
+  async headers() {
+    return [{ source: "/:path*", headers: securityHeaders }];
   },
   // The marketing and legal pages live in the nexper-site repo (nexper.in).
   async redirects() {
