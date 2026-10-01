@@ -38,13 +38,18 @@ Nexper is a billing, stock and udhaar app for small Indian shops
 
 ## Sign-in
 
-- Owners: **Continue with Google** first (`app/login/page.js` → Supabase
-  Google provider → `app/auth/callback/page.js`). Email and password stay as a
-  fallback link. Staff: staff code + PIN.
-- Google needs the provider switched on in Supabase (Authentication →
-  Providers → Google) with the Google Cloud OAuth client ID and secret, and
+- Owners register and sign in with **email and password** (with "Forgot
+  password"). Staff use staff code + PIN.
+- **Google sign-in is built but switched off:** the button shows with a
+  "Soon" label and does nothing when tapped. It turns on when
+  `NEXT_PUBLIC_GOOGLE_SIGNIN=true` is set in Vercel (then redeploy); then "Continue with
+  Google" shows first and email becomes a fallback link
+  (`app/login/page.js` → Supabase Google provider →
+  `app/auth/callback/page.js`). Before switching it on: enable the Google
+  provider in Supabase (Authentication → Providers → Google) with the Google
+  Cloud OAuth client ID and secret, and add
   `https://<project>.supabase.co/auth/v1/callback` as a redirect URI in
-  Google Cloud. Until then the button explains that Google isn't on yet.
+  Google Cloud.
 
 ## Languages
 

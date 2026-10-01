@@ -5,6 +5,13 @@ import { useRouter } from "next/navigation";
 import { Loader2, Mail } from "lucide-react";
 import { createClient } from "@/lib/supabaseClient";
 
+// Google sign-in is built but off until it's set up in Supabase and
+// Google Cloud: the button shows with a "Soon" label and does nothing, and
+// the email form is open below it. Turn it on by setting
+// NEXT_PUBLIC_GOOGLE_SIGNIN=true in Vercel and redeploying; then the button
+// works and the email form folds behind a link.
+const GOOGLE_SIGNIN = process.env.NEXT_PUBLIC_GOOGLE_SIGNIN === "true";
+
 export default function LoginPage() {
   const router = useRouter();
   const [supabase] = useState(() => createClient());
@@ -20,7 +27,7 @@ export default function LoginPage() {
   const [checkingSession, setCheckingSession] = useState(true);
   // Owners sign in with Google; the email form is a fallback that stays
   // folded away unless asked for (or a ?mode= link points at it).
-  const [showEmail, setShowEmail] = useState(false);
+  const [showEmail, setShowEmail] = useState(!GOOGLE_SIGNIN);
   const [googleLoading, setGoogleLoading] = useState(false);
 
   useEffect(() => {
@@ -147,15 +154,25 @@ export default function LoginPage() {
           ) : mode !== "staff" ? (
             <div className="mb-5">
               <h2 className="ks-display font-bold text-center">{mode === "signin" ? "Sign in to your shop" : "Create your shop account"}</h2>
+              <>
               <button
                 type="button"
-                onClick={handleGoogle}
+                onClick={GOOGLE_SIGNIN ? handleGoogle : undefined}
                 disabled={googleLoading}
-                className="mt-5 w-full flex items-center justify-center gap-2.5 rounded-xl py-3 text-[15px] font-semibold transition-transform active:scale-[.98] disabled:opacity-60"
-                style={{ background: "#ffffff", color: "#1f1f1f", border: "1px solid var(--border-strong)" }}
+                aria-disabled={!GOOGLE_SIGNIN}
+                title={GOOGLE_SIGNIN ? undefined : "Google sign-in is coming soon"}
+                className={`mt-5 w-full flex items-center justify-center gap-2.5 rounded-xl py-3 text-[15px] font-semibold transition-transform disabled:opacity-60 ${
+                  GOOGLE_SIGNIN ? "active:scale-[.98]" : "cursor-default"
+                }`}
+                style={{ background: "#ffffff", color: "#1f1f1f", border: "1px solid var(--border-strong)", opacity: GOOGLE_SIGNIN ? 1 : 0.7 }}
               >
                 {googleLoading ? <Loader2 size={18} className="animate-spin" /> : <GoogleMark />}
                 Continue with Google
+                {!GOOGLE_SIGNIN && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "#efeaff", color: "#5b3be0" }}>
+                    Soon
+                  </span>
+                )}
               </button>
               {!showEmail && (
                 <button
@@ -177,6 +194,7 @@ export default function LoginPage() {
               {!showEmail && error && (
                 <p className="text-sm ks-note-err rounded-lg px-3 py-2 mt-3">{error}</p>
               )}
+              </>
             </div>
           ) : (
             <div className="mb-5">
