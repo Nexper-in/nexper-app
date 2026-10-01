@@ -2,7 +2,7 @@
   "id": "/",
   "name": "Nexper",
   "short_name": "Nexper",
-  "description": "Billing, stock and udhaar for your shop",
+  "description": "Your store, in your pocket. Billing, stock and udhaar for your shop.",
   "lang": "en-IN",
   "categories": ["business", "finance", "productivity"],
   "start_url": "/billing",
