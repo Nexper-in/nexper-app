@@ -136,7 +136,7 @@ html { scroll-behavior: smooth; }
 body {
   font-family: var(--font-body);
   color: var(--text-primary);
-  min-height: 100vh;
+  min-height: 100vh; min-height: 100dvh;
   background: var(--bg-page-glow), var(--bg-page);
   background-attachment: fixed;
   transition: background-color .25s ease, color .25s ease;
@@ -165,6 +165,14 @@ body {
   color: var(--text-primary);
   outline: none;
   transition: border-color .15s, box-shadow .15s;
+}
+/* iPhone Safari zooms the whole page in when a field under 16px gets focus,
+   and doesn't zoom back out, so the app looks too big and cut off. Keep every
+   field at 16px on phones. Don't lower this. */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+@media (max-width: 1023px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  select, textarea { font-size: 16px !important; }
 }
 .ks-input::placeholder { color: var(--text-secondary); }
 .ks-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft-bg); }

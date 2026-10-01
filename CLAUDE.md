@@ -24,6 +24,11 @@ Nexper is a billing, stock and udhaar app for small Indian shops
   barcodes stay black on white; the WhatsApp green `#25D366`.
 - Fonts: Manrope for headings and the wordmark, DM Sans for body text.
   The wordmark is `Ne<span class="ks-grad-text">x</span>per` with `ks-wordmark`.
+- **iPhone rules:** every input, select and textarea is 16px or larger on
+  phones (`app/globals.css`), because iPhone Safari zooms the page in on a
+  smaller field and the app then looks too big and cut off. Pop-ups and full
+  height boxes use `dvh`, not `vh`, so Safari's toolbars don't hide the bottom.
+  Test at 402px wide (iPhone 17 Pro) as well as 390px.
 - Check every new screen in **both** themes and at phone width (390px).
   Wide tables on the other pages become stacked cards on phones
   (`StackTables` + `.ks-stack`).

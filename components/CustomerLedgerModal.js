@@ -44,7 +44,7 @@ export default function CustomerLedgerModal({ customer, credits, supabase, activ
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.5)" }}>
-      <div className="ks-card w-full max-w-lg relative flex flex-col" style={{ background: "var(--bg-surface)", maxHeight: "85vh" }}>
+      <div className="ks-card w-full max-w-lg relative flex flex-col" style={{ background: "var(--bg-surface)", maxHeight: "85dvh" }}>
         <div className="flex items-start justify-between p-5 border-b border-[var(--border)] shrink-0">
           <div>
             <h2 className="ks-display font-bold text-lg">{customer.name}</h2>

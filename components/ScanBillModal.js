@@ -125,7 +125,7 @@ export default function ScanBillModal({ items, supabase, activeShopId, showToast
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" style={{ background: "rgba(0,0,0,0.55)" }}>
       <div
         className="ks-card w-full sm:max-w-xl flex flex-col rounded-t-3xl sm:rounded-2xl"
-        style={{ background: "var(--bg-surface)", maxHeight: "92vh" }}
+        style={{ background: "var(--bg-surface)", maxHeight: "92dvh" }}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] shrink-0">

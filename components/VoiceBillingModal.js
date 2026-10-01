@@ -190,7 +190,7 @@ export default function VoiceBillingModal({ items, onConfirm, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex flex-col" style={{ background: "rgba(0,0,0,0.7)" }}>
       <div
-        className="flex flex-col w-full h-full sm:relative sm:m-auto sm:rounded-3xl sm:max-w-lg sm:max-h-[90vh] overflow-hidden"
+        className="flex flex-col w-full h-full sm:relative sm:m-auto sm:rounded-3xl sm:max-w-lg sm:max-h-[90dvh] overflow-hidden"
         style={{ background: "var(--bg-surface)" }}
       >
         {/* Header */}
