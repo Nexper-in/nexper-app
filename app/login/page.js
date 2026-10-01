@@ -278,13 +278,13 @@ export default function LoginPage() {
 
         <p className="text-center text-[11px] text-muted mt-6">
           By continuing you agree to our{" "}
-          <Link href="/terms" className="underline">
+          <a href="https://nexper.in/terms/" className="underline">
             Terms
-          </Link>{" "}
+          </a>{" "}
           and{" "}
-          <Link href="/privacy" className="underline">
+          <a href="https://nexper.in/privacy/" className="underline">
             Privacy policy
-          </Link>
+          </a>
           .
         </p>
       </div>
