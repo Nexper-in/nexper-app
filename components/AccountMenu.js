@@ -8,6 +8,7 @@ import { useShop } from "@/components/ShopContext";
 import { useTheme } from "@/lib/theme";
 import { displayName, initials } from "@/lib/format";
 import { useT } from "@/lib/i18n";
+import { SITE } from "@/lib/site";
 import LanguagePicker from "@/components/LanguagePicker";
 
 // Top-right account button on every app screen: who is signed in, the
@@ -37,7 +38,9 @@ export default function AccountMenu({ onOpenSettings }) {
   async function handleSignOut() {
     await supabase.auth.signOut();
     await clearLocalData();
-    router.replace("/login");
+    // Back to the website. (On localhost there is no website, so stay on sign-in.)
+    if (/(^|\.)nexper\.in$/.test(window.location.hostname)) window.location.href = SITE.url;
+    else router.replace("/login");
   }
 
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;

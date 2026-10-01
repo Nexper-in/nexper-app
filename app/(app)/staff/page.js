@@ -10,10 +10,9 @@ import StaffCreatedModal from "@/components/StaffCreatedModal";
 import Modal from "@/components/ui/Modal";
 import UpgradePrompt from "@/components/UpgradePrompt";
 import { MODULES } from "@/lib/modules";
-import { isPro } from "@/lib/pricing";
+import { limitOf } from "@/lib/platformConfig";
 
 import { useT } from "@/lib/i18n";
-const FREE_STAFF_LIMIT = 1;
 
 export default function StaffPage() {
   const t = useT();
@@ -99,7 +98,7 @@ export default function StaffPage() {
           {t("Workers sign in with a staff code and PIN — from the login screen's \"Staff sign in\" tab — and only see the sections you allow.")}
         </p>
         <button
-          onClick={() => (!isPro(activeShop) && staff.length >= FREE_STAFF_LIMIT ? setShowStaffUpgrade(true) : setShowAdd(true))}
+          onClick={() => (limitOf(activeShop, "maxStaff") !== null && staff.length >= limitOf(activeShop, "maxStaff") ? setShowStaffUpgrade(true) : setShowAdd(true))}
           className="ks-btn-primary flex items-center gap-1.5 shrink-0"
         >
           <Plus size={16} /> {t("Add staff member")}

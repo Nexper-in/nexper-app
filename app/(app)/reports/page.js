@@ -8,7 +8,7 @@ import { rupee } from "@/lib/format";
 import { computeGstSummary, summaryToCsv, buildGstr1Json, downloadFile } from "@/lib/gstReport";
 import ModuleGuard from "@/components/ModuleGuard";
 import UpgradePrompt from "@/components/UpgradePrompt";
-import { isPro } from "@/lib/pricing";
+import { hasFeature } from "@/lib/platformConfig";
 
 import { useT } from "@/lib/i18n";
 export default function ReportsPage() {
@@ -201,7 +201,7 @@ function ReportsPageInner() {
             <Download size={15} /> {t("Download CSV")}
           </button>
         </div>
-      ) : !isPro(activeShop) ? (
+      ) : !hasFeature(activeShop, "gstr1_json") ? (
         <UpgradePrompt
           feature={t("GSTR-1 filing export")}
           description={t("The rate-wise summary on the left tab is free. The upload-ready JSON file for the GST Offline Tool is part of Nexper Pro.")}

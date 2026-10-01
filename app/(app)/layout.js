@@ -90,7 +90,7 @@ const SCREEN_TITLES = {
 function AppShell({ children }) {
   const pathname = usePathname();
   const t = useT();
-  const { shops, activeShop, addShop, loading, toast } = useShop();
+  const { shops, activeShop, addShop, loading, toast, platform } = useShop();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const router = useRouter();
   const [showStoreSettings, setShowStoreSettings] = useState(false);
@@ -117,6 +117,19 @@ function AppShell({ children }) {
           router.replace("/billing");
         }}
       />
+    );
+  }
+
+  if (platform.maintenance.enabled) {
+    return (
+      <main className="min-h-screen flex items-center justify-center px-6 text-center">
+        <div className="max-w-sm">
+          <p className="ks-wordmark text-[32px] mb-4">
+            Ne<span className="ks-grad-text">x</span>per
+          </p>
+          <p className="text-sm" style={{ color: "var(--text-secondary)" }}>{platform.maintenance.message}</p>
+        </div>
+      </main>
     );
   }
 
@@ -156,7 +169,17 @@ function AppShell({ children }) {
         <div className="ks-no-print ks-desk-bar ks-page-pad max-w-5xl items-center justify-end">
           <AccountMenu onOpenSettings={() => setShowStoreSettings(true)} />
         </div>
-        <main className="flex-1 min-w-0 ks-page-pad ks-page-bottom-safe max-w-5xl">{children}</main>
+        <main className="flex-1 min-w-0 ks-page-pad ks-page-bottom-safe max-w-5xl">
+          {platform.announcement.enabled && platform.announcement.text && (
+            <p
+              className="text-xs font-semibold rounded-xl px-3 py-2 mt-3"
+              style={platform.announcement.tone === "warn" ? { background: "var(--warn-soft)", color: "var(--warn)" } : { background: "var(--accent-soft-bg)", color: "var(--accent-soft-text)" }}
+            >
+              {platform.announcement.text}
+            </p>
+          )}
+          {children}
+        </main>
       </div>
 
       {toast && <Toast msg={toast.msg} tone={toast.tone} />}

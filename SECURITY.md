@@ -21,13 +21,20 @@ Nothing here contains secrets.
 | 12 | Low | External links opened without `noopener` | Added |
 | 13 | Low | Image optimiser allowed any host | Removed (not used) |
 
+## Platform console, API and MCP (added later)
+
+- Every `/api/admin/*` route needs a signed-in platform admin (`requireAdmin`), is rate limited where it sends mail or makes keys, validates input, and is audit logged.
+- API keys (`nxp_...`) are shown once and stored as a SHA-256 hash; revoke is immediate; scopes are read-only; each key is rate limited; wrong keys get the same answer as missing ones. Off until enabled globally and per shop.
+- MCP masks customer phone numbers and has no write tools.
+- `shops.plan` can no longer be changed by owners once "Let owners switch plan themselves" is turned off (trigger `protect_shop_plan`). Sign-up can be closed or invite-only in the database (`can_create_shop`), not only in the screen.
+
 ## Still open (not code)
 
-- Run migration 028 (and 024-027) in Supabase. After 028, check:
+- Run migrations 024-029 in Supabase. After 028, check:
   `select has_function_privilege('anon','admin_transfer_shop_ownership(uuid,uuid)','execute');` returns false.
 - The rate limiter is in memory (resets on cold starts). Add a shared one (Upstash/Vercel KV) before heavy public use.
 - Supabase Auth settings to check by hand: email confirmation on, minimum password length 8+, leaked-password protection, redirect URLs limited to the real domains.
-- `shops.plan` can be changed by the shop owner under the current row-level rules. Fine while Pro is free; move it to a server-only change before taking payments.
+- Before taking payments, turn off "Let owners switch plan themselves" in the console (Pricing & tax) so only you can change a plan.
 - Staff can read the staff codes of other staff in the same shop (a code alone is not enough to sign in, the PIN is also needed).
 - Never put `SUPABASE_SERVICE_ROLE_KEY` or `ANTHROPIC_API_KEY` in a `NEXT_PUBLIC_*` variable.
 

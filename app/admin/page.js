@@ -27,6 +27,11 @@ import {
   Clock,
   KeyRound,
   CheckCircle2,
+  UserPlus,
+  Tags,
+  ToggleRight,
+  Megaphone,
+  Plug,
 } from "lucide-react";
 import {
   PieChart,
@@ -48,6 +53,12 @@ import Field from "@/components/ui/Field";
 import { createClient } from "@/lib/supabaseClient";
 import { callApi } from "@/lib/apiClient";
 import { MODULES } from "@/lib/modules";
+import TenantsTab from "./console/TenantsTab";
+import OnboardingTab from "./console/OnboardingTab";
+import PricingTab from "./console/PricingTab";
+import FeaturesTab from "./console/FeaturesTab";
+import PlatformTab from "./console/PlatformTab";
+import IntegrationsTab from "./console/IntegrationsTab";
 
 const fmtDate = (d) =>
   d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
@@ -310,6 +321,12 @@ function AdminPageInner() {
   const TABS = [
     { key: "overview", label: "Overview", icon: LayoutDashboard },
     { key: "shops", label: "Owners & Shops", icon: Building2 },
+    { key: "tenants", label: "Tenants", icon: Store },
+    { key: "onboarding", label: "Onboarding", icon: UserPlus },
+    { key: "pricing", label: "Pricing & tax", icon: Tags },
+    { key: "features", label: "Features", icon: ToggleRight },
+    { key: "integrations", label: "API & MCP", icon: Plug },
+    { key: "platform", label: "Platform", icon: Megaphone },
     { key: "passwords", label: "Password resets", icon: KeyRound },
     { key: "audit", label: "Audit log", icon: ClipboardList },
   ];
@@ -401,6 +418,13 @@ function AdminPageInner() {
                 setConfirmTransfer={setConfirmTransfer}
               />
             )}
+
+            {activeTab === "tenants" && <TenantsTab supabase={supabase} />}
+            {activeTab === "onboarding" && <OnboardingTab supabase={supabase} />}
+            {activeTab === "pricing" && <PricingTab supabase={supabase} />}
+            {activeTab === "features" && <FeaturesTab supabase={supabase} />}
+            {activeTab === "integrations" && <IntegrationsTab supabase={supabase} />}
+            {activeTab === "platform" && <PlatformTab supabase={supabase} />}
 
             {data && activeTab === "passwords" && (
               <PasswordResetsTab owners={data.owners} onReset={resetUserPassword} />
@@ -891,6 +915,13 @@ const ACTION_META = {
   update_member:      { label: "Updated member",       color: "#7EB3F9",     bg: "rgba(91,124,250,0.14)" },
   transfer_ownership: { label: "Transferred ownership",color: "#A78BFA",     bg: "rgba(167,139,250,0.14)" },
   reset_password:     { label: "Reset password",       color: "#7FE0B8",     bg: SUCCESS_BG },
+  update_setting:         { label: "Changed a setting",     color: "#7EB3F9", bg: "rgba(91,124,250,0.14)" },
+  update_tenant_controls: { label: "Changed shop controls", color: "#7EB3F9", bg: "rgba(91,124,250,0.14)" },
+  create_tenant:          { label: "Opened a shop",         color: SUCCESS_TEXT, bg: SUCCESS_BG },
+  create_invite:          { label: "Invited",               color: SUCCESS_TEXT, bg: SUCCESS_BG },
+  revoke_invite:          { label: "Revoked invite",        color: "#F2A93B", bg: "rgba(242,169,59,0.14)" },
+  create_api_key:         { label: "Created API key",       color: "#A78BFA", bg: "rgba(167,139,250,0.14)" },
+  revoke_api_key:         { label: "Revoked API key",       color: "#F2A93B", bg: "rgba(242,169,59,0.14)" },
 };
 
 function AuditTab({ log, loading, onRefresh }) {

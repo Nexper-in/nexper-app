@@ -637,7 +637,6 @@
   "{n} rows found": "{n} வரிசைகள் கிடைத்தன",
   "{n} unmatched": "{n} பொருந்தவில்லை",
   "{n}% GST": "{n}% GST",
-  "~24% cheaper than paying monthly": "மாதம் மாதம் செலுத்துவதை விட சுமார் 24% மலிவு",
   "— not in inventory (skip)": "— இருப்பில் இல்லை (தவிர்)",
   "→ Inventory item:": "→ இருப்புப் பொருள்:",
   "Photo URL (optional)": "படத்தின் இணைப்பு (விருப்பம்)",
@@ -682,5 +681,12 @@
   "Workers sign in with a staff code and PIN — from the login screen's \"Staff sign in\" tab — and only see the sections you allow.": "ஊழியர்கள் ஊழியர் குறியீடு, PIN உடன் உள்நுழைவுத் திரையின் \"Staff sign in\" தாவலில் உள்நுழைவார்கள்; நீங்கள் அனுமதித்த பகுதிகளை மட்டுமே பார்ப்பார்கள்.",
   "a GSTR-1 JSON file in the format the government's GST Offline Utility accepts, so you or your CA can upload it instead of retyping every invoice. It covers your B2C rate-wise sales and an HSN-wise summary.": "அரசின் GST Offline Utility ஏற்கும் வடிவில் GSTR-1 JSON கோப்பு, இதனால் நீங்களோ உங்கள் CA-வோ ஒவ்வொரு இன்வாய்ஸையும் மீண்டும் தட்டச்சு செய்யாமல் பதிவேற்றலாம். இதில் உங்கள் B2C விகித வாரியான விற்பனையும் HSN வாரியான சுருக்கமும் அடங்கும்.",
   "🧾 No bills yet — generate one from the \"New Bill\" tab.": "🧾 இன்னும் பில்கள் இல்லை — \"New Bill\" தாவலில் உருவாக்குங்கள்.",
-  "Sign-in didn't finish. Please try again.": "உள்நுழைவு முடியவில்லை. மீண்டும் முயலுங்கள்."
+  "Sign-in didn't finish. Please try again.": "உள்நுழைவு முடியவில்லை. மீண்டும் முயலுங்கள்.",
+  "To change your plan, contact us.": "திட்டத்தை மாற்ற எங்களைத் தொடர்பு கொள்ளுங்கள்.",
+  "incl. {rate}% GST": "{rate}% GST உட்பட",
+  "+ {rate}% GST (₹{total} in all)": "+ {rate}% GST (மொத்தம் ₹{total})",
+  "~{n}% cheaper than paying monthly": "மாதம் மாதம் செலுத்துவதை விட சுமார் {n}% மலிவு",
+  "New sign-ups are closed right now.": "இப்போது புதிய பதிவுகள் மூடப்பட்டுள்ளன.",
+  "Nexper is invite-only right now. Sign up with the email you were invited on.": "Nexper இப்போது அழைப்பு மூலம் மட்டுமே. அழைப்பு வந்த மின்னஞ்சலில் பதிவு செய்யுங்கள்.",
+  "This isn't available right now.": "இது இப்போது கிடைக்காது."
 }

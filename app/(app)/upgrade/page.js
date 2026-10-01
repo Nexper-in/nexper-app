@@ -3,15 +3,23 @@
 import { useState } from "react";
 import { Check, Loader2, Sparkles } from "lucide-react";
 import { useShop } from "@/components/ShopContext";
-import { PRO_PRICING, PRO_FEATURES, FREE_FEATURES, isPro } from "@/lib/pricing";
+import { PRO_FEATURES, FREE_FEATURES, isPro } from "@/lib/pricing";
+import { priceWithTax } from "@/lib/platformConfig";
 
 import { useT } from "@/lib/i18n";
 export default function UpgradePage() {
   const t = useT();
-  const { activeShop, updateActiveShop, showToast } = useShop();
+  const { activeShop, updateActiveShop, showToast, platform } = useShop();
   const [billing, setBilling] = useState("yearly"); // monthly | yearly
   const [saving, setSaving] = useState(false);
   const pro = isPro(activeShop);
+  // Prices, GST and whether owners may switch plans themselves are set on the
+  // platform admin page.
+  const { monthlyInr, yearlyInr } = platform.pricing;
+  const amount = billing === "monthly" ? monthlyInr : yearlyInr;
+  const tax = priceWithTax(amount, platform.tax);
+  const yearlySaving = monthlyInr > 0 ? Math.round((1 - yearlyInr / (monthlyInr * 12)) * 100) : 0;
+  const canSwitch = platform.gating.allowSelfPlanSwitch;
 
   async function setPlan(plan) {
     setSaving(true);
@@ -41,7 +49,7 @@ export default function UpgradePage() {
           {t("Current plan:")} <span style={{ color: pro ? "var(--gold)" : "var(--text-primary)" }}>{pro ? "Pro" : "Free"}</span>
         </span>
         <span className="text-[11px]" style={{ color: "var(--text-secondary)" }}>
-          {t("Testing toggle — no payment collected yet")}
+          {canSwitch ? t("Testing toggle — no payment collected yet") : t("To change your plan, contact us.")}
         </span>
       </div>
 
@@ -57,7 +65,7 @@ export default function UpgradePage() {
               </li>
             ))}
           </ul>
-          {pro && (
+          {pro && canSwitch && (
             <button onClick={() => setPlan("free")} disabled={saving} className="ks-btn-outline w-full flex items-center justify-center gap-2">
               {saving && <Loader2 size={14} className="animate-spin" />} {t("Switch to Free")}
             </button>
@@ -85,17 +93,23 @@ export default function UpgradePage() {
             </div>
           </div>
           <p className="ks-display font-bold text-2xl mb-0.5">
-            ₹{billing === "monthly" ? PRO_PRICING.monthlyInr : PRO_PRICING.yearlyInr}
+            ₹{amount}
             <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
               /{billing === "monthly" ? "mo" : "yr"}
             </span>
           </p>
-          {billing === "yearly" && (
-            <p className="text-[11px] mb-3" style={{ color: "var(--success)" }}>
-              {t("~24% cheaper than paying monthly")}
+          {amount > 0 && platform.tax.gstRatePct > 0 && (
+            <p className="text-[11px] mb-1" style={{ color: "var(--text-secondary)" }}>
+              {tax.inclusive ? t("incl. {rate}% GST", { rate: tax.rate }) : t("+ {rate}% GST (₹{total} in all)", { rate: tax.rate, total: tax.total })}
             </p>
           )}
-          {billing === "monthly" && <div className="mb-3" />}
+          {billing === "yearly" && yearlySaving > 0 ? (
+            <p className="text-[11px] mb-3" style={{ color: "var(--success)" }}>
+              {t("~{n}% cheaper than paying monthly", { n: yearlySaving })}
+            </p>
+          ) : (
+            <div className="mb-3" />
+          )}
           <p className="text-[11px] font-semibold mb-2" style={{ color: "var(--text-secondary)" }}>
             {t("Everything in Free, plus:")}
           </p>
@@ -110,7 +124,7 @@ export default function UpgradePage() {
               </li>
             ))}
           </ul>
-          {!pro && (
+          {!pro && canSwitch && (
             <button onClick={() => setPlan("pro")} disabled={saving} className="ks-btn-primary w-full flex items-center justify-center gap-2">
               {saving && <Loader2 size={14} className="animate-spin" />} {t("Switch to Pro")}
             </button>

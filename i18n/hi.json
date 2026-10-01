@@ -637,7 +637,6 @@
   "{n} rows found": "{n} पंक्तियाँ मिलीं",
   "{n} unmatched": "{n} नहीं मिले",
   "{n}% GST": "{n}% GST",
-  "~24% cheaper than paying monthly": "महीने-महीने देने से लगभग 24% सस्ता",
   "— not in inventory (skip)": "— इन्वेंटरी में नहीं (छोड़ें)",
   "→ Inventory item:": "→ इन्वेंटरी का सामान:",
   "Photo URL (optional)": "फ़ोटो का लिंक (ज़रूरी नहीं)",
@@ -682,5 +681,12 @@
   "Workers sign in with a staff code and PIN — from the login screen's \"Staff sign in\" tab — and only see the sections you allow.": "स्टाफ़ कोड और PIN से लॉगिन स्क्रीन के \"Staff sign in\" टैब में काम करने वाले साइन इन करते हैं, और सिर्फ़ वही हिस्से देखते हैं जो आप दें।",
   "a GSTR-1 JSON file in the format the government's GST Offline Utility accepts, so you or your CA can upload it instead of retyping every invoice. It covers your B2C rate-wise sales and an HSN-wise summary.": "सरकार की GST Offline Utility जिस फ़ॉर्मैट को मानती है, उसमें GSTR-1 JSON फ़ाइल, ताकि आप या आपका CA हर इनवॉइस दोबारा टाइप किए बिना अपलोड कर सकें। इसमें आपकी B2C दर-वार बिक्री और HSN-वार सारांश शामिल है।",
   "🧾 No bills yet — generate one from the \"New Bill\" tab.": "🧾 अभी कोई बिल नहीं — \"New Bill\" टैब से बनाएँ।",
-  "Sign-in didn't finish. Please try again.": "साइन-इन पूरा नहीं हुआ। फिर कोशिश करें।"
+  "Sign-in didn't finish. Please try again.": "साइन-इन पूरा नहीं हुआ। फिर कोशिश करें।",
+  "To change your plan, contact us.": "प्लान बदलने के लिए हमसे संपर्क करें।",
+  "incl. {rate}% GST": "{rate}% GST सहित",
+  "+ {rate}% GST (₹{total} in all)": "+ {rate}% GST (कुल ₹{total})",
+  "~{n}% cheaper than paying monthly": "महीने-महीने देने से लगभग {n}% सस्ता",
+  "New sign-ups are closed right now.": "अभी नए साइन-अप बंद हैं।",
+  "Nexper is invite-only right now. Sign up with the email you were invited on.": "Nexper अभी सिर्फ़ इनवाइट से चल रहा है। जिस ईमेल पर इनवाइट मिला, उसी से साइन अप करें।",
+  "This isn't available right now.": "यह अभी उपलब्ध नहीं है।"
 }

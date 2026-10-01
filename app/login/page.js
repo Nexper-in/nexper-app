@@ -32,6 +32,17 @@ export default function LoginPage() {
   // folded away unless asked for (or a ?mode= link points at it).
   const [showEmail, setShowEmail] = useState(!GOOGLE_SIGNIN);
   const [googleLoading, setGoogleLoading] = useState(false);
+  // Sign-up mode from the platform admin page: open, invite_only or closed.
+  const [signup, setSignup] = useState({ mode: "open", message: "" });
+
+  useEffect(() => {
+    supabase
+      .from("platform_settings")
+      .select("value")
+      .eq("key", "signup")
+      .maybeSingle()
+      .then(({ data }) => data?.value?.mode && setSignup({ mode: data.value.mode, message: data.value.message || "" }));
+  }, [supabase]);
 
   useEffect(() => {
     const requested = new URLSearchParams(window.location.search).get("mode");
@@ -105,6 +116,11 @@ export default function LoginPage() {
       if (error) setError(error.message);
       else router.replace("/dashboard");
     } else if (mode === "signup") {
+      if (signup.mode === "closed") {
+        setError(signup.message || t("New sign-ups are closed right now."));
+        setLoading(false);
+        return;
+      }
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -209,6 +225,12 @@ export default function LoginPage() {
               <h2 className="ks-display font-bold text-center">{t("Staff sign in")}</h2>
               <p className="text-xs text-muted text-center mt-1">{t("Enter the staff code and PIN your shop owner gave you.")}</p>
             </div>
+          )}
+
+          {mode === "signup" && signup.mode !== "open" && (
+            <p className="text-xs rounded-lg px-3 py-2 mb-3" style={{ background: "var(--warn-soft)", color: "var(--warn)" }}>
+              {signup.message || (signup.mode === "invite_only" ? t("Nexper is invite-only right now. Sign up with the email you were invited on.") : t("New sign-ups are closed right now."))}
+            </p>
           )}
 
           {(showEmail || mode === "staff" || mode === "forgot") && (

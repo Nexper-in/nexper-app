@@ -7,6 +7,7 @@ import { useShop } from "@/components/ShopContext";
 import GroupPoster from "@/components/GroupPoster";
 import { isGroupInviteLink, offerMessageText, groupInviteText, whatsappLink, OFFER_KINDS } from "@/lib/messaging";
 import { T, useT } from "@/lib/i18n";
+import { hasFeature } from "@/lib/platformConfig";
 
 const KINDS = [
   { id: "offer", label: T("Offer"), icon: Tag },
@@ -118,6 +119,10 @@ export default function OffersPage() {
       window.print();
       setPoster(false);
     }, 400);
+  }
+
+  if (!hasFeature(activeShop, "offers_group")) {
+    return <div className="pt-6 text-sm" style={{ color: "var(--text-secondary)" }}>{t("This isn't available right now.")}</div>;
   }
 
   if (loading) {

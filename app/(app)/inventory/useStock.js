@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ScanLine, Upload, BarChart2, BookOpen } from "lucide-react";
 import { useShop } from "@/components/ShopContext";
-import { isPro } from "@/lib/pricing";
+import { hasFeature } from "@/lib/platformConfig";
 import { fetchShopItems, flattenShopProduct } from "@/lib/products";
 import { useT } from "@/lib/i18n";
 import { STOCK_RANK, stockLevelOf } from "./stockShared";
@@ -167,7 +167,7 @@ export function useStock() {
   // Less-used tools: a "⋯" menu on phones, buttons on the laptop.
   const tools = [
     { icon: BookOpen, label: t("Add from catalogue"), sub: t("Common Indian products"), run: () => setShowCatalogPicker(true) },
-    { icon: ScanLine, label: t("Scan supplier bill"), sub: t("Photo of a printed bill"), run: () => (isPro(activeShop) ? setShowScanBill(true) : setShowScanUpgrade(true)) },
+    { icon: ScanLine, label: t("Scan supplier bill"), sub: t("Photo of a printed bill"), run: () => (hasFeature(activeShop, "ocr_scan") ? setShowScanBill(true) : setShowScanUpgrade(true)) },
     { icon: Upload, label: t("Import a sheet"), sub: t("CSV of many items"), run: () => setShowBulkImport(true) },
     { icon: BarChart2, label: showInsights ? t("Hide profit per item") : t("Profit per item"), sub: t("Margin on each item"), run: () => setShowInsights((v) => !v) },
   ];

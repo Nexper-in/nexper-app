@@ -29,6 +29,7 @@ import ShopTypeIcon from "@/components/ShopTypeIcon";
 import SyncStatusBadge from "@/components/SyncStatusBadge";
 import { shopTypeInfo } from "@/lib/shopTypes";
 import { isPro } from "@/lib/pricing";
+import { hasFeature } from "@/lib/platformConfig";
 import { isModuleEnabled } from "@/lib/modules";
 
 // What a shopkeeper needs every hour sits at the top; everything else is
@@ -56,9 +57,9 @@ const GROUPS = [
     items: [
       { href: "/suppliers", key: "suppliers", label: T("Suppliers"), icon: Truck, pro: true },
       { href: "/purchase-orders", key: "purchase_orders", label: T("Purchase orders"), icon: ClipboardList, pro: true },
-      { href: "/expiry", key: "inventory", label: T("Expiry"), icon: CalendarClock },
+      { href: "/expiry", key: "inventory", label: T("Expiry"), icon: CalendarClock, feature: "expiry" },
       { href: "/clearance", key: "clearance", label: T("Clearance offers"), icon: Tag, ownerOnly: true },
-      { href: "/offers", key: "clearance", label: T("Offers & group"), icon: Megaphone, ownerOnly: true },
+      { href: "/offers", key: "clearance", label: T("Offers & group"), icon: Megaphone, ownerOnly: true, feature: "offers_group" },
       // Same "inventory" permission as Stock: batches/expiry and barcode labels.
       { href: "/inventory/config", key: "inventory", label: T("Batches & barcodes"), icon: SlidersHorizontal },
     ],
@@ -96,7 +97,8 @@ export default function Sidebar({ onOpenSettings, onNavigate }) {
   if (!activeShop) return null;
 
   const allowed = (item) =>
-    item.ownerOnly ? isOwner && isModuleEnabled(activeShop, item.key) : isModuleEnabled(activeShop, item.key) && hasPermission(item.key);
+    (!item.feature || hasFeature(activeShop, item.feature)) &&
+    (item.ownerOnly ? isOwner && isModuleEnabled(activeShop, item.key) : isModuleEnabled(activeShop, item.key) && hasPermission(item.key));
   const mainNav = MAIN_NAV.filter(allowed);
   const groups = GROUPS.map((g) => ({ ...g, items: g.items.filter(allowed) })).filter((g) => g.items.length);
 
@@ -112,7 +114,7 @@ export default function Sidebar({ onOpenSettings, onNavigate }) {
       >
         <Icon size={17} />
         {t(item.label)}
-        {item.pro && !isPro(activeShop) && (
+        {item.pro && !hasFeature(activeShop, "purchase_orders") && (
           <span
             className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0"
             style={{ background: "var(--gold-soft)", color: "var(--gold)" }}

@@ -158,3 +158,22 @@ the app can be deployed before the SQL is run. Current pending list is in
 
 - `npx next build` and `npm run check:i18n` must pass.
 - Look at the changed screens in Night and Light, on a phone width.
+
+## Platform console (/admin)
+
+- The owner of the platform controls pricing, GST, plans, feature switches,
+  sign-up mode, banners, API and MCP from `/admin` (tabs Tenants, Onboarding,
+  Pricing & tax, Features, API & MCP, Platform). Settings live in
+  `platform_settings`, per-shop overrides in `tenant_controls` (migration 029).
+- Defaults in `lib/platformDefaults.js` reproduce the old behaviour (plans not
+  enforced, everyone gets everything). A new gated feature needs: an entry in
+  `FEATURES` there, a check with `evalFeature` (client: `useShop().hasFeature`,
+  server: `lib/platformConfig.js`), and a switch automatically appears in the
+  console. Rule order: global kill switch, per-shop override, plan.
+- Admin API routes call `requireAdmin` first, validate with `normalizeSetting`,
+  and write the audit log. Admin pages stay English.
+- Read API (`/api/v1/*`) and MCP (`/api/mcp`) are read-only, key based
+  (`lib/apiKeys.js`, only a hash is stored), off until enabled globally and per
+  shop. MCP masks customer phone numbers. Never add a write tool without a
+  deliberate decision.
+

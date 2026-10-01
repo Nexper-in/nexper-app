@@ -19,7 +19,7 @@ Rules:
 - If a line is unreadable, skip it.`;
 
 export async function POST(request) {
-  const guard = await guardImageRequest(request);
+  const guard = await guardImageRequest(request, { feature: "handwritten_scan" });
   if (guard.error) return guard.error;
 
   if (!process.env.ANTHROPIC_API_KEY) {

@@ -6,12 +6,14 @@ import Field from "@/components/ui/Field";
 import ShopTypeIcon from "@/components/ShopTypeIcon";
 import { SHOP_TYPES } from "@/lib/shopTypes";
 import { useT } from "@/lib/i18n";
+import { useShop } from "@/components/ShopContext";
 
 // One owner, one shop, chosen right here at signup — there's no "add
 // another shop" flow, so this only ever renders once, for a brand-new
 // account with zero shops (see app/(app)/layout.js).
 export function AddShopOnboarding({ onAdd }) {
   const t = useT();
+  const { platform } = useShop();
   const [type, setType] = useState("kirana");
   const [name, setName] = useState("");
   const [seedTemplate, setSeedTemplate] = useState(true);
@@ -24,7 +26,9 @@ export function AddShopOnboarding({ onAdd }) {
     try {
       await onAdd(name.trim(), type, { seedTemplate });
     } catch (err) {
-      setError(err.message);
+      // The database refuses new shops when sign-up is invite-only or closed
+      // (platform admin page): say so in plain words.
+      setError(/row-level security/i.test(err.message) ? platform.signup.message || t("Nexper is invite-only right now. Sign up with the email you were invited on.") : err.message);
       setSaving(false);
     }
   }

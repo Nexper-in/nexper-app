@@ -13,7 +13,7 @@ const SELL_FIRST_DAYS = 14;
 
 export default function ExpiryPage() {
   return (
-    <ModuleGuard module="inventory">
+    <ModuleGuard module="inventory" feature="expiry">
       <ExpiryScreen />
     </ModuleGuard>
   );

@@ -30,7 +30,7 @@ Rules:
 export async function POST(request) {
 
   // Signed in, rate limited, sensible image: see lib/aiGuard.js
-  const guard = await guardImageRequest(request);
+  const guard = await guardImageRequest(request, { feature: "ocr_scan" });
   if (guard.error) return guard.error;
 
   if (!process.env.ANTHROPIC_API_KEY) {

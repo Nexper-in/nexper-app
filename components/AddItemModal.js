@@ -6,13 +6,13 @@ import Modal from "@/components/ui/Modal";
 import Field from "@/components/ui/Field";
 import { nextCode } from "@/lib/inventoryHelpers";
 import { useShop } from "@/components/ShopContext";
-import { isPro } from "@/lib/pricing";
+import { hasFeature } from "@/lib/platformConfig";
 
 import { useT } from "@/lib/i18n";
 export default function AddItemModal({ items, onClose, onAdd }) {
   const t = useT();
   const { activeShop } = useShop();
-  const pro = isPro(activeShop);
+  const pro = hasFeature(activeShop, "product_photos");
   const [form, setForm] = useState({
     name: "",
     hindi_name: "",

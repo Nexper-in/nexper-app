@@ -9,13 +9,14 @@ import PrintBillContent from "@/components/PrintBillContent";
 import VoiceBillingModal from "@/components/VoiceBillingModal";
 import HandwrittenBillModal from "@/components/HandwrittenBillModal";
 import { rupee } from "@/lib/format";
+import { hasFeature } from "@/lib/platformConfig";
 import { whatsappLink, billMessageText } from "@/lib/messaging";
 
 // Pieces of New bill shared by the phone and laptop screens.
 
 // Search box with scan and speak buttons.
 export function SearchBox({ vm, autoFocus }) {
-  const { t, query, setQuery, scannerActive, startBarcodeScanner, setShowVoiceBilling } = vm;
+  const { t, query, setQuery, scannerActive, startBarcodeScanner, setShowVoiceBilling, activeShop } = vm;
   return (
     <>
         <div className="relative mb-3">
@@ -38,15 +39,17 @@ export function SearchBox({ vm, autoFocus }) {
             >
               <ScanLine size={16} />
             </button>
-            <button
-              onClick={() => setShowVoiceBilling(true)}
-              aria-label={t("Say the items")}
-              title={t("Say the items")}
-              className="w-9 h-9 rounded-lg flex items-center justify-center"
-              style={{ background: "var(--grad)", color: "#fff" }}
-            >
-              <Mic size={16} />
-            </button>
+            {hasFeature(activeShop, "voice_billing") && (
+              <button
+                onClick={() => setShowVoiceBilling(true)}
+                aria-label={t("Say the items")}
+                title={t("Say the items")}
+                className="w-9 h-9 rounded-lg flex items-center justify-center"
+                style={{ background: "var(--grad)", color: "#fff" }}
+              >
+                <Mic size={16} />
+              </button>
+            )}
           </div>
         </div>
     </>
@@ -55,7 +58,7 @@ export function SearchBox({ vm, autoFocus }) {
 
 // Search results, or the quick item tiles when nothing is typed.
 export function FindItems({ vm, wide }) {
-  const { t, query, browsing, displayItems, quickItems, setPickerItem, setShowHandwritten } = vm;
+  const { t, query, browsing, displayItems, quickItems, setPickerItem, setShowHandwritten, activeShop } = vm;
   return (
     <>
       {browsing ? (
@@ -110,7 +113,7 @@ export function FindItems({ vm, wide }) {
             {t("Search, scan or speak to add items.")}
           </div>
         )}
-      {!browsing && (
+      {!browsing && hasFeature(activeShop, "handwritten_scan") && (
         <button
           onClick={() => setShowHandwritten(true)}
           className="mt-3 flex items-center gap-1.5 text-xs font-semibold"
