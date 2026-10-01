@@ -29,12 +29,22 @@ export const metadata = {
   },
 };
 
+// One viewport tag only. (A hand-written tag in <head> next to the one Next.js
+// adds made iPhone Safari ignore maximum-scale, so it zoomed the page in when a
+// field was tapped and left it cut off at the edges.) viewport-fit=cover lets
+// content reach behind the iPhone notch / Dynamic Island.
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+};
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en-IN" suppressHydrationWarning>
       <head>
-        {/* Viewport — viewport-fit=cover lets content reach behind iPhone notch/Dynamic Island */}
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
         <link rel="manifest" href="/manifest.json" />
         {/* Browser bar colour; lib/theme.js updates it when the theme changes */}
         <meta name="theme-color" content="#08070f" />

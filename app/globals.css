@@ -169,7 +169,7 @@ body {
 /* iPhone Safari zooms the whole page in when a field under 16px gets focus,
    and doesn't zoom back out, so the app looks too big and cut off. Keep every
    field at 16px on phones. Don't lower this. */
-html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; touch-action: manipulation; } /* manipulation: no double-tap zoom */
 @media (max-width: 1023px) {
   input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
   select, textarea { font-size: 16px !important; }

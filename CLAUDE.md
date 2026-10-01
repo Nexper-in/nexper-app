@@ -28,7 +28,10 @@ Nexper is a billing, stock and udhaar app for small Indian shops
   phones (`app/globals.css`), because iPhone Safari zooms the page in on a
   smaller field and the app then looks too big and cut off. Pop-ups and full
   height boxes use `dvh`, not `vh`, so Safari's toolbars don't hide the bottom.
-  Test at 402px wide (iPhone 17 Pro) as well as 390px.
+  There must be **one** viewport tag, from `export const viewport` in
+  `app/layout.js`; never add a hand-written `<meta name="viewport">` (Next adds
+  its own, and two made Safari ignore `maximum-scale`). Test at 402px wide
+  (iPhone 17 Pro) as well as 390px.
 - Check every new screen in **both** themes and at phone width (390px).
   Wide tables on the other pages become stacked cards on phones
   (`StackTables` + `.ks-stack`).
