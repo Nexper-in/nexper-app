@@ -31,7 +31,7 @@ export default function RecordPaymentModal({ customer, upiId, storeName, onClose
         </Field>
         {upiId && Number(amount) > 0 && <UpiQrCard upiId={upiId} payeeName={storeName} amount={Number(amount)} note={`Udhaar - ${customer.name}`} />}
         {error && (
-          <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>
+          <p className="text-sm text-[var(--danger)] bg-[var(--danger-soft)] border border-[var(--danger-line)] rounded-lg px-3 py-2">{error}</p>
         )}
         <button disabled={!valid || saving} onClick={handleAdd} className="ks-btn-primary w-full flex items-center justify-center gap-2">
           {saving && <Loader2 size={16} className="animate-spin" />}

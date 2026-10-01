@@ -1,5 +1,6 @@
 import "./globals.css";
 import { SITE } from "@/lib/site";
+import { THEME_BOOT_SCRIPT } from "@/lib/theme";
 
 export const metadata = {
   metadataBase: new URL(SITE.url),
@@ -29,13 +30,15 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en-IN">
+    <html lang="en-IN" suppressHydrationWarning>
       <head>
         {/* Viewport — viewport-fit=cover lets content reach behind iPhone notch/Dynamic Island */}
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
         <link rel="manifest" href="/manifest.json" />
-        {/* Theme colour matches sidebar/hero purple */}
-        <meta name="theme-color" content="#5B2CDB" />
+        {/* Browser bar colour; lib/theme.js updates it when the theme changes */}
+        <meta name="theme-color" content="#08070f" />
+        {/* Apply the saved theme before first paint so Light users never see a dark flash */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         {/* black-translucent = iOS status bar overlays content, letting our topbar fill edge-to-edge */}

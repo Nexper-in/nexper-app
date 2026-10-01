@@ -18,9 +18,9 @@ function offerStatus(offer) {
 }
 
 const STATUS_INFO = {
-  active: { label: "Active now", bg: "#E4F5F0", color: "#0F6E56" },
-  upcoming: { label: "Upcoming", bg: "#EEF0FE", color: "#4F46E5" },
-  expired: { label: "Ended", bg: "#E7E9F3", color: "#6B7280" },
+  active: { label: "Active now", bg: "var(--success-soft)", color: "var(--success)" },
+  upcoming: { label: "Upcoming", bg: "var(--accent-soft-bg)", color: "var(--accent-soft-text)" },
+  expired: { label: "Ended", bg: "var(--bg-surface-alt)", color: "var(--text-secondary)" },
 };
 
 const fmtDate = (d) => new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
@@ -123,9 +123,9 @@ export default function ClearancePage() {
       <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
         <div>
           <h1 className="ks-display font-bold text-lg flex items-center gap-2">
-            <Tag size={18} style={{ color: "#4F46E5" }} /> Quick clearance offers
+            <Tag size={18} style={{ color: "var(--accent-soft-text)" }} /> Quick clearance offers
           </h1>
-          <p className="text-xs text-[#6B7280] mt-0.5">
+          <p className="text-xs text-[var(--text-secondary)] mt-0.5">
             A time-boxed discount on picked items. It applies automatically in Billing while the dates are open, and
             reverts on its own once the offer ends.
           </p>
@@ -137,7 +137,7 @@ export default function ClearancePage() {
 
       {offers.length === 0 ? (
         <div className="ks-card p-8 text-center">
-          <p className="text-sm text-[#6B7280] mb-3">No clearance offers yet.</p>
+          <p className="text-sm text-[var(--text-secondary)] mb-3">No clearance offers yet.</p>
           <button onClick={() => setShowNew(true)} className="ks-btn-primary inline-flex items-center gap-1.5">
             <Plus size={16} /> Start your first offer
           </button>
@@ -155,11 +155,11 @@ export default function ClearancePage() {
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: info.bg, color: info.color }}>
                       {info.label}
                     </span>
-                    <span className="text-xs font-bold" style={{ color: "#C13F45" }}>
+                    <span className="text-xs font-bold" style={{ color: "var(--danger)" }}>
                       −{Number(offer.discount_pct)}%
                     </span>
                   </div>
-                  <p className="text-[11px] text-[#6B7280] flex items-center gap-1 mb-1.5">
+                  <p className="text-[11px] text-[var(--text-secondary)] flex items-center gap-1 mb-1.5">
                     <Calendar size={11} /> {fmtDate(offer.start_date)} – {fmtDate(offer.end_date)}
                   </p>
                   <div className="flex flex-wrap gap-1.5">
@@ -167,7 +167,7 @@ export default function ClearancePage() {
                       <span
                         key={it.shop_product_id}
                         className="text-[11px] px-2 py-0.5 rounded-full"
-                        style={{ background: "#E7E9F3", color: "#6B7280" }}
+                        style={{ background: "var(--bg-surface-alt)", color: "var(--text-secondary)" }}
                       >
                         {itemName(it.shop_product_id)}
                       </span>
@@ -178,7 +178,7 @@ export default function ClearancePage() {
                   onClick={() => setRemoving(offer)}
                   title="Remove offer"
                   className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-                  style={{ background: "#FDEAEA", color: "#C13F45" }}
+                  style={{ background: "var(--danger-soft)", color: "var(--danger)" }}
                 >
                   <Trash2 size={14} />
                 </button>
@@ -203,9 +203,9 @@ export default function ClearancePage() {
 
       {removing && (
         <div className="ks-no-print fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[70] px-4">
-          <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-5">
+          <div className="bg-[var(--bg-surface)] rounded-3xl w-full max-w-sm shadow-2xl p-5">
             <h3 className="ks-display font-bold mb-2">Remove &quot;{removing.name}&quot;?</h3>
-            <p className="text-sm text-[#6B7280] mb-4">
+            <p className="text-sm text-[var(--text-secondary)] mb-4">
               Items go back to their normal price immediately. This can&apos;t be undone.
             </p>
             <div className="flex gap-2">
@@ -215,7 +215,7 @@ export default function ClearancePage() {
               <button
                 onClick={confirmRemove}
                 className="flex-1 rounded-full text-white text-sm font-semibold py-2.5"
-                style={{ background: "#C13F45" }}
+                style={{ background: "var(--danger-solid)" }}
               >
                 Remove
               </button>

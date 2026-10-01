@@ -13,7 +13,7 @@ export default function BarcodeModal({ item, onClose }) {
         JsBarcode(svgRef.current, item.barcode || item.code, {
           format: "CODE128",
           lineColor: "#000000",
-          background: "#ffffff",
+          background: "var(--bg-surface)",
           width: 2.5,
           height: 80,
           displayValue: true,
@@ -27,7 +27,7 @@ export default function BarcodeModal({ item, onClose }) {
         JsBarcode(svgRef.current, item.code, {
           format: "CODE128",
           lineColor: "#000000",
-          background: "#ffffff",
+          background: "var(--bg-surface)",
           width: 2.5,
           height: 80,
           displayValue: true,
@@ -58,15 +58,15 @@ export default function BarcodeModal({ item, onClose }) {
         <button
           onClick={onClose}
           className="absolute top-4 right-4 w-7 h-7 flex items-center justify-center rounded-full"
-          style={{ background: "#E7E9F3", color: "#6B7280" }}
+          style={{ background: "var(--bg-surface-alt)", color: "var(--text-secondary)" }}
         >
           <X size={15} />
         </button>
         <h2 className="ks-display font-bold mb-1">{item.name}</h2>
-        <p className="text-xs text-[#6B7280] mb-4 ks-mono">
+        <p className="text-xs text-[var(--text-secondary)] mb-4 ks-mono">
           Code: {item.code}{item.barcode && item.barcode !== item.code ? ` · Barcode: ${item.barcode}` : ""}
         </p>
-        <div className="flex justify-center bg-white rounded-xl p-3 border border-[#E7E9F3] mb-4">
+        <div className="flex justify-center bg-white rounded-xl p-3 border border-[var(--border)] mb-4">
           <svg ref={svgRef} />
         </div>
         <button

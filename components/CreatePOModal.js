@@ -95,7 +95,7 @@ export default function CreatePOModal({ items, suppliers, onClose, onCreate }) {
         </div>
 
         <div>
-          <p className="text-xs font-semibold text-[#6B7280] mb-2 uppercase tracking-wide">Items to order</p>
+          <p className="text-xs font-semibold text-[var(--text-secondary)] mb-2 uppercase tracking-wide">Items to order</p>
           <div className="space-y-2">
             {lines.map((line, idx) => (
               <div key={idx} className="grid gap-2" style={{ gridTemplateColumns: "1fr auto auto auto" }}>
@@ -126,14 +126,14 @@ export default function CreatePOModal({ items, suppliers, onClose, onCreate }) {
                   onClick={() => removeLine(idx)}
                   disabled={lines.length === 1}
                   className="w-8 h-10 flex items-center justify-center rounded-xl disabled:opacity-30"
-                  style={{ color: "#C13F45" }}
+                  style={{ color: "var(--danger)" }}
                 >
                   <Trash2 size={15} />
                 </button>
               </div>
             ))}
           </div>
-          <button onClick={addLine} className="mt-2 text-xs font-semibold flex items-center gap-1" style={{ color: "#4F46E5" }}>
+          <button onClick={addLine} className="mt-2 text-xs font-semibold flex items-center gap-1" style={{ color: "var(--accent-soft-text)" }}>
             <Plus size={13} /> Add item
           </button>
         </div>
@@ -142,7 +142,7 @@ export default function CreatePOModal({ items, suppliers, onClose, onCreate }) {
           <textarea className="ks-input resize-none" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Any notes for this order…" />
         </Field>
 
-        {error && <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>}
+        {error && <p className="text-sm text-[var(--danger)] bg-[var(--danger-soft)] border border-[var(--danger-line)] rounded-lg px-3 py-2">{error}</p>}
         <button disabled={!valid || saving} onClick={handleCreate} className="ks-btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-40">
           {saving && <Loader2 size={16} className="animate-spin" />}
           Create purchase order

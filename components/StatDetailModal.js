@@ -33,30 +33,30 @@ export default function StatDetailModal({ mode, items, todaysBills, stockValue, 
     <Modal title={titles[mode]} onClose={onClose}>
       <div className="space-y-3">
         {mode === "value" && (
-          <div className="flex items-center justify-between pb-2 border-b border-[#E7E9F3]">
-            <span className="text-sm font-semibold text-[#6B7280]">Total stock value</span>
-            <span className="ks-mono text-lg font-bold text-[#4F46E5]">{rupee(stockValue)}</span>
+          <div className="flex items-center justify-between pb-2 border-b border-[var(--border)]">
+            <span className="text-sm font-semibold text-[var(--text-secondary)]">Total stock value</span>
+            <span className="ks-mono text-lg font-bold text-[var(--accent-soft-text)]">{rupee(stockValue)}</span>
           </div>
         )}
         {mode === "profit" && (
-          <div className="flex items-center justify-between pb-2 border-b border-[#E7E9F3]">
-            <span className="text-sm font-semibold text-[#6B7280]">Total profit today</span>
-            <span className="ks-mono text-lg font-bold text-[#4F46E5]">{rupee(totalProfit)}</span>
+          <div className="flex items-center justify-between pb-2 border-b border-[var(--border)]">
+            <span className="text-sm font-semibold text-[var(--text-secondary)]">Total profit today</span>
+            <span className="ks-mono text-lg font-bold text-[var(--accent-soft-text)]">{rupee(totalProfit)}</span>
           </div>
         )}
 
         {mode === "profit" ? (
           <div className="max-h-80 overflow-y-auto ks-scroll space-y-2.5 pr-1">
-            {profitRows.length === 0 && <p className="text-sm text-[#6B7280] text-center py-6">No sales yet today.</p>}
+            {profitRows.length === 0 && <p className="text-sm text-[var(--text-secondary)] text-center py-6">No sales yet today.</p>}
             {profitRows.map((r) => (
               <div key={r.name} className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="ks-mono text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0" style={{ background: "#E7E9F3", color: "#6B7280" }}>
+                  <span className="ks-mono text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0" style={{ background: "var(--bg-surface-alt)", color: "var(--text-secondary)" }}>
                     {r.code}
                   </span>
                   <span className="font-medium truncate">{r.name}</span>
                 </div>
-                <span className="ks-mono font-semibold shrink-0 ml-2 text-[#4F46E5]">{rupee(r.profit)}</span>
+                <span className="ks-mono font-semibold shrink-0 ml-2 text-[var(--accent-soft-text)]">{rupee(r.profit)}</span>
               </div>
             ))}
           </div>
@@ -64,7 +64,7 @@ export default function StatDetailModal({ mode, items, todaysBills, stockValue, 
           <div className="max-h-80 overflow-y-auto ks-scroll space-y-2.5 pr-1">
             {rows.length === 0 && (
               <div className="text-center py-6 space-y-3">
-                <p className="text-sm text-[#6B7280]">Nothing to show here. 🎉</p>
+                <p className="text-sm text-[var(--text-secondary)]">Nothing to show here. 🎉</p>
                 {(mode === "items" || mode === "value") && (
                   <button onClick={onAddItems} className="ks-btn-primary">
                     Add items
@@ -75,7 +75,7 @@ export default function StatDetailModal({ mode, items, todaysBills, stockValue, 
             {rows.map((i) => (
               <div key={i.id} className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="ks-mono text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0" style={{ background: "#E7E9F3", color: "#6B7280" }}>
+                  <span className="ks-mono text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0" style={{ background: "var(--bg-surface-alt)", color: "var(--text-secondary)" }}>
                     {i.code}
                   </span>
                   <span className="font-medium truncate">{i.name}</span>
@@ -83,7 +83,7 @@ export default function StatDetailModal({ mode, items, todaysBills, stockValue, 
                 {mode === "value" ? (
                   <span className="ks-mono font-semibold shrink-0 ml-2">{rupee(i.stock * i.price)}</span>
                 ) : (
-                  <span className={`ks-mono font-semibold shrink-0 ml-2 ${i.stock <= i.low_at ? "text-[#C13F45]" : "text-[#000000]"}`}>
+                  <span className={`ks-mono font-semibold shrink-0 ml-2 ${i.stock <= i.low_at ? "text-[var(--danger)]" : "text-[var(--text-primary)]"}`}>
                     {i.stock} {i.unit}
                   </span>
                 )}

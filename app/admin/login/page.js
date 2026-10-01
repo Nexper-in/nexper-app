@@ -1,5 +1,6 @@
 "use client";
 
+import { applyTheme, readTheme } from "@/lib/theme";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ShieldCheck, Loader2 } from "lucide-react";
@@ -21,9 +22,9 @@ export default function AdminLoginPage() {
   const [checkingSession, setCheckingSession] = useState(true);
 
   useEffect(() => {
-    document.documentElement.dataset.theme = "dark";
+    delete document.documentElement.dataset.theme; // admin always uses Night
     return () => {
-      delete document.documentElement.dataset.theme;
+      applyTheme(readTheme());
     };
   }, []);
 

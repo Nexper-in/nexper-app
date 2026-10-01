@@ -128,17 +128,17 @@ export default function ScanBillModal({ items, supabase, activeShopId, showToast
         style={{ background: "var(--bg-surface)", maxHeight: "92vh" }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#E7E9F3] shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] shrink-0">
           <div>
             <h2 className="ks-display font-bold">Scan supplier bill</h2>
             {billMeta?.supplier && (
-              <p className="text-xs text-[#6B7280] mt-0.5">{billMeta.supplier}{billMeta.invoice_date ? ` · ${billMeta.invoice_date}` : ""}</p>
+              <p className="text-xs text-[var(--text-secondary)] mt-0.5">{billMeta.supplier}{billMeta.invoice_date ? ` · ${billMeta.invoice_date}` : ""}</p>
             )}
           </div>
           <button
             onClick={onClose}
             className="w-7 h-7 flex items-center justify-center rounded-full"
-            style={{ background: "#E7E9F3", color: "#6B7280" }}
+            style={{ background: "var(--bg-surface-alt)", color: "var(--text-secondary)" }}
           >
             <X size={15} />
           </button>
@@ -149,7 +149,7 @@ export default function ScanBillModal({ items, supabase, activeShopId, showToast
           {(step === STEP.CAPTURE || step === STEP.ANALYZING) && (
             <div className="p-5 space-y-4">
               {error && (
-                <div className="flex items-center gap-2 p-3 rounded-xl text-sm font-medium" style={{ background: "#FDEAEA", color: "#C13F45" }}>
+                <div className="flex items-center gap-2 p-3 rounded-xl text-sm font-medium" style={{ background: "var(--danger-soft)", color: "var(--danger)" }}>
                   <AlertTriangle size={15} className="shrink-0" />
                   {error}
                 </div>
@@ -157,7 +157,7 @@ export default function ScanBillModal({ items, supabase, activeShopId, showToast
 
               {/* Image preview / placeholder */}
               {preview ? (
-                <div className="relative rounded-2xl overflow-hidden border border-[#E7E9F3]" style={{ maxHeight: 280 }}>
+                <div className="relative rounded-2xl overflow-hidden border border-[var(--border)]" style={{ maxHeight: 280 }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={preview} alt="Bill preview" className="w-full object-contain" style={{ maxHeight: 280 }} />
                   <button
@@ -172,12 +172,12 @@ export default function ScanBillModal({ items, supabase, activeShopId, showToast
                 <button
                   onClick={() => fileRef.current?.click()}
                   className="w-full rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-3 py-10"
-                  style={{ borderColor: "#E7E9F3" }}
+                  style={{ borderColor: "var(--border)" }}
                 >
                   <Camera size={36} style={{ color: "var(--accent)" }} />
                   <div className="text-center">
                     <p className="font-semibold text-sm">Take a photo of the supplier bill</p>
-                    <p className="text-xs text-[#6B7280] mt-1">Or tap to upload from gallery</p>
+                    <p className="text-xs text-[var(--text-secondary)] mt-1">Or tap to upload from gallery</p>
                   </div>
                 </button>
               )}
@@ -211,7 +211,7 @@ export default function ScanBillModal({ items, supabase, activeShopId, showToast
                 </button>
               </div>
 
-              <p className="text-[11px] text-[#6B7280] text-center">
+              <p className="text-[11px] text-[var(--text-secondary)] text-center">
                 Works with printed bills, handwritten chalans, and Hindi/English bills. Keep the text in frame and well-lit.
               </p>
             </div>
@@ -220,9 +220,9 @@ export default function ScanBillModal({ items, supabase, activeShopId, showToast
           {/* REVIEW STEP */}
           {step === STEP.REVIEW && (
             <div className="p-5 space-y-4">
-              <div className="flex items-center gap-2 text-xs text-[#6B7280]">
-                <span className="font-semibold text-[#4F46E5]">{matchedCount} matched</span>
-                {unmatchedCount > 0 && <><span>·</span><span className="text-[#C13F45] font-semibold">{unmatchedCount} unmatched</span></>}
+              <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+                <span className="font-semibold text-[var(--accent-soft-text)]">{matchedCount} matched</span>
+                {unmatchedCount > 0 && <><span>·</span><span className="text-[var(--danger)] font-semibold">{unmatchedCount} unmatched</span></>}
                 <span>· {rows.length} items found on bill</span>
               </div>
 
@@ -232,8 +232,8 @@ export default function ScanBillModal({ items, supabase, activeShopId, showToast
                     key={idx}
                     className="rounded-xl border p-3"
                     style={{
-                      borderColor: !row.include ? "#E7E9F3" : row.matched ? "#C7D7FD" : "#FDC7C7",
-                      background: !row.include ? "var(--bg-surface-alt)" : row.matched ? "#F0F4FF" : "#FFF0F0",
+                      borderColor: !row.include ? "var(--border)" : row.matched ? "var(--accent)" : "var(--danger-line)",
+                      background: !row.include ? "var(--bg-surface-alt)" : row.matched ? "var(--accent-soft-bg)" : "var(--danger-soft)",
                       opacity: row.include ? 1 : 0.6,
                     }}
                   >
@@ -247,7 +247,7 @@ export default function ScanBillModal({ items, supabase, activeShopId, showToast
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-semibold text-sm truncate">{row.name}</span>
-                          <span className="ks-mono text-xs text-[#6B7280] shrink-0">
+                          <span className="ks-mono text-xs text-[var(--text-secondary)] shrink-0">
                             ×{row.qty} {row.unit}
                             {row.price_per_unit != null && ` @ ${rupee(row.price_per_unit)}`}
                             {row.total != null && ` = ${rupee(row.total)}`}
@@ -256,14 +256,14 @@ export default function ScanBillModal({ items, supabase, activeShopId, showToast
 
                         {/* Inventory match selector */}
                         <div className="mt-1.5 flex items-center gap-2">
-                          <span className="text-[11px] text-[#6B7280] shrink-0">→ Inventory item:</span>
+                          <span className="text-[11px] text-[var(--text-secondary)] shrink-0">→ Inventory item:</span>
                           <select
                             value={row.matched?.id || ""}
                             onChange={(e) => {
                               const inv = items.find((i) => i.id === e.target.value) || null;
                               updateRow(idx, { matched: inv });
                             }}
-                            className="text-xs flex-1 rounded-lg border border-[#E7E9F3] px-2 py-1"
+                            className="text-xs flex-1 rounded-lg border border-[var(--border)] px-2 py-1"
                             style={{ background: "var(--bg-surface)", color: "var(--text-primary)" }}
                           >
                             <option value="">— not in inventory (skip)</option>
@@ -278,17 +278,17 @@ export default function ScanBillModal({ items, supabase, activeShopId, showToast
                         {/* Qty override */}
                         {row.include && row.matched && (
                           <div className="mt-1.5 flex items-center gap-2">
-                            <span className="text-[11px] text-[#6B7280] shrink-0">Qty to add:</span>
+                            <span className="text-[11px] text-[var(--text-secondary)] shrink-0">Qty to add:</span>
                             <input
                               type="number"
                               min="0"
                               step="0.01"
                               value={row.qty}
                               onChange={(e) => updateRow(idx, { qty: e.target.value })}
-                              className="ks-mono text-xs w-24 rounded-lg border border-[#E7E9F3] px-2 py-1"
+                              className="ks-mono text-xs w-24 rounded-lg border border-[var(--border)] px-2 py-1"
                               style={{ background: "var(--bg-surface)" }}
                             />
-                            <span className="text-[11px] text-[#6B7280]">{row.matched.unit}</span>
+                            <span className="text-[11px] text-[var(--text-secondary)]">{row.matched.unit}</span>
                           </div>
                         )}
                       </div>
@@ -298,7 +298,7 @@ export default function ScanBillModal({ items, supabase, activeShopId, showToast
               </div>
 
               {unmatchedCount > 0 && (
-                <p className="text-[11px] text-[#6B7280] bg-[#FCEEDA] rounded-lg px-3 py-2">
+                <p className="text-[11px] text-[var(--text-secondary)] bg-[var(--warn-soft)] rounded-lg px-3 py-2">
                   ⚠️ {unmatchedCount} item{unmatchedCount === 1 ? "" : "s"} not matched to your inventory — add them to inventory first, then re-scan, or use the dropdown above to link them manually.
                 </p>
               )}
@@ -308,15 +308,15 @@ export default function ScanBillModal({ items, supabase, activeShopId, showToast
           {/* DONE STEP */}
           {step === STEP.DONE && (
             <div className="p-8 flex flex-col items-center text-center gap-3">
-              <CheckCircle2 size={40} style={{ color: "#4F46E5" }} />
+              <CheckCircle2 size={40} style={{ color: "var(--accent-soft-text)" }} />
               <h3 className="ks-display font-bold text-lg">Inventory updated!</h3>
-              <p className="text-sm text-[#6B7280]">Stock has been added for {matchedCount} item{matchedCount === 1 ? "" : "s"}.</p>
+              <p className="text-sm text-[var(--text-secondary)]">Stock has been added for {matchedCount} item{matchedCount === 1 ? "" : "s"}.</p>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-4 border-t border-[#E7E9F3] shrink-0">
+        <div className="px-5 py-4 border-t border-[var(--border)] shrink-0">
           {step === STEP.REVIEW && (
             <button
               onClick={applyToInventory}

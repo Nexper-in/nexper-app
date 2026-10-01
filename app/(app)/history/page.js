@@ -55,7 +55,7 @@ function HistoryPageInner() {
       <div className="ks-card overflow-hidden overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left ks-mono text-[11px] uppercase tracking-wide text-[#6B7280] border-b border-[#E7E9F3]">
+            <tr className="text-left ks-mono text-[11px] uppercase tracking-wide text-[var(--text-secondary)] border-b border-[var(--border)]">
               <th className="px-5 py-3 font-medium">Bill No.</th>
               <th className="px-5 py-3 font-medium">Date</th>
               <th className="px-5 py-3 font-medium">Customer</th>
@@ -67,18 +67,18 @@ function HistoryPageInner() {
           <tbody>
             {bills.map((b) => (
               <Fragment key={b.id}>
-                <tr className="border-b border-[#E7E9F3] cursor-pointer hover:bg-[#F8F9FD]" onClick={() => setOpen(open === b.id ? null : b.id)}>
+                <tr className="border-b border-[var(--border)] cursor-pointer hover:bg-[var(--bg-surface-alt)]" onClick={() => setOpen(open === b.id ? null : b.id)}>
                   <td className="px-5 py-3 ks-mono font-bold">{b.bill_no}</td>
-                  <td className="px-5 py-3 text-[#6B7280]">{new Date(b.date).toLocaleString("en-IN")}</td>
+                  <td className="px-5 py-3 text-[var(--text-secondary)]">{new Date(b.date).toLocaleString("en-IN")}</td>
                   <td className="px-5 py-3">
                     {b.customer_name || "—"}
                     {b.payment_type === "credit" && (
-                      <span className="ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "#FDEAF6", color: "#B5399C" }}>
+                      <span className="ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "var(--udhaar-soft)", color: "var(--udhaar)" }}>
                         UDHAAR
                       </span>
                     )}
                     {b.payment_type !== "credit" && b.payment_method && b.payment_method !== "cash" && (
-                      <span className="ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "#EEF0FE", color: "#4F46E5" }}>
+                      <span className="ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "var(--accent-soft-bg)", color: "var(--accent-soft-text)" }}>
                         {b.payment_method.toUpperCase()}
                       </span>
                     )}
@@ -93,7 +93,7 @@ function HistoryPageInner() {
                           doPrint(b);
                         }}
                         className="text-xs px-2.5 py-1.5 rounded-full font-semibold flex items-center gap-1"
-                        style={{ background: "#E7E9F3", color: "#000000" }}
+                        style={{ background: "var(--bg-surface-alt)", color: "var(--text-primary)" }}
                       >
                         <Printer size={13} /> Print
                       </button>
@@ -113,7 +113,7 @@ function HistoryPageInner() {
                   </td>
                 </tr>
                 {open === b.id && (
-                  <tr className="bg-[#F8F9FD] border-b border-[#E7E9F3]">
+                  <tr className="bg-[var(--bg-surface-alt)] border-b border-[var(--border)]">
                     <td colSpan={6} className="px-6 py-4">
                       <div className="space-y-1.5">
                         {(b.items || []).map((it, idx) => (
@@ -133,7 +133,7 @@ function HistoryPageInner() {
             ))}
             {bills.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-5 py-12 text-center text-[#6B7280] text-sm">
+                <td colSpan={6} className="px-5 py-12 text-center text-[var(--text-secondary)] text-sm">
                   🧾 No bills yet — generate one from the &quot;New Bill&quot; tab.
                 </td>
               </tr>

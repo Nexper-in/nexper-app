@@ -115,25 +115,25 @@ function CashbookPageInner() {
       <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
         <div className="grid grid-cols-3 gap-3 flex-1">
           <div className="ks-card p-4">
-            <div className="text-[11px] uppercase tracking-wide text-[#6B7280] font-semibold">Cash in</div>
-            <div className="ks-display text-xl font-bold mt-0.5" style={{ color: "#4F46E5" }}>
+            <div className="text-[11px] uppercase tracking-wide text-[var(--text-secondary)] font-semibold">Cash in</div>
+            <div className="ks-display text-xl font-bold mt-0.5" style={{ color: "var(--accent-soft-text)" }}>
               {rupee(totalIn)}
             </div>
           </div>
           <div className="ks-card p-4">
-            <div className="text-[11px] uppercase tracking-wide text-[#6B7280] font-semibold">Cash out</div>
-            <div className="ks-display text-xl font-bold mt-0.5" style={{ color: "#C13F45" }}>
+            <div className="text-[11px] uppercase tracking-wide text-[var(--text-secondary)] font-semibold">Cash out</div>
+            <div className="ks-display text-xl font-bold mt-0.5" style={{ color: "var(--danger)" }}>
               {rupee(totalOut)}
             </div>
           </div>
           <div className="ks-card p-4">
-            <div className="text-[11px] uppercase tracking-wide text-[#6B7280] font-semibold">Net</div>
+            <div className="text-[11px] uppercase tracking-wide text-[var(--text-secondary)] font-semibold">Net</div>
             <div className="ks-display text-xl font-bold mt-0.5">{rupee(totalIn - totalOut)}</div>
           </div>
         </div>
       </div>
 
-      <div className="flex gap-1.5 mb-3 bg-[#F1EEE6] p-1 rounded-full w-fit">
+      <div className="flex gap-1.5 mb-3 bg-[var(--bg-surface-alt)] p-1 rounded-full w-fit">
         {[
           { v: "7", l: "7 days" },
           { v: "30", l: "30 days" },
@@ -142,7 +142,7 @@ function CashbookPageInner() {
           <button
             key={r.v}
             onClick={() => setRange(r.v)}
-            className={`text-xs font-semibold px-3 py-1.5 rounded-full transition-colors ${range === r.v ? "bg-[#000000] text-white" : "text-[#6B7280]"}`}
+            className={`text-xs font-semibold px-3 py-1.5 rounded-full transition-colors ${range === r.v ? "bg-[var(--strong)] text-[var(--on-strong)]" : "text-[var(--text-secondary)]"}`}
           >
             {r.l}
           </button>
@@ -152,7 +152,7 @@ function CashbookPageInner() {
       <div className="ks-card overflow-hidden overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left ks-mono text-[11px] uppercase tracking-wide text-[#6B7280] border-b border-[#E7E9F3]">
+            <tr className="text-left ks-mono text-[11px] uppercase tracking-wide text-[var(--text-secondary)] border-b border-[var(--border)]">
               <th className="px-5 py-3 font-medium">Date</th>
               <th className="px-5 py-3 font-medium">Entry</th>
               <th className="px-5 py-3 font-medium">Amount</th>
@@ -161,10 +161,10 @@ function CashbookPageInner() {
           </thead>
           <tbody>
             {[...withBalance].reverse().map((e) => (
-              <tr key={e.id} className="border-b border-[#E7E9F3] last:border-0">
-                <td className="px-5 py-3 text-[#6B7280]">{new Date(e.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}</td>
+              <tr key={e.id} className="border-b border-[var(--border)] last:border-0">
+                <td className="px-5 py-3 text-[var(--text-secondary)]">{new Date(e.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}</td>
                 <td className="px-5 py-3">{e.label}</td>
-                <td className="px-5 py-3 ks-mono font-semibold" style={{ color: e.type === "in" ? "#4F46E5" : "#C13F45" }}>
+                <td className="px-5 py-3 ks-mono font-semibold" style={{ color: e.type === "in" ? "var(--accent-soft-text)" : "var(--danger)" }}>
                   {e.type === "in" ? "+" : "−"}
                   {rupee(e.amount)}
                 </td>
@@ -173,7 +173,7 @@ function CashbookPageInner() {
             ))}
             {withBalance.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-5 py-10 text-center text-[#6B7280] text-sm">
+                <td colSpan={4} className="px-5 py-10 text-center text-[var(--text-secondary)] text-sm">
                   Nothing in this period yet.
                 </td>
               </tr>

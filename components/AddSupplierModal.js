@@ -40,7 +40,7 @@ export default function AddSupplierModal({ onClose, onAdd }) {
           <input className="ks-input" value={form.items} onChange={(e) => setForm({ ...form, items: e.target.value })} placeholder="e.g. Rice, dal, oil" />
         </Field>
         {error && (
-          <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>
+          <p className="text-sm text-[var(--danger)] bg-[var(--danger-soft)] border border-[var(--danger-line)] rounded-lg px-3 py-2">{error}</p>
         )}
         <button disabled={!valid || saving} onClick={handleAdd} className="ks-btn-primary w-full flex items-center justify-center gap-2">
           {saving && <Loader2 size={16} className="animate-spin" />}

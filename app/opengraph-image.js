@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "Nexper — Your store, in your pocket";
+export const alt = "Nexper — Dukaan ka hisaab, ab phone pe";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -15,29 +15,19 @@ export default function OpengraphImage() {
           flexDirection: "column",
           justifyContent: "center",
           padding: "0 90px",
-          color: "#fff",
-          background: "radial-gradient(120% 140% at 12% 0%, #3B1F87 0%, #1B1030 62%)",
+          color: "#f4f2ff",
+          backgroundColor: "#08070f",
+          backgroundImage: "radial-gradient(90% 110% at 5% 0%, rgba(124,92,255,0.55) 0%, rgba(8,7,15,0) 60%)",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <div
-            style={{
-              width: 84,
-              height: 84,
-              borderRadius: 22,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "linear-gradient(135deg, #4F46E5, #129C81 55%, #818CF8)",
-            }}
-          >
-            <div style={{ width: 38, height: 44, background: "#fff", borderRadius: "6px 6px 10px 10px" }} />
-          </div>
-          <div style={{ fontSize: 56, fontWeight: 800, marginLeft: 24 }}>Nexper</div>
+        <div style={{ display: "flex", fontSize: 64, fontWeight: 800, letterSpacing: "-0.04em" }}>
+          Ne<span style={{ color: "#f472b6" }}>x</span>per
         </div>
-        <div style={{ fontSize: 72, fontWeight: 800, lineHeight: 1.1, marginTop: 48 }}>Your store, in your pocket.</div>
-        <div style={{ fontSize: 32, marginTop: 28, color: "rgba(255,255,255,0.78)" }}>Billing, stock and udhaar. Free to start.</div>
-        <div style={{ position: "absolute", bottom: 44, right: 90, fontSize: 30, color: "#E8C468", fontWeight: 700 }}>nexper.in</div>
+        <div style={{ display: "flex", flexDirection: "column", fontSize: 92, fontWeight: 800, lineHeight: 1.05, marginTop: 44, letterSpacing: "-0.03em" }}>
+          <span>Dukaan ka hisaab,</span>
+          <span style={{ color: "#c084fc" }}>ab phone pe.</span>
+        </div>
+        <div style={{ fontSize: 32, marginTop: 36, color: "rgba(244,242,255,0.72)" }}>Billing, stock and udhaar for India&apos;s small shops</div>
       </div>
     ),
     size

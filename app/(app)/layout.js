@@ -9,7 +9,7 @@ import BottomNav from "@/components/BottomNav";
 import { AddShopOnboarding } from "@/components/ShopOnboarding";
 import StoreSettingsModal from "@/components/StoreSettingsModal";
 import Toast from "@/components/ui/Toast";
-import { initials } from "@/lib/format";
+import AccountMenu from "@/components/AccountMenu";
 
 function OfflineBanner() {
   const { pendingCount } = useShop();
@@ -62,19 +62,9 @@ function OfflineBanner() {
 }
 
 function AppShell({ children }) {
-  const { shops, activeShop, addShop, loading, toast, user } = useShop();
+  const { shops, activeShop, addShop, loading, toast } = useShop();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showStoreSettings, setShowStoreSettings] = useState(false);
-
-  // The shop's chosen theme drives every color token in globals.css via
-  // [data-theme] on <html> — see StoreSettingsModal for the picker. Reset
-  // to the default (no attribute = "light") once signed out.
-  useEffect(() => {
-    document.documentElement.dataset.theme = activeShop?.theme || "light";
-    return () => {
-      delete document.documentElement.dataset.theme;
-    };
-  }, [activeShop?.theme]);
 
   if (loading) {
     return (
@@ -91,24 +81,17 @@ function AppShell({ children }) {
   return (
     <div className="min-h-screen flex">
       <OfflineBanner />
-      <div className="ks-no-print ks-mobile-bar ks-topbar fixed top-0 left-0 right-0 z-30 items-center justify-between px-4 py-3 shadow-sm">
-        <div className="flex items-center gap-2">
-          <span
-            className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0"
-            style={{ background: "var(--accent)", color: "var(--accent-contrast)" }}
-          >
-            {initials(user)}
-          </span>
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="w-8 h-8 flex items-center justify-center"
-            style={{ color: "var(--text-secondary)" }}
-          >
-            <Menu size={20} />
-          </button>
-        </div>
-        <span className="text-sm font-bold truncate px-2">{activeShop?.name}</span>
-        <div style={{ width: 32 }} />
+      <div className="ks-no-print ks-mobile-bar ks-topbar fixed top-0 left-0 right-0 z-30 items-center justify-between gap-2 px-3 py-2">
+        <button
+          onClick={() => setSidebarOpen(true)}
+          aria-label="Open menu"
+          className="w-9 h-9 flex items-center justify-center rounded-full shrink-0"
+          style={{ color: "var(--text-secondary)" }}
+        >
+          <Menu size={20} />
+        </button>
+        <span className="ks-display text-sm font-bold truncate px-1 flex-1 text-center">{activeShop?.name}</span>
+        <AccountMenu onOpenSettings={() => setShowStoreSettings(true)} />
       </div>
 
       {sidebarOpen && (
@@ -127,6 +110,9 @@ function AppShell({ children }) {
       {showStoreSettings && <StoreSettingsModal onClose={() => setShowStoreSettings(false)} />}
 
       <div className="ks-main flex-1 min-w-0">
+        <div className="ks-no-print ks-desk-bar ks-page-pad max-w-5xl items-center justify-end">
+          <AccountMenu onOpenSettings={() => setShowStoreSettings(true)} />
+        </div>
         <main className="flex-1 min-w-0 ks-page-pad ks-page-bottom-safe max-w-5xl">{children}</main>
       </div>
 

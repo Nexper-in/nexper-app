@@ -130,7 +130,7 @@ function ExpensesPageInner() {
 
   return (
     <div className="pt-6">
-      <div className="flex gap-1.5 mb-4 bg-[#F1EEE6] p-1 rounded-full w-fit">
+      <div className="flex gap-1.5 mb-4 bg-[var(--bg-surface-alt)] p-1 rounded-full w-fit">
         {[
           { v: "log", l: "Expense log" },
           { v: "fixed", l: "Fixed monthly costs" },
@@ -138,7 +138,7 @@ function ExpensesPageInner() {
           <button
             key={t.v}
             onClick={() => setTab(t.v)}
-            className={`text-xs font-semibold px-3.5 py-1.5 rounded-full transition-colors ${tab === t.v ? "bg-[#000000] text-white" : "text-[#6B7280]"}`}
+            className={`text-xs font-semibold px-3.5 py-1.5 rounded-full transition-colors ${tab === t.v ? "bg-[var(--strong)] text-[var(--on-strong)]" : "text-[var(--text-secondary)]"}`}
           >
             {t.l}
           </button>
@@ -149,13 +149,13 @@ function ExpensesPageInner() {
         <>
           <div className="grid grid-cols-2 gap-3.5 mb-4">
             <div className="ks-card p-4">
-              <div className="text-[11px] uppercase tracking-wide text-[#6B7280] font-semibold">Today&apos;s expenses</div>
-              <div className="ks-display text-2xl font-bold mt-0.5" style={{ color: "#C13F45" }}>
+              <div className="text-[11px] uppercase tracking-wide text-[var(--text-secondary)] font-semibold">Today&apos;s expenses</div>
+              <div className="ks-display text-2xl font-bold mt-0.5" style={{ color: "var(--danger)" }}>
                 {rupee(todaysTotal)}
               </div>
             </div>
             <div className="ks-card p-4">
-              <div className="text-[11px] uppercase tracking-wide text-[#6B7280] font-semibold">This month</div>
+              <div className="text-[11px] uppercase tracking-wide text-[var(--text-secondary)] font-semibold">This month</div>
               <div className="ks-display text-2xl font-bold mt-0.5">{rupee(monthTotal)}</div>
             </div>
           </div>
@@ -164,17 +164,17 @@ function ExpensesPageInner() {
             <div className="grid md:grid-cols-2 gap-3.5 mb-4">
               {last6Months.some((m) => m.value > 0) && (
                 <div className="ks-card p-4">
-                  <p className="text-[11px] uppercase tracking-wide text-[#6B7280] font-semibold mb-3">Monthly trend</p>
+                  <p className="text-[11px] uppercase tracking-wide text-[var(--text-secondary)] font-semibold mb-3">Monthly trend</p>
                   <MiniBarChart
                     data={last6Months}
-                    color="#C13F45"
+                    color="var(--danger)"
                     formatValue={(v) => `₹${v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}`}
                   />
                 </div>
               )}
               {monthCategoryBreakdown.length > 0 && (
                 <div className="ks-card p-4">
-                  <p className="text-[11px] uppercase tracking-wide text-[#6B7280] font-semibold mb-3">This month by category</p>
+                  <p className="text-[11px] uppercase tracking-wide text-[var(--text-secondary)] font-semibold mb-3">This month by category</p>
                   <div className="space-y-2.5">
                     {monthCategoryBreakdown.map(([cat, total]) => {
                       const c = categoryColor(cat);
@@ -183,9 +183,9 @@ function ExpensesPageInner() {
                         <div key={cat}>
                           <div className="flex items-center justify-between text-sm mb-1">
                             <span className="font-semibold" style={{ color: c.text }}>{cat}</span>
-                            <span className="ks-mono text-xs text-[#6B7280]">{rupee(total)}</span>
+                            <span className="ks-mono text-xs text-[var(--text-secondary)]">{rupee(total)}</span>
                           </div>
-                          <div className="h-2 rounded-full bg-[#E7E9F3] overflow-hidden">
+                          <div className="h-2 rounded-full bg-[var(--bg-surface-alt)] overflow-hidden">
                             <div className="h-full rounded-full" style={{ width: `${pct}%`, background: c.text }} />
                           </div>
                         </div>
@@ -206,7 +206,7 @@ function ExpensesPageInner() {
           <div className="ks-card overflow-hidden overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left ks-mono text-[11px] uppercase tracking-wide text-[#6B7280] border-b border-[#E7E9F3]">
+                <tr className="text-left ks-mono text-[11px] uppercase tracking-wide text-[var(--text-secondary)] border-b border-[var(--border)]">
                   <th className="px-5 py-3 font-medium">Date</th>
                   <th className="px-5 py-3 font-medium">Category</th>
                   <th className="px-5 py-3 font-medium">Note</th>
@@ -215,20 +215,20 @@ function ExpensesPageInner() {
               </thead>
               <tbody>
                 {expenses.map((e) => (
-                  <tr key={e.id} className="border-b border-[#E7E9F3] last:border-0">
-                    <td className="px-5 py-3 text-[#6B7280]">{new Date(e.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}</td>
+                  <tr key={e.id} className="border-b border-[var(--border)] last:border-0">
+                    <td className="px-5 py-3 text-[var(--text-secondary)]">{new Date(e.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}</td>
                     <td className="px-5 py-3">
                       <CategoryChip category={e.category} />
                     </td>
                     <td className="px-5 py-3">{e.note || "—"}</td>
-                    <td className="px-5 py-3 ks-mono font-bold" style={{ color: "#C13F45" }}>
+                    <td className="px-5 py-3 ks-mono font-bold" style={{ color: "var(--danger)" }}>
                       −{rupee(e.amount)}
                     </td>
                   </tr>
                 ))}
                 {expenses.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="px-5 py-10 text-center text-[#6B7280] text-sm">
+                    <td colSpan={4} className="px-5 py-10 text-center text-[var(--text-secondary)] text-sm">
                       No expenses logged yet — rent, electricity, salaries, etc.
                     </td>
                   </tr>
@@ -240,7 +240,7 @@ function ExpensesPageInner() {
       ) : (
         <>
           <div className="ks-card p-4 mb-4 w-fit">
-            <div className="text-[11px] uppercase tracking-wide text-[#6B7280] font-semibold">Fixed costs, every month</div>
+            <div className="text-[11px] uppercase tracking-wide text-[var(--text-secondary)] font-semibold">Fixed costs, every month</div>
             <div className="ks-display text-2xl font-bold mt-0.5">{rupee(fixedTotal)}</div>
           </div>
 
@@ -250,7 +250,7 @@ function ExpensesPageInner() {
             </button>
           </div>
 
-          <div className="ks-card overflow-hidden divide-y divide-[#E7E9F3]">
+          <div className="ks-card overflow-hidden divide-y divide-[var(--border)]">
             {fixedExpenses.map((exp) => (
               <div key={exp.id} className="flex items-center justify-between gap-3 px-5 py-3.5">
                 <div className="min-w-0">
@@ -258,7 +258,7 @@ function ExpensesPageInner() {
                     <span className="font-semibold text-sm">{exp.name}</span>
                     <CategoryChip category={exp.category} />
                   </div>
-                  <p className="text-xs text-[#6B7280] mt-0.5">
+                  <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                     Due on the {exp.due_day}
                     {ordinal(exp.due_day)} of each month
                   </p>
@@ -267,7 +267,7 @@ function ExpensesPageInner() {
                   <span className="ks-mono font-bold">{rupee(exp.amount)}</span>
                   <button
                     onClick={() => setFixedModal({ editing: exp })}
-                    className="w-7 h-7 rounded-full flex items-center justify-center bg-[#E7E9F3] text-[#6B7280]"
+                    className="w-7 h-7 rounded-full flex items-center justify-center bg-[var(--bg-surface-alt)] text-[var(--text-secondary)]"
                     aria-label="Edit expense"
                   >
                     <Pencil size={13} />
@@ -275,7 +275,7 @@ function ExpensesPageInner() {
                   <button
                     onClick={() => deleteFixedExpense(exp.id)}
                     className="w-7 h-7 rounded-full flex items-center justify-center"
-                    style={{ background: "#FDEAEA", color: "#C13F45" }}
+                    style={{ background: "var(--danger-soft)", color: "var(--danger)" }}
                     aria-label="Remove expense"
                   >
                     <Trash2 size={13} />
@@ -284,7 +284,7 @@ function ExpensesPageInner() {
               </div>
             ))}
             {fixedExpenses.length === 0 && (
-              <p className="px-5 py-10 text-center text-[#6B7280] text-sm">
+              <p className="px-5 py-10 text-center text-[var(--text-secondary)] text-sm">
                 No fixed costs set up yet — rent, salaries, subscriptions, loan EMIs.
               </p>
             )}

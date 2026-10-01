@@ -41,7 +41,7 @@ export default function PrintBillContent({ bill, storeName, gstin }) {
   const mrpSavings = (bill.items || []).reduce((s, it) => (it.mrp > it.price ? s + (it.mrp - it.price) * it.qty : s), 0);
 
   return (
-    <div style={{ width: "100%", maxWidth: "740px", margin: "0 auto", padding: "36px 40px", fontFamily: "'Inter', sans-serif", color: "#1A1D29", fontSize: "13px" }}>
+    <div style={{ width: "100%", maxWidth: "740px", margin: "0 auto", padding: "36px 40px", fontFamily: "'DM Sans', 'Inter', sans-serif", color: "#1A1D29", fontSize: "13px" }}>
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", paddingBottom: 18, borderBottom: "2px solid #1A1D29" }}>
         <div>

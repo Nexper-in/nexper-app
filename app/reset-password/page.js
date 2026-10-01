@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabaseClient";
 
@@ -48,14 +47,15 @@ export default function ResetPasswordPage() {
     <main className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-6">
-          <Image src="/logo-mark.svg" alt="Nexper" width={56} height={56} className="rounded-2xl mb-3" priority />
-          <h1 className="ks-display text-2xl font-bold">Nexper</h1>
+          <h1 className="ks-wordmark text-[40px]">
+            Ne<span className="ks-grad-text">x</span>per
+          </h1>
         </div>
 
         <div className="ks-card p-6">
           {done ? (
             <div className="text-center space-y-3 py-2">
-              <CheckCircle2 size={40} className="mx-auto" style={{ color: "#22C55E" }} />
+              <CheckCircle2 size={40} className="mx-auto" style={{ color: "var(--success)" }} />
               <p className="font-bold">Password updated!</p>
               <p className="text-sm text-muted">Redirecting you to the dashboard…</p>
             </div>
@@ -99,7 +99,7 @@ export default function ResetPasswordPage() {
                   />
                 </div>
                 {error && (
-                  <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>
+                  <p className="text-sm text-[var(--danger)] bg-[var(--danger-soft)] border border-[var(--danger-line)] rounded-lg px-3 py-2">{error}</p>
                 )}
                 <button
                   type="submit"

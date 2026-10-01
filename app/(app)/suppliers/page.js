@@ -132,8 +132,8 @@ function SuppliersPageInner() {
     <div className="pt-6">
       <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
         <div className="ks-card p-4">
-          <div className="text-[11px] uppercase tracking-wide text-[#6B7280] font-semibold">Total payable</div>
-          <div className="ks-display text-2xl font-bold mt-0.5" style={{ color: "#C13F45" }}>
+          <div className="text-[11px] uppercase tracking-wide text-[var(--text-secondary)] font-semibold">Total payable</div>
+          <div className="ks-display text-2xl font-bold mt-0.5" style={{ color: "var(--danger)" }}>
             {rupee(totalOwed)}
           </div>
         </div>
@@ -152,7 +152,7 @@ function SuppliersPageInner() {
       <div className="ks-card overflow-hidden overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left ks-mono text-[11px] uppercase tracking-wide text-[#6B7280] border-b border-[#E7E9F3]">
+            <tr className="text-left ks-mono text-[11px] uppercase tracking-wide text-[var(--text-secondary)] border-b border-[var(--border)]">
               <th className="px-5 py-3 font-medium">Supplier</th>
               <th className="px-5 py-3 font-medium">Phone</th>
               <th className="px-5 py-3 font-medium">Supplies</th>
@@ -165,11 +165,11 @@ function SuppliersPageInner() {
             {suppliers.map((s) => {
               const owed = owedById.get(s.id) || 0;
               return (
-                <tr key={s.id} className="border-b border-[#E7E9F3] last:border-0 hover:bg-[#F8F9FD]">
+                <tr key={s.id} className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg-surface-alt)]">
                   <td className="px-5 py-3 font-semibold">{s.name}</td>
-                  <td className="px-5 py-3 ks-mono text-[#6B7280]">{s.phone || "—"}</td>
-                  <td className="px-5 py-3 text-[#6B7280]">{s.items || "—"}</td>
-                  <td className="px-5 py-3 ks-mono font-bold" style={{ color: owed > 0 ? "#C13F45" : "#6B7280" }}>
+                  <td className="px-5 py-3 ks-mono text-[var(--text-secondary)]">{s.phone || "—"}</td>
+                  <td className="px-5 py-3 text-[var(--text-secondary)]">{s.items || "—"}</td>
+                  <td className="px-5 py-3 ks-mono font-bold" style={{ color: owed > 0 ? "var(--danger)" : "var(--text-secondary)" }}>
                     {rupee(owed)}
                   </td>
                   <td className="px-5 py-3 ks-mono">{purchaseCount(s.name)}</td>
@@ -179,7 +179,7 @@ function SuppliersPageInner() {
                         onClick={() => setAmountModal({ mode: "purchase", supplier: s })}
                         title="Log purchase (increases owed)"
                         className="w-7 h-7 rounded-full flex items-center justify-center"
-                        style={{ background: "#EEF0FE", color: "#4F46E5" }}
+                        style={{ background: "var(--accent-soft-bg)", color: "var(--accent-soft-text)" }}
                       >
                         <PackagePlus size={13} />
                       </button>
@@ -187,7 +187,7 @@ function SuppliersPageInner() {
                         onClick={() => setAmountModal({ mode: "payment", supplier: s })}
                         title="Record payment"
                         className="w-7 h-7 rounded-full flex items-center justify-center"
-                        style={{ background: "#E4F5F0", color: "#0F6E56" }}
+                        style={{ background: "var(--success-soft)", color: "var(--success)" }}
                       >
                         <HandCoins size={13} />
                       </button>
@@ -195,7 +195,7 @@ function SuppliersPageInner() {
                         onClick={() => setAmountModal({ mode: "debit", supplier: s })}
                         title="Log return / debit note"
                         className="w-7 h-7 rounded-full flex items-center justify-center"
-                        style={{ background: "#FDEAEA", color: "#C13F45" }}
+                        style={{ background: "var(--danger-soft)", color: "var(--danger)" }}
                       >
                         <Undo2 size={13} />
                       </button>
@@ -215,7 +215,7 @@ function SuppliersPageInner() {
             })}
             {suppliers.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-5 py-10 text-center text-[#6B7280] text-sm">
+                <td colSpan={6} className="px-5 py-10 text-center text-[var(--text-secondary)] text-sm">
                   No suppliers linked to this shop yet.
                 </td>
               </tr>

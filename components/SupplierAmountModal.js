@@ -11,21 +11,21 @@ const MODE_INFO = {
     label: "Value of goods received (₹)",
     hint: "Goods received on credit — this adds to what you owe. No cash moves.",
     button: "Log purchase",
-    color: "#4F46E5",
+    color: "var(--accent-soft-text)",
   },
   payment: {
     title: (name) => `Record payment — ${name}`,
     label: "Amount paid (₹)",
     hint: "This logs a cash-out expense and reduces the balance owed.",
     button: "Record payment",
-    color: "#0F6E56",
+    color: "var(--success)",
   },
   debit: {
     title: (name) => `Return / debit note — ${name}`,
     label: "Value of returned / rejected stock (₹)",
     hint: "Reduces what you owe this vendor — no cash movement.",
     button: "Log debit note",
-    color: "#C13F45",
+    color: "var(--danger)",
   },
 };
 
@@ -53,8 +53,8 @@ export default function SupplierAmountModal({ mode, supplier, onClose, onConfirm
         <Field label={info.label}>
           <input autoFocus type="number" min="0" className="ks-input" value={amount} onChange={(e) => setAmount(e.target.value)} />
         </Field>
-        <p className="text-xs text-[#6B7280]">{info.hint}</p>
-        {error && <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>}
+        <p className="text-xs text-[var(--text-secondary)]">{info.hint}</p>
+        {error && <p className="text-sm text-[var(--danger)] bg-[var(--danger-soft)] border border-[var(--danger-line)] rounded-lg px-3 py-2">{error}</p>}
         <button
           disabled={!valid || saving}
           onClick={handleConfirm}

@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
-import Link from "next/link";
-import { Loader2 } from "lucide-react";
+import { Loader2, Mail } from "lucide-react";
 import { createClient } from "@/lib/supabaseClient";
 
 export default function LoginPage() {
@@ -20,10 +18,16 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [checkingSession, setCheckingSession] = useState(true);
+  // Owners sign in with Google; the email form is a fallback that stays
+  // folded away unless asked for (or a ?mode= link points at it).
+  const [showEmail, setShowEmail] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   useEffect(() => {
     const requested = new URLSearchParams(window.location.search).get("mode");
     if (requested === "signup" || requested === "staff") setMode(requested);
+    const oauthError = new URLSearchParams(window.location.search).get("error");
+    if (oauthError) setError(oauthError);
   }, []);
 
   useEffect(() => {
@@ -40,6 +44,32 @@ export default function LoginPage() {
     setMode(next);
     setError("");
     setNotice("");
+  }
+
+  async function handleGoogle() {
+    setError("");
+    setGoogleLoading(true);
+    try {
+      // Ask Supabase first whether Google is switched on, so an owner never
+      // lands on a raw "provider is not enabled" error page.
+      const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const res = await fetch(`${base}/auth/v1/settings`, {
+        headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY },
+      });
+      const settings = res.ok ? await res.json() : null;
+      if (settings && !settings.external?.google) {
+        throw new Error("Google sign-in isn't switched on yet. Please use email for now.");
+      }
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: `${window.location.origin}/auth/callback` },
+      });
+      if (error) throw error;
+    } catch (err) {
+      setError(err.message || "Couldn't start Google sign-in");
+      setShowEmail(true);
+      setGoogleLoading(false);
+    }
   }
 
   async function handleSubmit(e) {
@@ -101,14 +131,11 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <div className="flex flex-col items-center mb-6">
-          <Link href="/" className="flex flex-col items-center" aria-label="Nexper home">
-            <Image src="/logo-mark.svg" alt="Nexper" width={56} height={56} className="rounded-2xl mb-3" priority />
-            <h1 className="ks-display text-2xl font-bold">Nexper</h1>
-          </Link>
-          <p className="text-sm text-muted mt-1 text-center">
-            Billing, inventory &amp; udhaar for your shop
-          </p>
+        <div className="flex flex-col items-center mb-7">
+          <a href="https://nexper.in" className="ks-wordmark text-[44px]" aria-label="Nexper home">
+            Ne<span className="ks-grad-text">x</span>per
+          </a>
+          <p className="text-sm text-muted mt-2 text-center">Dukaan ka hisaab, ab phone pe.</p>
         </div>
 
         <div className="ks-card p-6">
@@ -119,7 +146,37 @@ export default function LoginPage() {
             </div>
           ) : mode !== "staff" ? (
             <div className="mb-5">
-              <h2 className="ks-display font-bold text-center">{mode === "signin" ? "Sign in" : "Create account"}</h2>
+              <h2 className="ks-display font-bold text-center">{mode === "signin" ? "Sign in to your shop" : "Create your shop account"}</h2>
+              <button
+                type="button"
+                onClick={handleGoogle}
+                disabled={googleLoading}
+                className="mt-5 w-full flex items-center justify-center gap-2.5 rounded-xl py-3 text-[15px] font-semibold transition-transform active:scale-[.98] disabled:opacity-60"
+                style={{ background: "#ffffff", color: "#1f1f1f", border: "1px solid var(--border-strong)" }}
+              >
+                {googleLoading ? <Loader2 size={18} className="animate-spin" /> : <GoogleMark />}
+                Continue with Google
+              </button>
+              {!showEmail && (
+                <button
+                  type="button"
+                  onClick={() => setShowEmail(true)}
+                  className="mt-3 w-full flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  <Mail size={15} /> {mode === "signin" ? "Sign in with email instead" : "Use email instead"}
+                </button>
+              )}
+              {showEmail && (
+                <div className="flex items-center gap-3 mt-5 text-xs" style={{ color: "var(--text-secondary)" }}>
+                  <span className="flex-1 h-px" style={{ background: "var(--border)" }} />
+                  or with email
+                  <span className="flex-1 h-px" style={{ background: "var(--border)" }} />
+                </div>
+              )}
+              {!showEmail && error && (
+                <p className="text-sm ks-note-err rounded-lg px-3 py-2 mt-3">{error}</p>
+              )}
             </div>
           ) : (
             <div className="mb-5">
@@ -128,6 +185,7 @@ export default function LoginPage() {
             </div>
           )}
 
+          {(showEmail || mode === "staff" || mode === "forgot") && (
           <form onSubmit={handleSubmit} className="space-y-3">
             {mode === "signup" && (
               <div>
@@ -224,12 +282,12 @@ export default function LoginPage() {
             )}
 
             {error && (
-              <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+              <p className="text-sm ks-note-err rounded-lg px-3 py-2">
                 {error}
               </p>
             )}
             {notice && (
-              <p className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
+              <p className="text-sm ks-note-ok rounded-lg px-3 py-2">
                 {notice}
               </p>
             )}
@@ -245,6 +303,7 @@ export default function LoginPage() {
               </button>
             )}
           </form>
+          )}
         </div>
 
         {mode === "forgot" ? (
@@ -289,5 +348,16 @@ export default function LoginPage() {
         </p>
       </div>
     </main>
+  );
+}
+
+function GoogleMark() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+      <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z" />
+      <path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
+      <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z" />
+      <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z" />
+    </svg>
   );
 }

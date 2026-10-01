@@ -472,7 +472,7 @@ function BillingPageInner() {
                 onClick={startBarcodeScanner}
                 title="Scan barcode"
                 className={`absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center ${scannerActive ? "ks-pulse" : ""}`}
-                style={{ background: scannerActive ? "#4F46E5" : "transparent", color: scannerActive ? "#fff" : "var(--text-secondary)" }}
+                style={{ background: scannerActive ? "var(--accent)" : "transparent", color: scannerActive ? "#fff" : "var(--text-secondary)" }}
               >
                 <ScanLine size={14} />
               </button>
@@ -498,23 +498,23 @@ function BillingPageInner() {
 
           {/* Search / category results — a list, not a browsable catalog */}
           {browsing ? (
-            <div className="ks-card divide-y divide-[#F1F2F5] overflow-hidden">
+            <div className="ks-card divide-y divide-[var(--border)] overflow-hidden">
               {displayItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => item.stock > 0 && setPickerItem(item)}
                   disabled={item.stock <= 0}
-                  className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-[#F8F9FD] disabled:opacity-50 disabled:cursor-default disabled:hover:bg-transparent"
+                  className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--bg-surface-alt)] disabled:opacity-50 disabled:cursor-default disabled:hover:bg-transparent"
                 >
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="font-semibold text-sm truncate">{item.name}</span>
                       {item.clearancePct ? (
-                        <span className="ks-mono text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0" style={{ background: "#C13F45", color: "#fff" }}>
+                        <span className="ks-mono text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0" style={{ background: "var(--danger-solid)", color: "#fff" }}>
                           −{item.clearancePct}%
                         </span>
                       ) : item.mrp > item.price ? (
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0" style={{ background: "#E4F5F0", color: "#1F8A5F" }}>
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0" style={{ background: "var(--success-soft)", color: "var(--success)" }}>
                           {Math.round(((item.mrp - item.price) / item.mrp) * 100)}% OFF
                         </span>
                       ) : null}
@@ -522,7 +522,7 @@ function BillingPageInner() {
                     <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{item.category}</p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="font-bold text-sm" style={{ color: "#D97706" }}>
+                    <p className="font-bold text-sm" style={{ color: "var(--warn)" }}>
                       {item.originalPrice ? (
                         <span className="line-through mr-1 font-normal opacity-60">{rupee(item.originalPrice)}</span>
                       ) : item.mrp > item.price ? (
@@ -556,7 +556,7 @@ function BillingPageInner() {
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-bold text-base">Current Bill</h2>
-              <span className="ks-mono text-sm font-bold" style={{ color: "#D97706" }}>{nextBillNo}</span>
+              <span className="ks-mono text-sm font-bold" style={{ color: "var(--warn)" }}>{nextBillNo}</span>
             </div>
 
             {/* Cart items */}
@@ -570,7 +570,7 @@ function BillingPageInner() {
                   <div key={c.shop_product_id} className="flex items-center gap-2">
                     <span className="text-sm flex-1 font-medium truncate">{c.name}</span>
                     {c.clearancePct && (
-                      <span className="ks-mono text-[9px] font-bold px-1 py-0.5 rounded-full shrink-0" style={{ background: "#C13F45", color: "#fff" }}>
+                      <span className="ks-mono text-[9px] font-bold px-1 py-0.5 rounded-full shrink-0" style={{ background: "var(--danger-solid)", color: "#fff" }}>
                         −{c.clearancePct}%
                       </span>
                     )}
@@ -599,13 +599,13 @@ function BillingPageInner() {
                   </div>
                 )}
                 {clearanceSavings > 0 && (
-                  <div className="flex justify-between text-xs" style={{ color: "#C13F45" }}>
+                  <div className="flex justify-between text-xs" style={{ color: "var(--danger)" }}>
                     <span>Clearance savings</span>
                     <span className="ks-mono">−{rupee(clearanceSavings)}</span>
                   </div>
                 )}
                 {discountAmount > 0 && (
-                  <div className="flex justify-between text-xs" style={{ color: "#D97706" }}>
+                  <div className="flex justify-between text-xs" style={{ color: "var(--warn)" }}>
                     <span>Discount</span>
                     <span className="ks-mono">−{rupee(discountAmount)}</span>
                   </div>
@@ -636,12 +636,12 @@ function BillingPageInner() {
 
             {/* Loyalty */}
             {isLoyal && (
-              <div className="rounded-xl px-3 py-2 mb-3 flex items-center justify-between gap-2" style={{ background: "#FCEEDA" }}>
-                <span className="text-xs font-semibold text-[#7A5209]">⭐ Loyal · visit #{previousVisits + 1}</span>
+              <div className="rounded-xl px-3 py-2 mb-3 flex items-center justify-between gap-2" style={{ background: "var(--warn-soft)" }}>
+                <span className="text-xs font-semibold text-[var(--warn)]">⭐ Loyal · visit #{previousVisits + 1}</span>
                 <button
                   onClick={() => setLoyaltyDiscount((v) => !v)}
                   className="text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0"
-                  style={{ background: loyaltyDiscount ? "#F2A93B" : "#fff", color: loyaltyDiscount ? "#fff" : "#B5720B" }}
+                  style={{ background: loyaltyDiscount ? "var(--warn-solid)" : "var(--bg-surface)", color: loyaltyDiscount ? "#fff" : "var(--warn)" }}
                 >
                   {loyaltyDiscount ? "5% ✓" : "Apply 5%"}
                 </button>
@@ -653,12 +653,12 @@ function BillingPageInner() {
               <button
                 onClick={() => setManualDiscount((d) => ({ ...d, type: "pct" }))}
                 className="text-xs font-bold px-2.5 py-1.5 rounded-full shrink-0"
-                style={{ background: manualDiscount.type === "pct" ? "var(--text-primary)" : "var(--bg-surface-alt)", color: manualDiscount.type === "pct" ? "#fff" : "var(--text-secondary)" }}
+                style={{ background: manualDiscount.type === "pct" ? "var(--strong)" : "var(--bg-surface-alt)", color: manualDiscount.type === "pct" ? "var(--on-strong)" : "var(--text-secondary)" }}
               >%</button>
               <button
                 onClick={() => setManualDiscount((d) => ({ ...d, type: "amt" }))}
                 className="text-xs font-bold px-2.5 py-1.5 rounded-full shrink-0"
-                style={{ background: manualDiscount.type === "amt" ? "var(--text-primary)" : "var(--bg-surface-alt)", color: manualDiscount.type === "amt" ? "#fff" : "var(--text-secondary)" }}
+                style={{ background: manualDiscount.type === "amt" ? "var(--strong)" : "var(--bg-surface-alt)", color: manualDiscount.type === "amt" ? "var(--on-strong)" : "var(--text-secondary)" }}
               >₹</button>
               <input
                 type="number"
@@ -675,20 +675,20 @@ function BillingPageInner() {
               <button
                 onClick={() => setBillType("cash")}
                 className="flex-1 text-xs font-semibold py-1.5 rounded-full transition-colors"
-                style={{ background: billType === "cash" ? "var(--text-primary)" : "transparent", color: billType === "cash" ? "#fff" : "var(--text-secondary)" }}
+                style={{ background: billType === "cash" ? "var(--strong)" : "transparent", color: billType === "cash" ? "var(--on-strong)" : "var(--text-secondary)" }}
               >
                 Cash / Paid
               </button>
               <button
                 onClick={() => setBillType("credit")}
                 className="flex-1 text-xs font-semibold py-1.5 rounded-full transition-colors"
-                style={{ background: billType === "credit" ? "#B5399C" : "transparent", color: billType === "credit" ? "#fff" : "var(--text-secondary)" }}
+                style={{ background: billType === "credit" ? "var(--udhaar-solid)" : "transparent", color: billType === "credit" ? "#fff" : "var(--text-secondary)" }}
               >
                 Udhaar
               </button>
             </div>
             {billType === "credit" && !cleanPhone && (
-              <p className="text-[11px] font-medium mb-2" style={{ color: "#C13F45" }}>Add a phone number for udhaar.</p>
+              <p className="text-[11px] font-medium mb-2" style={{ color: "var(--danger)" }}>Add a phone number for udhaar.</p>
             )}
 
             {/* Payment method — only meaningful once money has actually changed hands */}
@@ -725,7 +725,7 @@ function BillingPageInner() {
                 {activeShop?.upi_id ? (
                   <UpiQrCard upiId={activeShop.upi_id} payeeName={activeShop.name} amount={total} note="Checkout" />
                 ) : (
-                  <p className="text-[11px] font-medium text-center py-2" style={{ color: "#C13F45" }}>
+                  <p className="text-[11px] font-medium text-center py-2" style={{ color: "var(--danger)" }}>
                     Add a UPI ID in Store settings to show a QR code here.
                   </p>
                 )}
@@ -737,7 +737,7 @@ function BillingPageInner() {
               disabled={cart.length === 0 || generating}
               onClick={generateBill}
               className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm mb-2 disabled:opacity-40 transition-opacity"
-              style={{ background: "var(--text-primary)", color: "#fff" }}
+              style={{ background: "var(--grad)", color: "#ffffff", boxShadow: "0 12px 28px -14px rgba(236, 72, 153, 0.8)" }}
             >
               {generating ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}
               {billType === "credit" ? "Generate Udhaar Bill" : "Generate Bill"}
@@ -753,8 +753,8 @@ function BillingPageInner() {
             {lastBill && (
               <div className="mt-4 pt-4 border-t ks-pop" style={{ borderColor: "var(--border)" }}>
                 <div className="flex items-center gap-2 mb-3">
-                  <CheckCircle2 size={16} style={{ color: "#4F46E5" }} />
-                  <p className="text-sm font-bold" style={{ color: "#4F46E5" }}>Bill generated!</p>
+                  <CheckCircle2 size={16} style={{ color: "var(--accent-soft-text)" }} />
+                  <p className="text-sm font-bold" style={{ color: "var(--accent-soft-text)" }}>Bill generated!</p>
                   <span className="ks-mono text-xs ml-auto" style={{ color: "var(--text-secondary)" }}>{lastBill.bill_no} · {rupee(lastBill.total)}</span>
                 </div>
                 {taxBreakup(lastBill.items).taxAmt > 0 && (

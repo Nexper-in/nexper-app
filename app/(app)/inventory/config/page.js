@@ -56,7 +56,7 @@ function InventoryConfigPageInner() {
       </div>
 
       <div className="relative w-full max-w-xs mb-4">
-        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#B0A996]" />
+        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
         <input
           placeholder="Search items..."
           value={query}
@@ -69,7 +69,7 @@ function InventoryConfigPageInner() {
       <div className="ks-card overflow-hidden overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left ks-mono text-[11px] uppercase tracking-wide text-[#6B7280] border-b border-[#E7E9F3]">
+            <tr className="text-left ks-mono text-[11px] uppercase tracking-wide text-[var(--text-secondary)] border-b border-[var(--border)]">
               <th className="px-5 py-3 font-medium">Item</th>
               <th className="px-5 py-3 font-medium">Category</th>
               <th className="px-5 py-3 font-medium">Actions</th>
@@ -77,7 +77,7 @@ function InventoryConfigPageInner() {
           </thead>
           <tbody>
             {filtered.map((i) => (
-              <tr key={i.id} className="border-b border-[#E7E9F3] last:border-0 hover:bg-[#F8F9FD]">
+              <tr key={i.id} className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg-surface-alt)]">
                 <td className="px-5 py-3 font-semibold max-w-[220px]">
                   <span className="truncate">{i.name}</span>
                 </td>
@@ -89,14 +89,14 @@ function InventoryConfigPageInner() {
                     <button
                       onClick={() => setBatchesItem(i)}
                       className="px-2.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1"
-                      style={{ background: "#E7E9F3", color: "#6B7280" }}
+                      style={{ background: "var(--bg-surface-alt)", color: "var(--text-secondary)" }}
                     >
                       <Layers size={13} /> Batches
                     </button>
                     <button
                       onClick={() => setBarcodeItem(i)}
                       className="px-2.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1"
-                      style={{ background: "#E7E9F3", color: "#6B7280" }}
+                      style={{ background: "var(--bg-surface-alt)", color: "var(--text-secondary)" }}
                     >
                       <Barcode size={13} /> Barcode
                     </button>
@@ -106,7 +106,7 @@ function InventoryConfigPageInner() {
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={3} className="px-5 py-10 text-center text-[#6B7280] text-sm">
+                <td colSpan={3} className="px-5 py-10 text-center text-[var(--text-secondary)] text-sm">
                   No items match &quot;{query}&quot;.
                 </td>
               </tr>

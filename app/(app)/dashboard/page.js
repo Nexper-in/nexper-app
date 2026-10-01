@@ -177,10 +177,10 @@ export default function DashboardPage() {
       </div>
 
       {expiringWithNames.length > 0 && (
-        <div className="ks-card p-4 mb-4" style={{ borderLeft: "4px solid #C13F45" }}>
+        <div className="ks-card p-4 mb-4" style={{ borderLeft: "4px solid var(--danger)" }}>
           <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
             <div className="flex items-center gap-2">
-              <CalendarClock size={16} style={{ color: "#C13F45" }} />
+              <CalendarClock size={16} style={{ color: "var(--danger)" }} />
               <h2 className="ks-display font-bold text-sm">Expiring soon — today&apos;s risk check</h2>
             </div>
             {isOwner && (
@@ -191,7 +191,7 @@ export default function DashboardPage() {
                   )
                 }
                 className="text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1"
-                style={{ background: "#C13F45", color: "#fff" }}
+                style={{ background: "var(--danger-solid)", color: "#fff" }}
               >
                 <Tag size={12} /> Run clearance offer
               </button>
@@ -202,7 +202,7 @@ export default function DashboardPage() {
               <span
                 key={b.id}
                 className="text-xs font-semibold px-2.5 py-1.5 rounded-full"
-                style={{ background: b.days < 0 ? "#FDEAEA" : "#FCEEDA", color: b.days < 0 ? "#C13F45" : "#B5720B" }}
+                style={{ background: b.days < 0 ? "var(--danger-soft)" : "var(--warn-soft)", color: b.days < 0 ? "var(--danger)" : "var(--warn)" }}
               >
                 {b.itemName} · {b.qty_remaining} {b.unit} · {b.days < 0 ? `expired ${Math.abs(b.days)}d ago` : b.days === 0 ? "expires today" : `${b.days}d left`}
               </span>
@@ -221,14 +221,14 @@ export default function DashboardPage() {
         />
         <StatCard
           icon={<Wallet size={16} />}
-          bar="#1F8A5F" tintBg="rgba(31,138,95,0.10)" tintFg="#1F8A5F"
+          bar="var(--success-solid)" tintBg="rgba(31,138,95,0.10)" tintFg="var(--success)"
           label="Stock value"
           value={rupee(stockValue)}
           onClick={() => setDetail("value")}
         />
         <StatCard
           icon={<AlertTriangle size={16} />}
-          bar="#C13F45" tintBg="rgba(193,63,69,0.10)" tintFg="#C13F45"
+          bar="var(--danger-solid)" tintBg="rgba(193,63,69,0.10)" tintFg="var(--danger)"
           label="Low stock"
           value={lowStockCount}
           onClick={() => setDetail("low")}
@@ -242,7 +242,7 @@ export default function DashboardPage() {
         />
         <StatCard
           icon={<Wallet size={16} />}
-          bar="#B5720B" tintBg="rgba(181,114,11,0.10)" tintFg="#B5720B"
+          bar="var(--warn-solid)" tintBg="rgba(181,114,11,0.10)" tintFg="var(--warn)"
           label="Outstanding udhaar"
           value={rupee(outstandingCredit)}
           onClick={() => router.push("/credit")}
@@ -254,11 +254,11 @@ export default function DashboardPage() {
         <div className="ks-card p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="ks-display font-bold">Sales this week</h2>
-            <span className="ks-mono text-xs text-[#6B7280]">last 7 days</span>
+            <span className="ks-mono text-xs text-[var(--text-secondary)]">last 7 days</span>
           </div>
           <MiniBarChart
             data={last7Days}
-            color="#5B2CDB"
+            color="var(--accent)"
             formatValue={(v) => `₹${v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}`}
           />
         </div>
@@ -266,10 +266,10 @@ export default function DashboardPage() {
         <div className="ks-card p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="ks-display font-bold">Top categories</h2>
-            <span className="ks-mono text-xs text-[#6B7280]">last 30 days</span>
+            <span className="ks-mono text-xs text-[var(--text-secondary)]">last 30 days</span>
           </div>
           {categorySales.length === 0 ? (
-            <p className="text-sm text-[#6B7280]">No sales yet — start billing to see category breakdown.</p>
+            <p className="text-sm text-[var(--text-secondary)]">No sales yet — start billing to see category breakdown.</p>
           ) : (
             <div className="space-y-2.5">
               {categorySales.map(([cat, total]) => {
@@ -279,9 +279,9 @@ export default function DashboardPage() {
                   <div key={cat}>
                     <div className="flex items-center justify-between text-sm mb-1">
                       <span className="font-semibold" style={{ color: c.text }}>{cat}</span>
-                      <span className="ks-mono text-xs text-[#6B7280]">{rupee(total)}</span>
+                      <span className="ks-mono text-xs text-[var(--text-secondary)]">{rupee(total)}</span>
                     </div>
-                    <div className="h-2 rounded-full bg-[#E7E9F3] overflow-hidden">
+                    <div className="h-2 rounded-full bg-[var(--bg-surface-alt)] overflow-hidden">
                       <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: c.text }} />
                     </div>
                   </div>
@@ -295,14 +295,14 @@ export default function DashboardPage() {
 
       <div className="grid md:grid-cols-3 gap-4 mt-5">
         <div className="ks-card ks-panel-wash overflow-hidden" style={{ "--wash": "rgba(193,63,69,0.06)" }}>
-          <div className="px-5 py-4 border-b border-[#E7E9F3] flex items-center justify-between">
+          <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="ks-tint-icon" style={{ "--tint-bg": "rgba(193,63,69,0.10)", "--tint-fg": "#C13F45" }}>
+              <div className="ks-tint-icon" style={{ "--tint-bg": "rgba(193,63,69,0.10)", "--tint-fg": "var(--danger)" }}>
                 <AlertTriangle size={15} />
               </div>
               <h2 className="ks-display font-bold">Stock alerts</h2>
               {lowItems.length > 0 && (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "#FDEAEA", color: "#C13F45" }}>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "var(--danger-soft)", color: "var(--danger)" }}>
                   {lowItems.length}
                 </span>
               )}
@@ -317,27 +317,27 @@ export default function DashboardPage() {
               </button>
             )}
           </div>
-          <div className="divide-y divide-[#F3F4F8]">
+          <div className="divide-y divide-[var(--border)]">
             {lowItems.length === 0 && (
-              <p className="text-sm text-[#6B7280] px-5 py-6">Nothing running low right now. 🎉</p>
+              <p className="text-sm text-[var(--text-secondary)] px-5 py-6">Nothing running low right now. 🎉</p>
             )}
             {[...lowItems].sort((a, b) => a.stock - b.stock).slice(0, 6).map((i) => {
               const isOut = i.stock === 0;
               return (
-                <div key={i.id} className="flex items-center justify-between px-5 py-3 hover:bg-[#F8F9FD] transition-colors">
+                <div key={i.id} className="flex items-center justify-between px-5 py-3 hover:bg-[var(--bg-surface-alt)] transition-colors">
                   <div className="flex items-center gap-2.5 min-w-0">
                     <span
                       className={`shrink-0 text-[9px] font-extrabold px-1.5 py-0.5 rounded tracking-wide ${isOut ? "ks-pulse" : ""}`}
                       style={isOut
-                        ? { background: "#FDEAEA", color: "#C13F45" }
-                        : { background: "#FFF4E0", color: "#B5720B" }}
+                        ? { background: "var(--danger-soft)", color: "var(--danger)" }
+                        : { background: "var(--warn-soft)", color: "var(--warn)" }}
                     >
                       {isOut ? "OUT" : "LOW"}
                     </span>
                     <span className="font-medium text-sm truncate">{i.name}</span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0 ml-2">
-                    <span className="ks-mono text-xs font-semibold" style={{ color: isOut ? "#C13F45" : "#B5720B" }}>
+                    <span className="ks-mono text-xs font-semibold" style={{ color: isOut ? "var(--danger)" : "var(--warn)" }}>
                       {i.stock} {i.unit}
                     </span>
                     <button
@@ -355,28 +355,28 @@ export default function DashboardPage() {
         </div>
 
         <div className="ks-card ks-panel-wash" style={{ "--wash": "var(--accent-soft-bg)" }}>
-          <div className="px-5 py-4 border-b border-[#E7E9F3] flex items-center gap-2.5">
+          <div className="px-5 py-4 border-b border-[var(--border)] flex items-center gap-2.5">
             <div className="ks-tint-icon" style={{ "--tint-bg": "var(--accent-soft-bg)", "--tint-fg": "var(--accent)" }}>
               <Activity size={15} />
             </div>
             <h2 className="ks-display font-bold">Recent stock movement</h2>
           </div>
           <div className="p-5 space-y-3 max-h-72 overflow-y-auto ks-scroll">
-            {movements.length === 0 && <p className="text-sm text-[#6B7280]">No stock movement logged yet.</p>}
+            {movements.length === 0 && <p className="text-sm text-[var(--text-secondary)]">No stock movement logged yet.</p>}
             {movements.map((m) => (
               <div key={m.id} className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
                   {m.type === "in" ? (
                     <ArrowUpCircle size={16} style={{ color: "var(--accent)" }} />
                   ) : (
-                    <ArrowDownCircle size={16} className="text-[#C13F45]" />
+                    <ArrowDownCircle size={16} className="text-[var(--danger)]" />
                   )}
                   <div>
                     <span className="font-medium">{m.item_name}</span>
-                    <span className="text-[#6B7280] ks-mono text-xs ml-2">{m.reason}</span>
+                    <span className="text-[var(--text-secondary)] ks-mono text-xs ml-2">{m.reason}</span>
                   </div>
                 </div>
-                <span className="ks-mono font-semibold" style={{ color: m.type === "in" ? "var(--accent)" : "#C13F45" }}>
+                <span className="ks-mono font-semibold" style={{ color: m.type === "in" ? "var(--accent)" : "var(--danger)" }}>
                   {m.type === "in" ? "+" : "−"}
                   {m.qty}
                 </span>
@@ -386,19 +386,19 @@ export default function DashboardPage() {
         </div>
 
         <div className="ks-card ks-panel-wash" style={{ "--wash": "var(--gold-soft)" }}>
-          <div className="px-5 py-4 border-b border-[#E7E9F3] flex items-center gap-2.5">
+          <div className="px-5 py-4 border-b border-[var(--border)] flex items-center gap-2.5">
             <div className="ks-tint-icon" style={{ "--tint-bg": "var(--gold-soft)", "--tint-fg": "var(--gold)" }}>
               <Users size={15} />
             </div>
             <h2 className="ks-display font-bold">Top customers</h2>
           </div>
           <div className="p-5 space-y-1 max-h-72 overflow-y-auto ks-scroll">
-            {bestCustomers.length === 0 && <p className="text-sm text-[#6B7280]">No customer purchases recorded yet.</p>}
+            {bestCustomers.length === 0 && <p className="text-sm text-[var(--text-secondary)]">No customer purchases recorded yet.</p>}
             {bestCustomers.map((c, i) => (
               <button
                 key={c.phone}
                 onClick={() => setCustomerDetail(c)}
-                className="w-full flex items-center justify-between text-sm py-1.5 -mx-1 px-1 rounded-lg hover:bg-[#F8F9FD] text-left"
+                className="w-full flex items-center justify-between text-sm py-1.5 -mx-1 px-1 rounded-lg hover:bg-[var(--bg-surface-alt)] text-left"
               >
                 <div className="flex items-center gap-2">
                   <span className={`ks-medal ${i === 0 ? "gold" : i === 1 ? "silver" : i === 2 ? "bronze" : "plain"}`}>
@@ -406,7 +406,7 @@ export default function DashboardPage() {
                   </span>
                   <div>
                     <div className="font-medium">{c.name}</div>
-                    <div className="text-[11px] text-[#6B7280]">
+                    <div className="text-[11px] text-[var(--text-secondary)]">
                       {c.visits} visit{c.visits === 1 ? "" : "s"}
                     </div>
                   </div>

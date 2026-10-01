@@ -7,18 +7,20 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        display: ["Sora", "sans-serif"],
+        display: ["Manrope", "system-ui", "sans-serif"],
         mono: ["IBM Plex Mono", "monospace"],
       },
+      // Theme-aware: these read the CSS variables in app/globals.css, so they
+      // follow Night/Light. Opacity modifiers (bg-brand/10) don't work with
+      // variables; use the *-soft tokens instead.
       colors: {
-        // Ported from the prototype's design tokens — see reference/kirana-store-app.jsx
         brand: {
-          DEFAULT: "#4F46E5",
-          light: "#818CF8",
+          DEFAULT: "var(--accent-soft-text)",
+          light: "var(--accent-soft-bg)",
         },
-        ink: "#000000",
-        muted: "#6B7280",
-        border: "#E7E9F3",
+        ink: "var(--text-primary)",
+        muted: "var(--text-secondary)",
+        border: "var(--border)",
       },
     },
   },

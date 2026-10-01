@@ -93,7 +93,7 @@ export default function StaffPage() {
   return (
     <div className="pt-6">
       <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
-        <p className="text-sm text-[#6B7280] max-w-md">
+        <p className="text-sm text-[var(--text-secondary)] max-w-md">
           Workers sign in with a staff code and PIN — from the login screen&apos;s &quot;Staff sign in&quot; tab — and only see
           the sections you allow.
         </p>
@@ -108,14 +108,14 @@ export default function StaffPage() {
       <div className="space-y-3">
         {owner && (
           <div className="ks-card p-4 flex items-center gap-4">
-            <div className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 text-sm font-bold text-white" style={{ background: "#4F46E5" }}>
+            <div className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 text-sm font-bold text-white" style={{ background: "var(--accent)" }}>
               {owner.name?.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-bold text-sm">{owner.name}</p>
-              <p className="text-xs text-[#6B7280] mt-0.5">Full access to everything</p>
+              <p className="text-xs text-[var(--text-secondary)] mt-0.5">Full access to everything</p>
             </div>
-            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0" style={{ background: "#EEF0FE", color: "#4F46E5" }}>
+            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0" style={{ background: "var(--accent-soft-bg)", color: "var(--accent-soft-text)" }}>
               OWNER
             </span>
           </div>
@@ -133,19 +133,19 @@ export default function StaffPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
                     <p className="font-bold text-sm">{m.name}</p>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "#E7E9F3", color: "#6B7280" }}>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "var(--bg-surface-alt)", color: "var(--text-secondary)" }}>
                       STAFF
                     </span>
-                    <span className="ks-mono text-xs font-bold px-2 py-0.5 rounded-md" style={{ background: "#F0F0F0", color: "#444" }}>
+                    <span className="ks-mono text-xs font-bold px-2 py-0.5 rounded-md" style={{ background: "var(--bg-surface-alt)", color: "var(--text-primary)" }}>
                       Code: {m.staff_code}
                     </span>
                   </div>
                   <div className="flex flex-wrap gap-1 mt-1.5">
                     {allowed.length === 0 ? (
-                      <span className="text-xs text-[#B0A996]">No access granted yet</span>
+                      <span className="text-xs text-[var(--text-secondary)]">No access granted yet</span>
                     ) : (
                       allowed.map((mod) => (
-                        <span key={mod.key} className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "#EEF0FE", color: "#4F46E5" }}>
+                        <span key={mod.key} className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--accent-soft-bg)", color: "var(--accent-soft-text)" }}>
                           {mod.label}
                         </span>
                       ))
@@ -156,7 +156,7 @@ export default function StaffPage() {
                   <button
                     onClick={() => setEditing(m)}
                     className="w-8 h-8 rounded-full flex items-center justify-center"
-                    style={{ background: "#E7E9F3", color: "#000000" }}
+                    style={{ background: "var(--bg-surface-alt)", color: "var(--text-primary)" }}
                     title="Edit"
                   >
                     <Pencil size={14} />
@@ -164,7 +164,7 @@ export default function StaffPage() {
                   <button
                     onClick={() => setRemoving(m)}
                     className="w-8 h-8 rounded-full flex items-center justify-center"
-                    style={{ background: "#FDEAEA", color: "#C13F45" }}
+                    style={{ background: "var(--danger-soft)", color: "var(--danger)" }}
                     title="Remove"
                   >
                     <Trash2 size={14} />
@@ -176,7 +176,7 @@ export default function StaffPage() {
         })}
 
         {staff.length === 0 && (
-          <div className="ks-card p-10 text-center text-[#6B7280] text-sm">
+          <div className="ks-card p-10 text-center text-[var(--text-secondary)] text-sm">
             No staff added yet — tap &quot;Add staff member&quot; to get started.
           </div>
         )}
@@ -198,7 +198,7 @@ export default function StaffPage() {
       {removing && (
         <Modal title={`Remove ${removing.name}?`} onClose={() => setRemoving(null)}>
           <div className="space-y-3.5">
-            <p className="text-sm text-[#6B7280]">
+            <p className="text-sm text-[var(--text-secondary)]">
               They&apos;ll immediately lose access — their staff code and PIN stop working. This can&apos;t be undone; you&apos;d need
               to add them again with a new code.
             </p>
@@ -210,7 +210,7 @@ export default function StaffPage() {
                 onClick={confirmRemove}
                 disabled={removeLoading}
                 className="flex-1 rounded-full text-white text-sm font-semibold py-2.5 disabled:opacity-40 flex items-center justify-center gap-2"
-                style={{ background: "#C13F45" }}
+                style={{ background: "var(--danger-solid)" }}
               >
                 {removeLoading && <Loader2 size={16} className="animate-spin" />}
                 Remove

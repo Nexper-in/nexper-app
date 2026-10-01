@@ -20,21 +20,21 @@ export default function QtyPickerModal({ item, onClose, onConfirm }) {
   return (
     <Modal title={item.name} onClose={onClose}>
       <div className="space-y-3.5">
-        <p className="text-xs text-[#6B7280]">
-          Available: <span className="ks-mono font-semibold text-[#000000]">{item.stock} {item.unit}</span> ·{" "}
+        <p className="text-xs text-[var(--text-secondary)]">
+          Available: <span className="ks-mono font-semibold text-[var(--text-primary)]">{item.stock} {item.unit}</span> ·{" "}
           {item.mrp > item.price && !item.originalPrice && (
             <span className="line-through mr-1 opacity-60 ks-mono">{rupee(item.mrp)}</span>
           )}
           {rupee(item.price)} / {item.unit}
           {item.mrp > item.price && !item.originalPrice && (
-            <span className="ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "#E4F5F0", color: "#1F8A5F" }}>
+            <span className="ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "var(--success-soft)", color: "var(--success)" }}>
               {Math.round(((item.mrp - item.price) / item.mrp) * 100)}% OFF
             </span>
           )}
         </p>
 
         {smallerUnit && (
-          <div className="flex gap-1.5 bg-[#E7E9F3] p-1 rounded-full w-fit">
+          <div className="flex gap-1.5 bg-[var(--bg-surface-alt)] p-1 rounded-full w-fit">
             {[item.unit, smallerUnit].map((u) => (
               <button
                 key={u}
@@ -42,7 +42,7 @@ export default function QtyPickerModal({ item, onClose, onConfirm }) {
                   setInputUnit(u);
                   setQty("1");
                 }}
-                className={`text-xs font-semibold px-3 py-1.5 rounded-full transition-colors ${inputUnit === u ? "bg-[#000000] text-white" : "text-[#6B7280]"}`}
+                className={`text-xs font-semibold px-3 py-1.5 rounded-full transition-colors ${inputUnit === u ? "bg-[var(--strong)] text-[var(--on-strong)]" : "text-[var(--text-secondary)]"}`}
               >
                 {u}
               </button>
@@ -63,14 +63,14 @@ export default function QtyPickerModal({ item, onClose, onConfirm }) {
           />
         </Field>
         {inputUnit !== item.unit && rawNum > 0 && (
-          <p className="text-xs text-[#6B7280]">
-            = <span className="ks-mono font-semibold text-[#000000]">{num} {item.unit}</span>
+          <p className="text-xs text-[var(--text-secondary)]">
+            = <span className="ks-mono font-semibold text-[var(--text-primary)]">{num} {item.unit}</span>
           </p>
         )}
-        {num > item.stock && <p className="text-xs text-[#C13F45] font-medium">Only {item.stock} {item.unit} in stock.</p>}
-        <div className="flex items-center justify-between py-2 border-t border-[#E7E9F3]">
-          <span className="text-sm font-semibold text-[#6B7280]">Line total</span>
-          <span className="ks-mono text-lg font-bold text-[#4F46E5]">{rupee((num > 0 ? num : 0) * item.price)}</span>
+        {num > item.stock && <p className="text-xs text-[var(--danger)] font-medium">Only {item.stock} {item.unit} in stock.</p>}
+        <div className="flex items-center justify-between py-2 border-t border-[var(--border)]">
+          <span className="text-sm font-semibold text-[var(--text-secondary)]">Line total</span>
+          <span className="ks-mono text-lg font-bold text-[var(--accent-soft-text)]">{rupee((num > 0 ? num : 0) * item.price)}</span>
         </div>
         <button disabled={!valid} onClick={() => onConfirm(num)} className="ks-btn-primary w-full">
           Add to bill

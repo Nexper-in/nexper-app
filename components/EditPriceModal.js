@@ -46,13 +46,13 @@ export default function EditPriceModal({ item, onClose, onSave }) {
           </Field>
         </div>
         {mrp !== "" && Number(mrp) <= Number(price) && (
-          <p className="text-xs" style={{ color: "#B5720B" }}>MRP should be higher than the selling price to show as a discount.</p>
+          <p className="text-xs" style={{ color: "var(--warn)" }}>MRP should be higher than the selling price to show as a discount.</p>
         )}
         <Field label="Purchase price (₹, optional)">
           <input type="number" className="ks-input" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} />
         </Field>
         {error && (
-          <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>
+          <p className="text-sm text-[var(--danger)] bg-[var(--danger-soft)] border border-[var(--danger-line)] rounded-lg px-3 py-2">{error}</p>
         )}
         <button disabled={!valid || saving} onClick={handleSave} className="ks-btn-primary w-full flex items-center justify-center gap-2">
           {saving && <Loader2 size={16} className="animate-spin" />}

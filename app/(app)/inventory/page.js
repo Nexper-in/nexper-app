@@ -26,9 +26,9 @@ function stockLevelOf(i) {
 }
 const STOCK_RANK = { low: 0, medium: 1, good: 2 };
 const STOCK_META = {
-  low: { label: "LOW", text: "#C13F45", bg: "#FDEAEA" },
-  medium: { label: "MEDIUM", text: "#B5720B", bg: "#FFF4E0" },
-  good: { label: "IN STOCK", text: "#1F8A5F", bg: "#E4F5F0" },
+  low: { label: "LOW", text: "var(--danger)", bg: "var(--danger-soft)" },
+  medium: { label: "MEDIUM", text: "var(--warn)", bg: "var(--warn-soft)" },
+  good: { label: "IN STOCK", text: "var(--success)", bg: "var(--success-soft)" },
 };
 
 export default function InventoryPage() {
@@ -177,11 +177,35 @@ function InventoryPageInner() {
     );
   }
 
+  // Edit price, stock in, stock out. Wider buttons on the phone cards.
+  function stockActions(i, wide) {
+    const pill = `${wide ? "flex-1 justify-center py-2" : "px-2.5 py-1.5"} rounded-full text-xs font-semibold flex items-center gap-1`;
+    return (
+      <div className="flex gap-1.5">
+        <button
+          onClick={() => setEditPriceItem(i)}
+          title="Edit price / MRP"
+          aria-label={`Edit price of ${i.name}`}
+          className={`${wide ? "w-9 h-9" : "w-7 h-7"} rounded-full flex items-center justify-center shrink-0`}
+          style={{ background: "var(--bg-surface-alt)", color: "var(--text-secondary)" }}
+        >
+          <Pencil size={13} />
+        </button>
+        <button onClick={() => setAdjustItem({ item: i, type: "in" })} className={pill} style={{ background: "var(--success-soft)", color: "var(--success)" }}>
+          <ArrowUpCircle size={13} /> In
+        </button>
+        <button onClick={() => setAdjustItem({ item: i, type: "out" })} className={pill} style={{ background: "var(--danger-soft)", color: "var(--danger)" }}>
+          <ArrowDownCircle size={13} /> Out
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="pt-6">
       <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
         <div className="relative w-full max-w-xs">
-          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#B0A996]" />
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
           <input
             placeholder="Search items..."
             value={query}
@@ -227,12 +251,12 @@ function InventoryPageInner() {
       {showInsights && (
         <div className="ks-card p-5 mb-4">
           <div className="flex items-center gap-2 mb-4">
-            <TrendingUp size={16} style={{ color: "#4F46E5" }} />
+            <TrendingUp size={16} style={{ color: "var(--accent-soft-text)" }} />
             <h2 className="ks-display font-bold">Profit per item</h2>
-            <span className="text-xs text-[#6B7280] ml-auto">margin % on selling price</span>
+            <span className="text-xs text-[var(--text-secondary)] ml-auto">margin % on selling price</span>
           </div>
           {insightItems.length === 0 ? (
-            <p className="text-sm text-[#6B7280]">Add purchase prices to items to see profit insights.</p>
+            <p className="text-sm text-[var(--text-secondary)]">Add purchase prices to items to see profit insights.</p>
           ) : (
             <div className="space-y-3">
               {insightItems.map((i, idx) => {
@@ -243,28 +267,28 @@ function InventoryPageInner() {
                   <div key={i.id}>
                     <div className="flex items-center justify-between text-sm mb-1">
                       <div className="flex items-center gap-2 min-w-0">
-                        {isTop && !isLoss && <TrendingUp size={12} style={{ color: "#4F46E5", flexShrink: 0 }} />}
-                        {isLoss && <TrendingDown size={12} style={{ color: "#C13F45", flexShrink: 0 }} />}
+                        {isTop && !isLoss && <TrendingUp size={12} style={{ color: "var(--accent-soft-text)", flexShrink: 0 }} />}
+                        {isLoss && <TrendingDown size={12} style={{ color: "var(--danger)", flexShrink: 0 }} />}
                         <span className="font-medium truncate">{i.name}</span>
-                        <span className="ks-mono text-[10px] shrink-0 text-[#6B7280]">{rupee(i.margin)} / {i.unit}</span>
+                        <span className="ks-mono text-[10px] shrink-0 text-[var(--text-secondary)]">{rupee(i.margin)} / {i.unit}</span>
                       </div>
                       <span
                         className="ks-mono text-xs font-bold shrink-0 ml-3 px-2 py-0.5 rounded-full"
                         style={isLoss
-                          ? { background: "#FDEAEA", color: "#C13F45" }
+                          ? { background: "var(--danger-soft)", color: "var(--danger)" }
                           : isTop
-                          ? { background: "#EEF0FB", color: "#4F46E5" }
-                          : { background: "#F3F4F8", color: "#6B7280" }}
+                          ? { background: "var(--accent-soft-bg)", color: "var(--accent-soft-text)" }
+                          : { background: "var(--bg-surface-alt)", color: "var(--text-secondary)" }}
                       >
                         {i.marginPct}%
                       </span>
                     </div>
-                    <div className="h-1.5 rounded-full bg-[#F3F4F8] overflow-hidden">
+                    <div className="h-1.5 rounded-full bg-[var(--bg-surface-alt)] overflow-hidden">
                       <div
                         className="h-full rounded-full"
                         style={{
                           width: `${Math.max(0, barPct)}%`,
-                          background: isLoss ? "#C13F45" : isTop ? "#4F46E5" : "#B0A996",
+                          background: isLoss ? "var(--danger-solid)" : isTop ? "var(--accent)" : "var(--text-secondary)",
                         }}
                       />
                     </div>
@@ -274,17 +298,51 @@ function InventoryPageInner() {
             </div>
           )}
           {items.filter((i) => i.cost_price == null).length > 0 && (
-            <p className="text-xs text-[#B0A996] mt-4">
+            <p className="text-xs text-[var(--text-secondary)] mt-4">
               {items.filter((i) => i.cost_price == null).length} item{items.filter((i) => i.cost_price == null).length > 1 ? "s" : ""} missing purchase price — add it in inventory to track margin.
             </p>
           )}
         </div>
       )}
 
-      <div className="ks-card overflow-hidden overflow-x-auto">
+      {/* Phones: one card per item, so price, stock and actions all fit. */}
+      <div className="ks-only-mobile ks-card overflow-hidden">
+        {filtered.map((i) => {
+          const stockMeta = STOCK_META[stockLevelOf(i)];
+          return (
+            <div key={i.id} className="p-4 border-b border-[var(--border)] last:border-0">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-semibold leading-snug">{i.name}</p>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                    <CategoryChip category={i.category} />
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: stockMeta.bg, color: stockMeta.text }}>
+                      {i.stock} {i.unit} · {stockMeta.label}
+                    </span>
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  {i.mrp > i.price && (
+                    <span className="block line-through text-[11px] ks-mono" style={{ color: "var(--text-secondary)" }}>{rupee(i.mrp)}</span>
+                  )}
+                  <span className="ks-mono font-bold">{rupee(i.price)}</span>
+                </div>
+              </div>
+              <div className="mt-3">
+                {stockActions(i, true)}
+              </div>
+            </div>
+          );
+        })}
+        {filtered.length === 0 && (
+          <p className="px-5 py-10 text-center text-[var(--text-secondary)] text-sm">No items match &quot;{query}&quot;.</p>
+        )}
+      </div>
+
+      <div className="ks-only-desk ks-card overflow-hidden overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left ks-mono text-[11px] uppercase tracking-wide text-[#6B7280] border-b border-[#E7E9F3]">
+            <tr className="text-left ks-mono text-[11px] uppercase tracking-wide text-[var(--text-secondary)] border-b border-[var(--border)]">
               <th className="px-5 py-3 font-medium">Item</th>
               <th className="px-5 py-3 font-medium">Category</th>
               <th className="px-5 py-3 font-medium">Price</th>
@@ -296,7 +354,7 @@ function InventoryPageInner() {
             {filtered.map((i) => {
               const stockMeta = STOCK_META[stockLevelOf(i)];
               return (
-                <tr key={i.id} className="border-b border-[#E7E9F3] last:border-0 hover:bg-[#F8F9FD]">
+                <tr key={i.id} className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg-surface-alt)]">
                   <td className="px-5 py-3 font-semibold max-w-[220px]">
                     <span className="truncate">{i.name}</span>
                   </td>
@@ -307,7 +365,7 @@ function InventoryPageInner() {
                     {i.mrp > i.price && (
                       <div className="flex items-center gap-1.5">
                         <span className="line-through text-[11px]" style={{ color: "var(--text-secondary)" }}>{rupee(i.mrp)}</span>
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "#E4F5F0", color: "#1F8A5F" }}>
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "var(--success-soft)", color: "var(--success)" }}>
                           {Math.round(((i.mrp - i.price) / i.mrp) * 100)}% OFF
                         </span>
                       </div>
@@ -323,37 +381,14 @@ function InventoryPageInner() {
                     </span>
                   </td>
                   <td className="px-5 py-3">
-                    <div className="flex gap-1.5">
-                      <button
-                        onClick={() => setEditPriceItem(i)}
-                        title="Edit price / MRP"
-                        className="w-7 h-7 rounded-full flex items-center justify-center"
-                        style={{ background: "#E7E9F3", color: "#6B7280" }}
-                      >
-                        <Pencil size={13} />
-                      </button>
-                      <button
-                        onClick={() => setAdjustItem({ item: i, type: "in" })}
-                        className="px-2.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1"
-                        style={{ background: "#E4F5F0", color: "#4F46E5" }}
-                      >
-                        <ArrowUpCircle size={13} /> In
-                      </button>
-                      <button
-                        onClick={() => setAdjustItem({ item: i, type: "out" })}
-                        className="px-2.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1"
-                        style={{ background: "#FDEAEA", color: "#C13F45" }}
-                      >
-                        <ArrowDownCircle size={13} /> Out
-                      </button>
-                    </div>
+                    {stockActions(i)}
                   </td>
                 </tr>
               );
             })}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-5 py-10 text-center text-[#6B7280] text-sm">
+                <td colSpan={5} className="px-5 py-10 text-center text-[var(--text-secondary)] text-sm">
                   No items match &quot;{query}&quot;.
                 </td>
               </tr>

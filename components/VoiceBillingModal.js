@@ -194,24 +194,24 @@ export default function VoiceBillingModal({ items, onConfirm, onClose }) {
         style={{ background: "var(--bg-surface)" }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#E7E9F3] shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] shrink-0">
           <div>
             <h2 className="ks-display font-bold">Voice billing</h2>
-            <p className="text-xs text-[#6B7280] mt-0.5">
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">
               {billType === "credit" ? "🟣 Udhaar bill" : "💵 Cash bill"}
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 bg-[#E7E9F3] rounded-full p-1">
+            <div className="flex items-center gap-1 bg-[var(--bg-surface-alt)] rounded-full p-1">
               <button
                 onClick={() => switchLang("en-IN")}
-                className={`text-[11px] font-bold px-2.5 py-1 rounded-full transition-colors ${lang === "en-IN" ? "bg-white shadow-sm text-[#000]" : "text-[#6B7280]"}`}
+                className={`text-[11px] font-bold px-2.5 py-1 rounded-full transition-colors ${lang === "en-IN" ? "bg-[var(--bg-surface)] shadow-sm text-[var(--text-primary)]" : "text-[var(--text-secondary)]"}`}
               >
                 EN
               </button>
               <button
                 onClick={() => switchLang("hi-IN")}
-                className={`text-[11px] font-bold px-2.5 py-1 rounded-full transition-colors ${lang === "hi-IN" ? "bg-white shadow-sm text-[#000]" : "text-[#6B7280]"}`}
+                className={`text-[11px] font-bold px-2.5 py-1 rounded-full transition-colors ${lang === "hi-IN" ? "bg-[var(--bg-surface)] shadow-sm text-[var(--text-primary)]" : "text-[var(--text-secondary)]"}`}
               >
                 हि
               </button>
@@ -219,7 +219,7 @@ export default function VoiceBillingModal({ items, onConfirm, onClose }) {
             <button
               onClick={onClose}
               className="w-7 h-7 flex items-center justify-center rounded-full"
-              style={{ background: "#E7E9F3", color: "#6B7280" }}
+              style={{ background: "var(--bg-surface-alt)", color: "var(--text-secondary)" }}
             >
               <X size={15} />
             </button>
@@ -230,20 +230,20 @@ export default function VoiceBillingModal({ items, onConfirm, onClose }) {
         <div className="flex flex-col items-center py-6 shrink-0">
           {done ? (
             <div className="flex flex-col items-center gap-2">
-              <CheckCircle2 size={56} style={{ color: "#4F46E5" }} />
-              <p className="font-bold text-[#4F46E5]">Generating bill…</p>
+              <CheckCircle2 size={56} style={{ color: "var(--accent-soft-text)" }} />
+              <p className="font-bold text-[var(--accent-soft-text)]">Generating bill…</p>
             </div>
           ) : (
             <>
               <button
                 onClick={toggleListening}
                 className="relative w-20 h-20 rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-95"
-                style={{ background: listening ? "#E5484D" : "var(--accent)" }}
+                style={{ background: listening ? "var(--danger-solid)" : "var(--accent)" }}
               >
                 {listening && (
                   <span
                     className="absolute inset-0 rounded-full animate-ping opacity-40"
-                    style={{ background: "#E5484D" }}
+                    style={{ background: "var(--danger-solid)" }}
                   />
                 )}
                 {listening ? (
@@ -256,7 +256,7 @@ export default function VoiceBillingModal({ items, onConfirm, onClose }) {
                 {feedback}
               </p>
               {lastHeard && (
-                <p className="text-xs text-[#6B7280] mt-1 italic px-6 text-center">
+                <p className="text-xs text-[var(--text-secondary)] mt-1 italic px-6 text-center">
                   Heard: &quot;{lastHeard}&quot;
                 </p>
               )}
@@ -268,10 +268,10 @@ export default function VoiceBillingModal({ items, onConfirm, onClose }) {
         <div className="flex-1 overflow-y-auto ks-scroll px-5 pb-2">
           {cart.length === 0 ? (
             <div className="text-center py-4">
-              <p className="text-sm text-[#6B7280] mb-4">Cart is empty — tap the mic and say item names</p>
+              <p className="text-sm text-[var(--text-secondary)] mb-4">Cart is empty — tap the mic and say item names</p>
               <div className="space-y-1.5">
                 {HINTS.map((h, i) => (
-                  <p key={i} className="text-xs text-[#6B7280] ks-mono">
+                  <p key={i} className="text-xs text-[var(--text-secondary)] ks-mono">
                     {lang === "hi-IN" ? h.hi : h.en}
                   </p>
                 ))}
@@ -287,7 +287,7 @@ export default function VoiceBillingModal({ items, onConfirm, onClose }) {
                 >
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm truncate">{item.name}</p>
-                    <p className="text-xs text-[#6B7280] ks-mono">
+                    <p className="text-xs text-[var(--text-secondary)] ks-mono">
                       {qty} {item.unit} × {rupee(item.price)}
                     </p>
                   </div>
@@ -295,7 +295,7 @@ export default function VoiceBillingModal({ items, onConfirm, onClose }) {
                   <button
                     onClick={() => removeItem(item.id)}
                     className="w-6 h-6 flex items-center justify-center rounded-full shrink-0"
-                    style={{ background: "#FDEAEA", color: "#C13F45" }}
+                    style={{ background: "var(--danger-soft)", color: "var(--danger)" }}
                   >
                     <Trash2 size={12} />
                   </button>
@@ -307,10 +307,10 @@ export default function VoiceBillingModal({ items, onConfirm, onClose }) {
 
         {/* Total + action */}
         {cart.length > 0 && !done && (
-          <div className="px-5 py-4 border-t border-[#E7E9F3] shrink-0">
+          <div className="px-5 py-4 border-t border-[var(--border)] shrink-0">
             <div className="flex items-center justify-between mb-3">
               <span className="ks-display font-bold text-lg">Total</span>
-              <span className="ks-mono text-2xl font-bold" style={{ color: "#4F46E5" }}>
+              <span className="ks-mono text-2xl font-bold" style={{ color: "var(--accent-soft-text)" }}>
                 {rupee(subtotal)}
               </span>
             </div>

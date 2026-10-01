@@ -102,12 +102,12 @@ export default function CatalogPickerModal({ onClose, onImport, nextCode }) {
     return (
       <Modal title="Import complete" onClose={onClose}>
         <div className="space-y-3">
-          <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: "#1F8A5F" }}>
+          <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: "var(--success)" }}>
             <CheckCircle2 size={16} /> {results.ok} item{results.ok === 1 ? "" : "s"} added to inventory
           </div>
           {results.failed.length > 0 && (
             <div className="space-y-1.5">
-              <p className="text-xs font-semibold flex items-center gap-1.5" style={{ color: "#C13F45" }}>
+              <p className="text-xs font-semibold flex items-center gap-1.5" style={{ color: "var(--danger)" }}>
                 <AlertCircle size={13} /> {results.failed.length} failed
               </p>
               {results.failed.map((f, i) => (
@@ -177,7 +177,7 @@ export default function CatalogPickerModal({ onClose, onImport, nextCode }) {
         </p>
 
         <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#B0A996]" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
           <input
             placeholder="Search catalog..."
             value={query}

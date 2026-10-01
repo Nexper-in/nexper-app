@@ -1,5 +1,6 @@
 "use client";
 
+import { applyTheme, readTheme } from "@/lib/theme";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -97,9 +98,9 @@ function AdminPageInner() {
   const [auditLoading, setAuditLoading] = useState(false);
 
   useEffect(() => {
-    document.documentElement.dataset.theme = "dark";
+    delete document.documentElement.dataset.theme; // admin always uses Night
     return () => {
-      delete document.documentElement.dataset.theme;
+      applyTheme(readTheme());
     };
   }, []);
 
@@ -424,7 +425,7 @@ function AdminPageInner() {
                 onClick={() => suspendOwner(confirmSuspend)}
                 disabled={busyId === confirmSuspend.id}
                 className="flex-1 rounded-full text-white text-sm font-semibold py-2.5 disabled:opacity-40 flex items-center justify-center gap-2"
-                style={{ background: "#C13F45" }}
+                style={{ background: "var(--danger-solid)" }}
               >
                 {busyId === confirmSuspend.id && <Loader2 size={16} className="animate-spin" />}
                 Suspend
@@ -979,7 +980,7 @@ function DeleteShopModal({ shop, busy, onClose, onConfirm }) {
             onClick={onConfirm}
             disabled={!matches || busy}
             className="flex-1 rounded-full text-white text-sm font-semibold py-2.5 disabled:opacity-40 flex items-center justify-center gap-2"
-            style={{ background: "#C13F45" }}
+            style={{ background: "var(--danger-solid)" }}
           >
             {busy && <Loader2 size={16} className="animate-spin" />}
             Delete permanently
@@ -1118,7 +1119,7 @@ function ResetPasswordModal({ user, onClose, onReset }) {
                 onClick={handleReset}
                 disabled={!valid || saving}
                 className="flex-1 rounded-full text-white text-sm font-semibold py-2.5 disabled:opacity-40 flex items-center justify-center gap-2"
-                style={{ background: "#5B7CFA" }}
+                style={{ background: "var(--accent)" }}
               >
                 {saving && <Loader2 size={16} className="animate-spin" />}
                 Set password

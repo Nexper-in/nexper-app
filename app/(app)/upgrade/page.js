@@ -50,7 +50,7 @@ export default function UpgradePage() {
           <ul className="space-y-2 mb-4">
             {FREE_FEATURES.map((f) => (
               <li key={f} className="flex items-start gap-2 text-xs">
-                <Check size={14} className="shrink-0 mt-0.5" style={{ color: "#1F8A5F" }} />
+                <Check size={14} className="shrink-0 mt-0.5" style={{ color: "var(--success)" }} />
                 <span style={{ color: "var(--text-secondary)" }}>{f}</span>
               </li>
             ))}
@@ -89,7 +89,7 @@ export default function UpgradePage() {
             </span>
           </p>
           {billing === "yearly" && (
-            <p className="text-[11px] mb-3" style={{ color: "#1F8A5F" }}>
+            <p className="text-[11px] mb-3" style={{ color: "var(--success)" }}>
               ~24% cheaper than paying monthly
             </p>
           )}

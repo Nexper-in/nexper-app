@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Package,
@@ -15,7 +15,6 @@ import {
   Truck,
   Users,
   Settings,
-  LogOut,
   Tag,
   MoreHorizontal,
   ChevronRight,
@@ -28,7 +27,6 @@ import { useShop } from "@/components/ShopContext";
 import ShopTypeIcon from "@/components/ShopTypeIcon";
 import SyncStatusBadge from "@/components/SyncStatusBadge";
 import { shopTypeInfo } from "@/lib/shopTypes";
-import { greeting, displayName, initials } from "@/lib/format";
 import { isPro } from "@/lib/pricing";
 
 const NAV_ITEMS = [
@@ -59,9 +57,8 @@ const TOP_LEVEL_HREFS = ["/dashboard", "/billing", "/inventory", "/history"];
 const todayStr = () => new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 
 export default function Sidebar({ onOpenSettings, onNavigate }) {
-  const { supabase, activeShop, activeShopId, user, isOwner, hasPermission, pendingCount } = useShop();
+  const { supabase, activeShop, activeShopId, isOwner, hasPermission, pendingCount } = useShop();
   const pathname = usePathname();
-  const router = useRouter();
   const [lowStockCount, setLowStockCount] = useState(0);
   const [moreOpen, setMoreOpen] = useState(false);
 
@@ -80,11 +77,6 @@ export default function Sidebar({ onOpenSettings, onNavigate }) {
       active = false;
     };
   }, [supabase, activeShopId]);
-
-  async function handleSignOut() {
-    await supabase.auth.signOut();
-    router.replace("/login");
-  }
 
   if (!activeShop) return null;
 
@@ -120,7 +112,7 @@ export default function Sidebar({ onOpenSettings, onNavigate }) {
           </span>
         )}
         {item.href === "/inventory" && lowStockCount > 0 && (
-          <span className="ml-auto inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#E5484D] text-white text-[10px] font-bold">
+          <span className="ml-auto inline-flex items-center justify-center w-5 h-5 rounded-full bg-[var(--danger-solid)] text-white text-[10px] font-bold">
             {lowStockCount}
           </span>
         )}
@@ -131,6 +123,9 @@ export default function Sidebar({ onOpenSettings, onNavigate }) {
   return (
     <div className="h-full flex flex-col ks-sidebar">
       <div className="p-4 space-y-3">
+        <Link href="/dashboard" onClick={() => onNavigate?.()} className="block px-1 pt-1 pb-1 text-[26px] ks-wordmark ks-sidebar-text-strong">
+          Ne<span className="ks-grad-text">x</span>per
+        </Link>
         <div className="ks-sidebar-chip rounded-2xl p-3 backdrop-blur-sm">
           <div className="flex items-center gap-2">
             <div className="ks-sidebar-chip w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ks-sidebar-text-strong">
@@ -141,16 +136,6 @@ export default function Sidebar({ onOpenSettings, onNavigate }) {
               <p className="text-[10px] font-medium ks-sidebar-text">{shopTypeInfo(activeShop.type).label}</p>
             </div>
           </div>
-        </div>
-
-        <div className="flex items-center gap-2 px-1">
-          <span className="ks-sidebar-chip w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ks-sidebar-text-strong shrink-0">
-            {initials(user)}
-          </span>
-          <p className="text-[11px] ks-sidebar-muted">
-            {greeting()}
-            {displayName(user) ? `, ${displayName(user)}` : ""} 👋
-          </p>
         </div>
         <div className="ks-sidebar-gold-rule" />
       </div>
@@ -199,12 +184,6 @@ export default function Sidebar({ onOpenSettings, onNavigate }) {
             <Settings size={17} /> Store settings
           </button>
         )}
-        <button
-          onClick={handleSignOut}
-          className="ks-sidebar-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold"
-        >
-          <LogOut size={17} /> Sign out
-        </button>
       </div>
     </div>
   );

@@ -149,7 +149,7 @@ function ReportsPageInner() {
           <div className="ks-card overflow-hidden overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left ks-mono text-[11px] uppercase tracking-wide text-[#6B7280] border-b border-[#E7E9F3]">
+                <tr className="text-left ks-mono text-[11px] uppercase tracking-wide text-[var(--text-secondary)] border-b border-[var(--border)]">
                   <th className="px-5 py-3 font-medium">GST Rate</th>
                   <th className="px-5 py-3 font-medium">Taxable value</th>
                   <th className="px-5 py-3 font-medium">CGST</th>
@@ -160,7 +160,7 @@ function ReportsPageInner() {
               </thead>
               <tbody>
                 {summary.map((r) => (
-                  <tr key={r.rate} className="border-b border-[#E7E9F3] last:border-0">
+                  <tr key={r.rate} className="border-b border-[var(--border)] last:border-0">
                     <td className="px-5 py-3 font-semibold">{r.rate}%</td>
                     <td className="px-5 py-3 ks-mono">{rupee(r.taxable)}</td>
                     <td className="px-5 py-3 ks-mono">{rupee(r.cgst)}</td>
@@ -171,7 +171,7 @@ function ReportsPageInner() {
                 ))}
                 {summary.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-5 py-10 text-center text-[#6B7280] text-sm">
+                    <td colSpan={6} className="px-5 py-10 text-center text-[var(--text-secondary)] text-sm">
                       No bills recorded in {monthLabel}.
                     </td>
                   </tr>
@@ -179,7 +179,7 @@ function ReportsPageInner() {
               </tbody>
               {summary.length > 0 && (
                 <tfoot>
-                  <tr className="border-t-2 border-[#E7E9F3] font-bold">
+                  <tr className="border-t-2 border-[var(--border)] font-bold">
                     <td className="px-5 py-3">TOTAL</td>
                     <td className="px-5 py-3 ks-mono">{rupee(totals.taxable)}</td>
                     <td className="px-5 py-3 ks-mono" colSpan={2}>
@@ -212,7 +212,7 @@ function ReportsPageInner() {
             <strong style={{ color: "var(--text-primary)" }}>What this is:</strong> a GSTR-1 JSON file in the format
             the government&apos;s GST Offline Utility accepts, so you or your CA can upload it instead of retyping every
             invoice. It covers your B2C rate-wise sales and an HSN-wise summary.
-            <div className="flex items-start gap-2 mt-3 px-3 py-2.5 rounded-lg" style={{ background: "#FFF4E0", color: "#8A5A00" }}>
+            <div className="flex items-start gap-2 mt-3 px-3 py-2.5 rounded-lg" style={{ background: "var(--warn-soft)", color: "var(--warn)" }}>
               <AlertTriangle size={14} className="shrink-0 mt-0.5" />
               <span>
                 Best-effort export — GSTN&apos;s schema changes over time, and this assumes every sale is B2C and
@@ -223,7 +223,7 @@ function ReportsPageInner() {
           </div>
 
           {!activeShop?.gstin && (
-            <div className="ks-card p-4 flex items-start gap-2 text-sm" style={{ color: "#C13F45", background: "#FDEAEA" }}>
+            <div className="ks-card p-4 flex items-start gap-2 text-sm" style={{ color: "var(--danger)", background: "var(--danger-soft)" }}>
               <AlertTriangle size={16} className="shrink-0 mt-0.5" />
               <span>
                 Your shop&apos;s GSTIN isn&apos;t set. Add it under <strong>Store settings</strong> — the export needs it to

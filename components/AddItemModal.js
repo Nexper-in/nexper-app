@@ -155,7 +155,7 @@ export default function AddItemModal({ items, onClose, onAdd }) {
       <Modal title="Set selling price" onClose={onClose}>
         <div className="space-y-4">
           {/* Product preview */}
-          <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: "#F8F9FD" }}>
+          <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: "var(--bg-surface-alt)" }}>
             {form.image_url && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -167,7 +167,7 @@ export default function AddItemModal({ items, onClose, onAdd }) {
             )}
             <div className="min-w-0">
               <p className="font-semibold text-sm leading-tight truncate">{form.name}</p>
-              <p className="text-xs text-[#6B7280] mt-0.5 ks-mono">{form.barcode}</p>
+              <p className="text-xs text-[var(--text-secondary)] mt-0.5 ks-mono">{form.barcode}</p>
             </div>
           </div>
 
@@ -205,7 +205,7 @@ export default function AddItemModal({ items, onClose, onAdd }) {
           </Field>
 
           {error && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>
+            <p className="text-sm text-[var(--danger)] bg-[var(--danger-soft)] border border-[var(--danger-line)] rounded-lg px-3 py-2">{error}</p>
           )}
 
           <button
@@ -221,7 +221,7 @@ export default function AddItemModal({ items, onClose, onAdd }) {
           <button
             type="button"
             onClick={() => setQuickMode(false)}
-            className="w-full text-xs text-[#6B7280] flex items-center justify-center gap-1 pt-1"
+            className="w-full text-xs text-[var(--text-secondary)] flex items-center justify-center gap-1 pt-1"
           >
             <ChevronDown size={13} /> More details (category, GST, Hindi name…)
           </button>
@@ -258,7 +258,7 @@ export default function AddItemModal({ items, onClose, onAdd }) {
                   type="button"
                   onClick={() => startVoice("name")}
                   className={`absolute right-2.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center transition-colors ${listeningField === "name" ? "ks-pulse" : ""}`}
-                  style={{ background: listeningField === "name" ? "#C13F45" : "#E7E9F3", color: listeningField === "name" ? "#fff" : "#6B7280" }}
+                  style={{ background: listeningField === "name" ? "var(--danger-solid)" : "var(--bg-surface-alt)", color: listeningField === "name" ? "#fff" : "var(--text-secondary)" }}
                   title="Speak item name"
                 >
                   <Mic size={13} />
@@ -281,21 +281,21 @@ export default function AddItemModal({ items, onClose, onAdd }) {
                 placeholder="Scan the product or type barcode"
               />
               {lookingUp && (
-                <Loader2 size={13} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin" style={{ color: "#4F46E5" }} />
+                <Loader2 size={13} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin" style={{ color: "var(--accent-soft-text)" }} />
               )}
             </div>
             <button
               type="button"
               onClick={startScan}
               className={`shrink-0 px-3 h-10 rounded-xl flex items-center gap-1.5 text-xs font-semibold transition-colors ${scanning ? "ks-pulse" : ""}`}
-              style={{ background: scanning ? "#4F46E5" : "#E7E9F3", color: scanning ? "#fff" : "#4F46E5" }}
+              style={{ background: scanning ? "var(--accent)" : "var(--bg-surface-alt)", color: scanning ? "#fff" : "var(--accent-soft-text)" }}
               title="Scan barcode with camera"
             >
               <ScanLine size={15} />
               {scanning ? "Scanning…" : "Scan"}
             </button>
           </div>
-          {lookingUp && <p className="text-xs text-[#4F46E5] mt-1">Looking up product…</p>}
+          {lookingUp && <p className="text-xs text-[var(--accent-soft-text)] mt-1">Looking up product…</p>}
         </Field>
 
         <Field label="Hindi / local name (optional)">
@@ -311,7 +311,7 @@ export default function AddItemModal({ items, onClose, onAdd }) {
               type="button"
               onClick={() => startVoice("hindi_name")}
               className={`absolute right-2.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center transition-colors ${listeningField === "hindi_name" ? "ks-pulse" : ""}`}
-              style={{ background: listeningField === "hindi_name" ? "#4F46E5" : "#E7E9F3", color: listeningField === "hindi_name" ? "#fff" : "#6B7280" }}
+              style={{ background: listeningField === "hindi_name" ? "var(--accent)" : "var(--bg-surface-alt)", color: listeningField === "hindi_name" ? "#fff" : "var(--text-secondary)" }}
               title="बोलकर हिंदी नाम भरें"
             >
               <Mic size={13} />
@@ -423,7 +423,7 @@ export default function AddItemModal({ items, onClose, onAdd }) {
         </div>
 
         {error && (
-          <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>
+          <p className="text-sm text-[var(--danger)] bg-[var(--danger-soft)] border border-[var(--danger-line)] rounded-lg px-3 py-2">{error}</p>
         )}
         <button disabled={!valid || saving} onClick={handleAdd} className="ks-btn-primary w-full flex items-center justify-center gap-2">
           {saving && <Loader2 size={16} className="animate-spin" />}

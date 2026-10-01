@@ -124,11 +124,11 @@ function DayClosePageInner() {
         <div className="ks-card p-5">
           <h2 className="ks-display font-bold mb-4">Today&apos;s cash reconciliation</h2>
           <div className="flex items-center justify-between text-sm mb-2">
-            <span className="text-[#6B7280] font-medium">Opening float (from last close)</span>
+            <span className="text-[var(--text-secondary)] font-medium">Opening float (from last close)</span>
             <span className="ks-mono font-bold">{rupee(openingFloat)}</span>
           </div>
           <div className="flex items-center justify-between text-sm mb-2">
-            <span className="text-[#6B7280] font-medium">Cash sales today (app)</span>
+            <span className="text-[var(--text-secondary)] font-medium">Cash sales today (app)</span>
             <span className="ks-mono font-bold">{rupee(todaysCashSales)}</span>
           </div>
           {todaysDigitalSales > 0 && (
@@ -138,12 +138,12 @@ function DayClosePageInner() {
             </div>
           )}
           <div className="flex items-center justify-between text-sm mb-3">
-            <span className="text-[#6B7280] font-medium">Less: personal draws</span>
-            <span className="ks-mono font-bold" style={{ color: "#C13F45" }}>
+            <span className="text-[var(--text-secondary)] font-medium">Less: personal draws</span>
+            <span className="ks-mono font-bold" style={{ color: "var(--danger)" }}>
               −{rupee(todaysDraws)}
             </span>
           </div>
-          <div className="flex items-center justify-between text-sm mb-3 pt-2 border-t border-[#E7E9F3]">
+          <div className="flex items-center justify-between text-sm mb-3 pt-2 border-t border-[var(--border)]">
             <span className="font-semibold">Expected cash in register</span>
             <span className="ks-mono font-bold">{rupee(expectedCash)}</span>
           </div>
@@ -157,11 +157,11 @@ function DayClosePageInner() {
             />
           </Field>
           {diff !== null && (
-            <div className="mt-3 rounded-xl px-3 py-2.5 flex items-center justify-between" style={{ background: diff === 0 ? "#E4F5F0" : "#FDEAEA" }}>
-              <span className="text-xs font-semibold" style={{ color: diff === 0 ? "#4F46E5" : "#C13F45" }}>
+            <div className="mt-3 rounded-xl px-3 py-2.5 flex items-center justify-between" style={{ background: diff === 0 ? "var(--success-soft)" : "var(--danger-soft)" }}>
+              <span className="text-xs font-semibold" style={{ color: diff === 0 ? "var(--accent-soft-text)" : "var(--danger)" }}>
                 {diff === 0 ? "Matches perfectly ✓" : diff > 0 ? "Extra cash in register" : "Cash short"}
               </span>
-              <span className="ks-mono font-bold" style={{ color: diff === 0 ? "#4F46E5" : "#C13F45" }}>
+              <span className="ks-mono font-bold" style={{ color: diff === 0 ? "var(--accent-soft-text)" : "var(--danger)" }}>
                 {diff > 0 ? "+" : ""}
                 {rupee(diff)}
               </span>
@@ -179,17 +179,17 @@ function DayClosePageInner() {
             <button
               onClick={() => setShowDraw(true)}
               className="text-xs font-semibold px-2.5 py-1.5 rounded-full flex items-center gap-1"
-              style={{ background: "#E7E9F3", color: "#000000" }}
+              style={{ background: "var(--bg-surface-alt)", color: "var(--text-primary)" }}
             >
               <Plus size={13} /> Add draw
             </button>
           </div>
           <div className="space-y-2">
-            {todaysDrawList.length === 0 && <p className="text-sm text-[#6B7280]">No money taken out for personal use today.</p>}
+            {todaysDrawList.length === 0 && <p className="text-sm text-[var(--text-secondary)]">No money taken out for personal use today.</p>}
             {todaysDrawList.map((d) => (
               <div key={d.id} className="flex items-center justify-between text-sm">
-                <span className="text-[#6B7280]">{d.note || "Personal draw"}</span>
-                <span className="ks-mono font-semibold" style={{ color: "#C13F45" }}>
+                <span className="text-[var(--text-secondary)]">{d.note || "Personal draw"}</span>
+                <span className="ks-mono font-semibold" style={{ color: "var(--danger)" }}>
                   −{rupee(d.amount)}
                 </span>
               </div>
@@ -199,20 +199,20 @@ function DayClosePageInner() {
       </div>
 
       <div className="ks-card overflow-hidden h-fit">
-        <div className="px-5 py-4 border-b border-[#E7E9F3]">
+        <div className="px-5 py-4 border-b border-[var(--border)]">
           <h2 className="ks-display font-bold">Past reconciliations</h2>
         </div>
         <div className="p-5 space-y-3 max-h-96 overflow-y-auto ks-scroll">
-          {reconciliations.length === 0 && <p className="text-sm text-[#6B7280]">No closes saved yet.</p>}
+          {reconciliations.length === 0 && <p className="text-sm text-[var(--text-secondary)]">No closes saved yet.</p>}
           {reconciliations.map((r) => (
             <div key={r.id} className="flex items-center justify-between text-sm">
               <div>
                 <div className="font-medium">{new Date(r.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}</div>
-                <div className="text-xs text-[#6B7280] ks-mono">
+                <div className="text-xs text-[var(--text-secondary)] ks-mono">
                   Expected {rupee(r.expected_cash)} · Cash {rupee(r.cash_counted)}
                 </div>
               </div>
-              <span className="ks-mono font-bold" style={{ color: r.diff === 0 ? "#4F46E5" : "#C13F45" }}>
+              <span className="ks-mono font-bold" style={{ color: r.diff === 0 ? "var(--accent-soft-text)" : "var(--danger)" }}>
                 {r.diff > 0 ? "+" : ""}
                 {rupee(r.diff)}
               </span>
