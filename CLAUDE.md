@@ -25,8 +25,8 @@ Nexper is a billing, stock and udhaar app for small Indian shops
 - Fonts: Manrope for headings and the wordmark, DM Sans for body text.
   The wordmark is `Ne<span class="ks-grad-text">x</span>per` with `ks-wordmark`.
 - Check every new screen in **both** themes and at phone width (390px).
-  Wide tables need a phone layout (see `ks-only-mobile` / `ks-only-desk` on
-  the Stock and Udhaar pages).
+  Wide tables on the other pages become stacked cards on phones
+  (`StackTables` + `.ks-stack`).
 
 ## Keep it lean
 
@@ -34,14 +34,14 @@ Shopkeepers use this at a busy counter. Every screen has one obvious main
 action, and only what's needed for it is shown; everything else sits one
 tap away (folded sections, a "⋯" menu, or the side menu).
 
-- **Home:** today's sales, **New bill**, three quick tiles (Stock, Udhaar,
+- **Home (phone):** today's sales, **New bill**, three quick tiles (Stock, Udhaar,
   Day close) and one **Needs attention** list (max 5 rows, each with its
   fix button). Charts and other stats live under "More insights".
-- **New bill:** search (with scan and voice), quick item tiles, then the
+- **New bill (phone):** search (with scan and voice), quick item tiles, then the
   bill: items, total, **Cash / UPI / Udhaar**, **Save bill**. Customer,
   phone, discount, card and bank transfer fold under "+ Customer, discount".
   On phones a checkout bar shows while the Save button is off screen.
-- **Stock:** search and **Add item**; catalogue, supplier-bill scan, import
+- **Stock (phone):** search and **Add item**; catalogue, supplier-bill scan, import
   and profit-per-item are in the "⋯" menu.
 - Same words everywhere: Home, New bill, Stock, Udhaar, Bills, Day close.
   The phone top bar shows the screen name.
@@ -50,6 +50,20 @@ tap away (folded sections, a "⋯" menu, or the side menu).
 
 ## Layout
 
+- **Phone and laptop have separate screens** (same app, same login) for
+  Home, New bill, Stock and Udhaar. Phone is below 1024px (`useIsMobile()`
+  in `lib/useIsMobile.js`), laptop from 1024px. Each of these folders has:
+  `use<Screen>.js` (all data, state and actions, returns one `vm`),
+  `<Screen>Mobile.js` and `<Screen>Desktop.js` (layout only), shared pieces
+  in `<Screen>Parts.js`, and `page.js` choosing between them. **Change
+  behaviour once, in the `use…` hook**; change layout in the screen that
+  needs it. Don't add `hidden lg:block` pairs inside a screen.
+- Phone screens stay lean (see below). Laptop screens use the room: Home
+  shows the whole dashboard (numbers, week chart, lists); Stock shows totals
+  and every tool as a button; New bill puts items and the bill side by side.
+- A new text on either screen needs translations like any other (below).
+- Other pages (Bills, Reports, Expenses…) are still one responsive layout.
+  Split one the same way only when it needs a different laptop design.
 - The account menu (`components/AccountMenu.js`) sits top right on every
   screen: name, email, Night/Light switch, Store settings, Sign out. Don't
   add another sign-out elsewhere.

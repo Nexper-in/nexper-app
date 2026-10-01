@@ -321,13 +321,6 @@ body {
    so this reliably works even without a JIT compiler in the sandbox. */
 .ks-mobile-bar { display: flex; }
 .ks-desk-bar { display: none; }
-/* Phone cards vs. wider-screen tables */
-.ks-only-mobile { display: block; }
-.ks-only-desk { display: none; }
-@media (min-width: 768px) {
-  .ks-only-mobile { display: none; }
-  .ks-only-desk { display: block; }
-}
 .ks-mobile-overlay { display: block; }
 
 /* On mobile the topbar is fixed; safe-area-inset-top pushes it below the
@@ -380,7 +373,6 @@ body {
 .ks-sidebar-wrap.open { left: 0; }
 
 .ks-page-pad { padding-left: 16px; padding-right: 16px; }
-.ks-billing-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
 @media (min-width: 1024px) {
   .ks-bottom-nav { display: none; }
   .ks-page-bottom-safe { padding-bottom: 64px; }
@@ -394,7 +386,6 @@ body {
   }
   .ks-main { padding-top: 0; }
   .ks-page-pad { padding-left: 32px; padding-right: 32px; }
-  .ks-billing-grid { grid-template-columns: 3fr 2fr; }
 }
 @media print {
   body * { visibility: hidden; }
