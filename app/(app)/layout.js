@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { Menu, Loader2, WifiOff, RefreshCw } from "lucide-react";
 import AuthGuard from "@/components/AuthGuard";
 import { ShopProvider, useShop } from "@/components/ShopContext";
@@ -61,7 +62,26 @@ function OfflineBanner() {
   );
 }
 
+// Screen names in the phone top bar; the same words as the menu and tabs.
+const SCREEN_TITLES = {
+  "/billing": "New bill",
+  "/inventory": "Stock",
+  "/credit": "Udhaar",
+  "/history": "Bills",
+  "/dayclose": "Day close",
+  "/expenses": "Expenses",
+  "/cashbook": "Cashbook",
+  "/reports": "Reports & GST",
+  "/suppliers": "Suppliers",
+  "/purchase-orders": "Purchase orders",
+  "/clearance": "Clearance offers",
+  "/inventory/config": "Batches & barcodes",
+  "/staff": "Staff",
+  "/upgrade": "Nexper Pro",
+};
+
 function AppShell({ children }) {
+  const pathname = usePathname();
   const { shops, activeShop, addShop, loading, toast } = useShop();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showStoreSettings, setShowStoreSettings] = useState(false);
@@ -90,7 +110,7 @@ function AppShell({ children }) {
         >
           <Menu size={20} />
         </button>
-        <span className="ks-display text-sm font-bold truncate px-1 flex-1 text-center">{activeShop?.name}</span>
+        <span className="ks-display text-[15px] font-bold truncate px-1 flex-1 text-center">{SCREEN_TITLES[pathname] || activeShop?.name}</span>
         <AccountMenu onOpenSettings={() => setShowStoreSettings(true)} />
       </div>
 

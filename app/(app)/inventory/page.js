@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Plus, ArrowUpCircle, ArrowDownCircle, Loader2, ScanLine, BarChart2, TrendingUp, TrendingDown, ChevronDown, ChevronUp, Upload, Pencil, BookOpen } from "lucide-react";
+import { Search, Plus, ArrowUpCircle, ArrowDownCircle, Loader2, ScanLine, BarChart2, TrendingUp, TrendingDown, Upload, Pencil, BookOpen, MoreHorizontal } from "lucide-react";
 import { useShop } from "@/components/ShopContext";
 import CategoryChip from "@/components/CategoryChip";
 import AddItemModal from "@/components/AddItemModal";
@@ -53,16 +53,19 @@ function InventoryPageInner() {
   const [showInsights, setShowInsights] = useState(false);
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [showCatalogPicker, setShowCatalogPicker] = useState(false);
+  const [showTools, setShowTools] = useState(false);
   const [showScanUpgrade, setShowScanUpgrade] = useState(false);
 
-  // Supports a "?add=1" deep link (e.g. from the dashboard's empty-stock
-  // state) that jumps straight into the add-item flow.
+  // Supports a "?add=1" deep link that jumps straight into the add-item flow.
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (new URLSearchParams(window.location.search).get("add") === "1") {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("add") === "1") {
       setShowAdd(true);
       router.replace("/inventory");
     }
+    // "?q=Maggi" (from Home's Needs attention list) opens Stock filtered to that item.
+    if (params.get("q")) setQuery(params.get("q"));
   }, [router]);
 
   const load = useCallback(async () => {
@@ -203,48 +206,60 @@ function InventoryPageInner() {
 
   return (
     <div className="pt-6">
-      <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
-        <div className="relative w-full max-w-xs">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="relative flex-1 min-w-0">
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
           <input
-            placeholder="Search items..."
+            placeholder="Search stock"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="ks-input"
-            style={{ paddingLeft: "2.25rem" }}
+            style={{ paddingLeft: "2.25rem", paddingTop: 11, paddingBottom: 11 }}
           />
         </div>
-        <div className="flex gap-2 flex-wrap">
+        <button onClick={() => setShowAdd(true)} className="ks-btn-primary flex items-center gap-1.5 shrink-0 py-2.5">
+          <Plus size={16} /> Add item
+        </button>
+        {/* Less-used tools live behind one button */}
+        <div className="relative shrink-0">
           <button
-            onClick={() => setShowInsights((v) => !v)}
-            className="ks-btn-outline flex items-center gap-1.5"
+            onClick={() => setShowTools((v) => !v)}
+            aria-label="More stock tools"
+            aria-expanded={showTools}
+            className="ks-btn-outline w-11 h-11 !p-0 flex items-center justify-center"
           >
-            <BarChart2 size={15} /> Insights {showInsights ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+            <MoreHorizontal size={18} />
           </button>
-          <button
-            onClick={() => setShowCatalogPicker(true)}
-            className="ks-btn-outline flex items-center gap-1.5"
-            title="Add common Indian grocery items instantly"
-          >
-            <BookOpen size={15} /> Catalogue
-          </button>
-          <button
-            onClick={() => setShowBulkImport(true)}
-            className="ks-btn-outline flex items-center gap-1.5"
-            title="Import multiple items from CSV"
-          >
-            <Upload size={15} /> Import
-          </button>
-          <button
-            onClick={() => (isPro(activeShop) ? setShowScanBill(true) : setShowScanUpgrade(true))}
-            className="ks-btn-outline flex items-center gap-1.5"
-            title="Scan supplier bill to auto-update stock"
-          >
-            <ScanLine size={15} /> Scan bill
-          </button>
-          <button onClick={() => setShowAdd(true)} className="ks-btn-primary flex items-center gap-1.5">
-            <Plus size={16} /> Add item
-          </button>
+          {showTools && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setShowTools(false)} />
+              <div className="ks-card absolute right-0 top-[calc(100%+6px)] z-50 w-60 p-1.5 ks-fade-up" style={{ boxShadow: "0 20px 50px rgba(0,0,0,0.35)" }}>
+                {[
+                  { icon: BookOpen, label: "Add from catalogue", sub: "Common Indian products", run: () => setShowCatalogPicker(true) },
+                  { icon: ScanLine, label: "Scan supplier bill", sub: "Photo of a printed bill", run: () => (isPro(activeShop) ? setShowScanBill(true) : setShowScanUpgrade(true)) },
+                  { icon: Upload, label: "Import a sheet", sub: "CSV of many items", run: () => setShowBulkImport(true) },
+                  { icon: BarChart2, label: showInsights ? "Hide profit per item" : "Profit per item", sub: "Margin on each item", run: () => setShowInsights((v) => !v) },
+                ].map(({ icon: Icon, label, sub, run }) => (
+                  <button
+                    key={label}
+                    onClick={() => {
+                      setShowTools(false);
+                      run();
+                    }}
+                    className="w-full flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-left hover:bg-[var(--bg-surface-alt)]"
+                  >
+                    <span className="ks-tint-icon">
+                      <Icon size={15} />
+                    </span>
+                    <span>
+                      <span className="block text-sm font-semibold">{label}</span>
+                      <span className="block text-[11px]" style={{ color: "var(--text-secondary)" }}>{sub}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </div>
 

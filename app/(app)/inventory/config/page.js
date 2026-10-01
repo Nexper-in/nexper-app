@@ -49,7 +49,7 @@ function InventoryConfigPageInner() {
   return (
     <div className="pt-6">
       <div className="mb-4">
-        <h1 className="ks-display font-bold text-xl">Config</h1>
+        <h1 className="ks-display font-bold text-xl">Batches &amp; barcodes</h1>
         <p className="text-sm mt-0.5" style={{ color: "var(--text-secondary)" }}>
           Batch tracking (FIFO/expiry) and barcode printing, per item.
         </p>

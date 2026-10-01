@@ -9,7 +9,7 @@ import { useShop } from "@/components/ShopContext";
 const TABS = [
   { href: "/dashboard", key: "dashboard", label: "Home", icon: LayoutDashboard },
   { href: "/inventory", key: "inventory", label: "Stock", icon: Package },
-  { href: "/billing", key: "billing", label: "New Bill", icon: Receipt, primary: true },
+  { href: "/billing", key: "billing", label: "New bill", icon: Receipt, primary: true },
   { href: "/credit", key: "credit", label: "Udhaar", icon: Wallet },
 ];
 

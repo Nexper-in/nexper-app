@@ -16,8 +16,6 @@ import {
   Users,
   Settings,
   Tag,
-  MoreHorizontal,
-  ChevronRight,
   ClipboardList,
   SlidersHorizontal,
   FileBarChart2,
@@ -29,30 +27,41 @@ import SyncStatusBadge from "@/components/SyncStatusBadge";
 import { shopTypeInfo } from "@/lib/shopTypes";
 import { isPro } from "@/lib/pricing";
 
-const NAV_ITEMS = [
-  { href: "/dashboard", key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/inventory", key: "inventory", label: "Inventory", icon: Package },
-  { href: "/billing", key: "billing", label: "New Bill", icon: Receipt },
-  { href: "/history", key: "history", label: "History", icon: Clock },
+// What a shopkeeper needs every hour sits at the top; everything else is
+// grouped below by what it's about. Names match the bottom tab bar.
+const MAIN_NAV = [
+  { href: "/dashboard", key: "dashboard", label: "Home", icon: LayoutDashboard },
+  { href: "/billing", key: "billing", label: "New bill", icon: Receipt },
+  { href: "/inventory", key: "inventory", label: "Stock", icon: Package },
   { href: "/credit", key: "credit", label: "Udhaar", icon: Wallet },
-  { href: "/dayclose", key: "dayclose", label: "Day Close", icon: Calculator },
-  { href: "/expenses", key: "expenses", label: "Expenses", icon: Wallet2 },
-  { href: "/cashbook", key: "cashbook", label: "Cashbook", icon: BookOpen },
-  { href: "/suppliers", key: "suppliers", label: "Suppliers", icon: Truck, pro: true },
-  { href: "/purchase-orders", key: "purchase_orders", label: "Purchase orders", icon: ClipboardList, pro: true },
-  { href: "/reports", key: "reports", label: "Reports", icon: FileBarChart2 },
-  // Gated on the same "inventory" permission as the main Inventory page —
-  // batches (FIFO/expiry) and barcode printing are inventory-adjacent,
-  // not a separate toggleable module.
-  { href: "/inventory/config", key: "inventory", label: "Config", icon: SlidersHorizontal },
+  { href: "/history", key: "history", label: "Bills", icon: Clock },
 ];
 
-// These four stay one tap away; everything else — including the
-// owner-only Staff/Clearance offers pages below — folds into "More" so
-// the nav doesn't force scrolling on a phone-sized drawer. Matched by
-// href, not permission key — Config shares the "inventory" key with
-// the main Inventory page but must still land in "More".
-const TOP_LEVEL_HREFS = ["/dashboard", "/billing", "/inventory", "/history"];
+const GROUPS = [
+  {
+    title: "Money",
+    items: [
+      { href: "/dayclose", key: "dayclose", label: "Day close", icon: Calculator },
+      { href: "/expenses", key: "expenses", label: "Expenses", icon: Wallet2 },
+      { href: "/cashbook", key: "cashbook", label: "Cashbook", icon: BookOpen },
+      { href: "/reports", key: "reports", label: "Reports & GST", icon: FileBarChart2 },
+    ],
+  },
+  {
+    title: "Stock & suppliers",
+    items: [
+      { href: "/suppliers", key: "suppliers", label: "Suppliers", icon: Truck, pro: true },
+      { href: "/purchase-orders", key: "purchase_orders", label: "Purchase orders", icon: ClipboardList, pro: true },
+      { href: "/clearance", key: "clearance", label: "Clearance offers", icon: Tag, ownerOnly: true },
+      // Same "inventory" permission as Stock: batches/expiry and barcode labels.
+      { href: "/inventory/config", key: "inventory", label: "Batches & barcodes", icon: SlidersHorizontal },
+    ],
+  },
+  {
+    title: "Shop",
+    items: [{ href: "/staff", key: "staff", label: "Staff", icon: Users, ownerOnly: true }],
+  },
+];
 
 const todayStr = () => new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 
@@ -60,7 +69,6 @@ export default function Sidebar({ onOpenSettings, onNavigate }) {
   const { supabase, activeShop, activeShopId, isOwner, hasPermission, pendingCount } = useShop();
   const pathname = usePathname();
   const [lowStockCount, setLowStockCount] = useState(0);
-  const [moreOpen, setMoreOpen] = useState(false);
 
   useEffect(() => {
     if (!activeShopId) return;
@@ -80,16 +88,11 @@ export default function Sidebar({ onOpenSettings, onNavigate }) {
 
   if (!activeShop) return null;
 
-  const enabledModules = activeShop.enabled_modules || NAV_ITEMS.map((i) => i.key);
-  const visibleNav = NAV_ITEMS.filter((item) => enabledModules.includes(item.key) && hasPermission(item.key));
-  const topNav = visibleNav.filter((item) => TOP_LEVEL_HREFS.includes(item.href));
-  const moreNav = [
-    ...visibleNav.filter((item) => !TOP_LEVEL_HREFS.includes(item.href)),
-    ...(isOwner && enabledModules.includes("staff") ? [{ href: "/staff", label: "Staff", icon: Users }] : []),
-    ...(isOwner && enabledModules.includes("clearance") ? [{ href: "/clearance", label: "Clearance offers", icon: Tag }] : []),
-  ];
-  const moreActive = moreNav.some((item) => item.href === pathname);
-  const showMore = moreOpen || moreActive;
+  const enabledModules = activeShop.enabled_modules || MAIN_NAV.map((i) => i.key);
+  const allowed = (item) =>
+    item.ownerOnly ? isOwner && enabledModules.includes(item.key) : enabledModules.includes(item.key) && hasPermission(item.key);
+  const mainNav = MAIN_NAV.filter(allowed);
+  const groups = GROUPS.map((g) => ({ ...g, items: g.items.filter(allowed) })).filter((g) => g.items.length);
 
   function renderNavItem(item) {
     const Icon = item.icon;
@@ -140,23 +143,14 @@ export default function Sidebar({ onOpenSettings, onNavigate }) {
         <div className="ks-sidebar-gold-rule" />
       </div>
 
-      <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto ks-scroll">
-        {topNav.map(renderNavItem)}
-        {moreNav.length > 0 && (
-          <>
-            <button
-              onClick={() => setMoreOpen((v) => !v)}
-              className={`ks-sidebar-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold ${
-                moreActive && !moreOpen ? "active" : ""
-              }`}
-            >
-              <MoreHorizontal size={17} />
-              More
-              <ChevronRight size={14} className={`ml-auto transition-transform ${showMore ? "rotate-90" : ""}`} />
-            </button>
-            {showMore && <div className="space-y-1 pl-2">{moreNav.map(renderNavItem)}</div>}
-          </>
-        )}
+      <nav className="flex-1 px-3 py-2 overflow-y-auto ks-scroll">
+        <div className="space-y-1">{mainNav.map(renderNavItem)}</div>
+        {groups.map((g) => (
+          <div key={g.title} className="mt-5">
+            <p className="px-3.5 mb-1.5 text-[10px] font-bold uppercase tracking-wider ks-sidebar-muted">{g.title}</p>
+            <div className="space-y-1">{g.items.map(renderNavItem)}</div>
+          </div>
+        ))}
       </nav>
 
       <div className="p-3 border-t ks-sidebar-border">

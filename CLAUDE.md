@@ -28,6 +28,26 @@ Nexper is a billing, stock and udhaar app for small Indian shops
   Wide tables need a phone layout (see `ks-only-mobile` / `ks-only-desk` on
   the Stock and Udhaar pages).
 
+## Keep it lean
+
+Shopkeepers use this at a busy counter. Every screen has one obvious main
+action, and only what's needed for it is shown; everything else sits one
+tap away (folded sections, a "⋯" menu, or the side menu).
+
+- **Home:** today's sales, **New bill**, three quick tiles (Stock, Udhaar,
+  Day close) and one **Needs attention** list (max 5 rows, each with its
+  fix button). Charts and other stats live under "More insights".
+- **New bill:** search (with scan and voice), quick item tiles, then the
+  bill: items, total, **Cash / UPI / Udhaar**, **Save bill**. Customer,
+  phone, discount, card and bank transfer fold under "+ Customer, discount".
+  On phones a checkout bar shows while the Save button is off screen.
+- **Stock:** search and **Add item**; catalogue, supplier-bill scan, import
+  and profit-per-item are in the "⋯" menu.
+- Same words everywhere: Home, New bill, Stock, Udhaar, Bills, Day close.
+  The phone top bar shows the screen name.
+- Before adding a new button to a main screen, ask whether it can live in
+  a fold or a menu instead.
+
 ## Layout
 
 - The account menu (`components/AccountMenu.js`) sits top right on every

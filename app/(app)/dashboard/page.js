@@ -9,12 +9,16 @@ import {
   TrendingUp,
   ArrowUpCircle,
   ArrowDownCircle,
-  Users,
   Loader2,
   CalendarClock,
-  Tag,
   Share2,
   Activity,
+  Receipt,
+  PackagePlus,
+  Calculator,
+  ChevronDown,
+  MessageCircle,
+  CheckCircle2,
 } from "lucide-react";
 import { useShop } from "@/components/ShopContext";
 import StatCard from "@/components/StatCard";
@@ -25,7 +29,7 @@ import { customerBalance, topCustomers } from "@/lib/dashboardHelpers";
 import { fetchShopItems } from "@/lib/products";
 import MiniBarChart from "@/components/MiniBarChart";
 import { categoryColor } from "@/components/CategoryChip";
-import { whatsappLink, dailyReportText } from "@/lib/messaging";
+import { whatsappLink, dailyReportText, creditReminderText } from "@/lib/messaging";
 
 export default function DashboardPage() {
   const { supabase, activeShopId, activeShop, user, isOwner } = useShop();
@@ -38,6 +42,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [detail, setDetail] = useState(null); // 'items' | 'value' | 'low' | 'profit'
   const [customerDetail, setCustomerDetail] = useState(null);
+  const [showInsights, setShowInsights] = useState(false);
 
   const load = useCallback(async () => {
     if (!activeShopId) return;
@@ -140,283 +145,324 @@ export default function DashboardPage() {
     [expiringBatches, items]
   );
 
+  // Today's takings split the way the counter thinks about it.
+  const todaySplit = useMemo(() => {
+    const split = { cash: 0, upi: 0, udhaar: 0 };
+    todaysBills.forEach((b) => {
+      if (b.payment_type === "credit") split.udhaar += b.total;
+      else if (b.payment_method === "upi") split.upi += b.total;
+      else split.cash += b.total;
+    });
+    return split;
+  }, [todaysBills]);
+
+  // Customers who owe money, biggest first, with days since their last entry.
+  const dueCustomers = useMemo(() => {
+    const byPhone = new Map();
+    credits.forEach((c) => {
+      const cur = byPhone.get(c.phone) || { phone: c.phone, name: c.name, last: 0 };
+      cur.last = Math.max(cur.last, new Date(c.date).getTime());
+      byPhone.set(c.phone, cur);
+    });
+    return [...byPhone.values()]
+      .map((c) => ({ ...c, balance: customerBalance(credits, c.phone), days: Math.floor((Date.now() - c.last) / 86400000) }))
+      .filter((c) => c.balance > 0)
+      .sort((a, b) => b.balance - a.balance);
+  }, [credits]);
+
   if (loading) {
     return (
       <div className="pt-6 flex items-center gap-2 text-sm text-muted">
-        <Loader2 size={16} className="animate-spin" /> Loading dashboard…
+        <Loader2 size={16} className="animate-spin" /> Loading…
       </div>
     );
   }
 
-  return (
-    <div className="pt-6">
-      <div className="ks-hero p-6 sm:p-7 mb-4">
-        <div className="flex items-start justify-between flex-wrap gap-4">
-          <div>
-            <p className="text-sm mb-3" style={{ color: "rgba(255,255,255,0.75)" }}>
-              {greeting()}{displayName(user) ? `, ${displayName(user)}` : ""} 👋
-            </p>
-            <p className="ks-eyebrow mb-2" style={{ color: "var(--gold)" }}>Today&apos;s Sales</p>
-            <div className="ks-hero-figure text-4xl sm:text-5xl">
-              <sup className="text-xl sm:text-2xl">₹</sup>{rupee(todaysSales).slice(1)}
-            </div>
-            <p className="text-sm mt-2" style={{ color: "rgba(255,255,255,0.75)" }}>
-              {todaysBills.length} bill{todaysBills.length === 1 ? "" : "s"} · profit ~{rupee(todaysProfit)} today
-            </p>
-          </div>
-          <div className="flex flex-col items-end gap-2">
-            <button
-              onClick={() => window.open(whatsappLink("", dailyReportText(activeShop?.name || "Store", todaysBills, items)), "_blank")}
-              className="ks-hero-btn flex items-center gap-1.5 text-xs px-3.5 py-2"
-            >
-              <Share2 size={13} /> Share report
-            </button>
-          </div>
-        </div>
-        <div className="ks-hero-rule mt-5" />
-      </div>
+  // One list of things that need the owner today, each with its fix.
+  const attention = [
+    ...[...lowItems]
+      .sort((a, b) => a.stock - b.stock)
+      .slice(0, 2)
+      .map((i) => ({
+        key: `low-${i.id}`,
+        icon: AlertTriangle,
+        tone: i.stock === 0 ? "danger" : "warn",
+        title: i.name,
+        sub: i.stock === 0 ? "Out of stock" : `Only ${i.stock} ${i.unit} left`,
+        action: "Add stock",
+        onClick: () => router.push(`/inventory?q=${encodeURIComponent(i.name)}`),
+      })),
+    ...expiringWithNames.slice(0, 1).map((b) => ({
+      key: `exp-${b.id}`,
+      icon: CalendarClock,
+      tone: b.days <= 0 ? "danger" : "warn",
+      title: b.itemName,
+      sub: `${b.qty_remaining} ${b.unit} · ${b.days < 0 ? `expired ${Math.abs(b.days)}d ago` : b.days === 0 ? "expires today" : `expires in ${b.days}d`}`,
+      action: isOwner ? "Offer" : null,
+      onClick: () => router.push(`/clearance?items=${b.shop_product_id}`),
+    })),
+    ...dueCustomers.slice(0, 2).map((c) => ({
+      key: `due-${c.phone}`,
+      icon: Wallet,
+      tone: "udhaar",
+      title: c.name,
+      sub: `Owes ${rupee(c.balance)}${c.days > 0 ? ` · ${c.days}d` : ""}`,
+      action: "Remind",
+      actionIcon: MessageCircle,
+      onClick: () => window.open(whatsappLink(c.phone, creditReminderText(activeShop?.name, c.name, c.balance)), "_blank"),
+    })),
+  ];
+  const TONE = {
+    danger: { bg: "var(--danger-soft)", fg: "var(--danger)" },
+    warn: { bg: "var(--warn-soft)", fg: "var(--warn)" },
+    udhaar: { bg: "var(--udhaar-soft)", fg: "var(--udhaar)" },
+  };
 
-      {expiringWithNames.length > 0 && (
-        <div className="ks-card p-4 mb-4" style={{ borderLeft: "4px solid var(--danger)" }}>
-          <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
-            <div className="flex items-center gap-2">
-              <CalendarClock size={16} style={{ color: "var(--danger)" }} />
-              <h2 className="ks-display font-bold text-sm">Expiring soon — today&apos;s risk check</h2>
-            </div>
-            {isOwner && (
-              <button
-                onClick={() =>
-                  router.push(
-                    `/clearance?items=${[...new Set(expiringWithNames.map((b) => b.shop_product_id))].join(",")}`
-                  )
-                }
-                className="text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1"
-                style={{ background: "var(--danger-solid)", color: "#fff" }}
-              >
-                <Tag size={12} /> Run clearance offer
-              </button>
-            )}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {expiringWithNames.map((b) => (
-              <span
-                key={b.id}
-                className="text-xs font-semibold px-2.5 py-1.5 rounded-full"
-                style={{ background: b.days < 0 ? "var(--danger-soft)" : "var(--warn-soft)", color: b.days < 0 ? "var(--danger)" : "var(--warn)" }}
-              >
-                {b.itemName} · {b.qty_remaining} {b.unit} · {b.days < 0 ? `expired ${Math.abs(b.days)}d ago` : b.days === 0 ? "expires today" : `${b.days}d left`}
-              </span>
+  const quick = [
+    { label: "Stock", icon: PackagePlus, href: "/inventory", note: lowStockCount > 0 ? `${lowStockCount} low` : null, noteColor: "var(--warn)" },
+    { label: "Udhaar", icon: Wallet, href: "/credit", note: outstandingCredit > 0 ? rupee(outstandingCredit) : null, noteColor: "var(--udhaar)" },
+    { label: "Day close", icon: Calculator, href: "/dayclose" },
+  ];
+
+  return (
+    <div className="pt-5 pb-4 max-w-2xl">
+      {/* Today */}
+      <div className="ks-hero p-5 sm:p-6 mb-3">
+        <div className="flex items-start justify-between gap-3">
+          <p className="text-sm" style={{ color: "rgba(255,255,255,0.75)" }}>
+            {greeting()}
+            {displayName(user) ? `, ${displayName(user)}` : ""}
+          </p>
+          <button
+            onClick={() => window.open(whatsappLink("", dailyReportText(activeShop?.name || "Store", todaysBills, items)), "_blank")}
+            className="ks-hero-btn w-8 h-8 flex items-center justify-center shrink-0"
+            aria-label="Share today's report on WhatsApp"
+            title="Share today's report"
+          >
+            <Share2 size={14} />
+          </button>
+        </div>
+        <p className="ks-eyebrow mt-3 mb-1" style={{ color: "var(--gold)" }}>Today</p>
+        <div className="ks-hero-figure text-[44px] sm:text-5xl">
+          <sup className="text-2xl">₹</sup>
+          {rupee(todaysSales).slice(1)}
+        </div>
+        <p className="text-sm mt-1.5" style={{ color: "rgba(255,255,255,0.75)" }}>
+          {todaysBills.length} bill{todaysBills.length === 1 ? "" : "s"}
+          {todaysProfit > 0 ? ` · profit ~${rupee(todaysProfit)}` : ""}
+        </p>
+        {todaysBills.length > 0 && (
+          <div className="grid grid-cols-3 gap-2 mt-4">
+            {[
+              ["Cash", todaySplit.cash],
+              ["UPI", todaySplit.upi],
+              ["Udhaar", todaySplit.udhaar],
+            ].map(([label, v]) => (
+              <div key={label} className="rounded-xl px-3 py-2" style={{ background: "rgba(255,255,255,0.08)" }}>
+                <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.65)" }}>{label}</p>
+                <p className="ks-mono text-sm font-semibold text-white">{rupee(v)}</p>
+              </div>
             ))}
           </div>
-        </div>
-      )}
-
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3.5">
-        <StatCard
-          icon={<Package size={16} />}
-          bar="var(--accent)" tintBg="var(--accent-soft-bg)" tintFg="var(--accent)"
-          label="Items in stock"
-          value={items.length}
-          onClick={() => setDetail("items")}
-        />
-        <StatCard
-          icon={<Wallet size={16} />}
-          bar="var(--success-solid)" tintBg="rgba(31,138,95,0.10)" tintFg="var(--success)"
-          label="Stock value"
-          value={rupee(stockValue)}
-          onClick={() => setDetail("value")}
-        />
-        <StatCard
-          icon={<AlertTriangle size={16} />}
-          bar="var(--danger-solid)" tintBg="rgba(193,63,69,0.10)" tintFg="var(--danger)"
-          label="Low stock"
-          value={lowStockCount}
-          onClick={() => setDetail("low")}
-        />
-        <StatCard
-          icon={<TrendingUp size={16} />}
-          bar="var(--gold)" tintBg="var(--gold-soft)" tintFg="var(--gold)"
-          label="Today's profit"
-          value={rupee(todaysProfit)}
-          onClick={() => setDetail("profit")}
-        />
-        <StatCard
-          icon={<Wallet size={16} />}
-          bar="var(--warn-solid)" tintBg="rgba(181,114,11,0.10)" tintFg="var(--warn)"
-          label="Outstanding udhaar"
-          value={rupee(outstandingCredit)}
-          onClick={() => router.push("/credit")}
-        />
+        )}
       </div>
 
-      {(!activeShop?.enabled_modules || activeShop.enabled_modules.includes("charts")) && (
-      <div className="grid md:grid-cols-2 gap-4 mt-5">
-        <div className="ks-card p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="ks-display font-bold">Sales this week</h2>
-            <span className="ks-mono text-xs text-[var(--text-secondary)]">last 7 days</span>
-          </div>
-          <MiniBarChart
-            data={last7Days}
-            color="var(--accent)"
-            formatValue={(v) => `₹${v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}`}
-          />
-        </div>
+      {/* The one thing the counter does most */}
+      <button
+        onClick={() => router.push("/billing")}
+        className="ks-btn-primary w-full flex items-center justify-center gap-2 py-4 text-base mb-3"
+      >
+        <Receipt size={19} /> New bill
+      </button>
 
-        <div className="ks-card p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="ks-display font-bold">Top categories</h2>
-            <span className="ks-mono text-xs text-[var(--text-secondary)]">last 30 days</span>
+      <div className="grid grid-cols-3 gap-2.5 mb-5">
+        {quick.map(({ label, icon: Icon, href, note, noteColor }) => (
+          <button
+            key={label}
+            onClick={() => router.push(href)}
+            className="ks-card flex flex-col items-center justify-center gap-1.5 py-3.5 px-2 transition-transform active:scale-[.97]"
+          >
+            <span className="ks-tint-icon">
+              <Icon size={16} />
+            </span>
+            <span className="text-xs font-semibold">{label}</span>
+            {note && <span className="ks-mono text-[10px]" style={{ color: noteColor }}>{note}</span>}
+          </button>
+        ))}
+      </div>
+
+      {/* Needs attention */}
+      <h2 className="ks-display font-bold text-base mb-2">Needs attention</h2>
+      <div className="ks-card overflow-hidden mb-5">
+        {attention.length === 0 ? (
+          <div className="flex items-center gap-3 px-4 py-5">
+            <CheckCircle2 size={20} style={{ color: "var(--success)" }} />
+            <div>
+              <p className="text-sm font-semibold">All clear</p>
+              <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                {items.length === 0 ? "Add your stock to start billing." : "Nothing needs you right now."}
+              </p>
+            </div>
           </div>
-          {categorySales.length === 0 ? (
-            <p className="text-sm text-[var(--text-secondary)]">No sales yet — start billing to see category breakdown.</p>
-          ) : (
-            <div className="space-y-2.5">
-              {categorySales.map(([cat, total]) => {
-                const c = categoryColor(cat);
-                const pct = Math.round((total / categorySales[0][1]) * 100);
-                return (
-                  <div key={cat}>
-                    <div className="flex items-center justify-between text-sm mb-1">
-                      <span className="font-semibold" style={{ color: c.text }}>{cat}</span>
-                      <span className="ks-mono text-xs text-[var(--text-secondary)]">{rupee(total)}</span>
+        ) : (
+          attention.map((a) => {
+            const t = TONE[a.tone];
+            const ActionIcon = a.actionIcon;
+            return (
+              <div key={a.key} className="flex items-center gap-3 px-4 py-3 border-b border-[var(--border)] last:border-0">
+                <span className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: t.bg, color: t.fg }}>
+                  <a.icon size={15} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold truncate">{a.title}</p>
+                  <p className="text-xs" style={{ color: t.fg }}>{a.sub}</p>
+                </div>
+                {a.action && (
+                  <button
+                    onClick={a.onClick}
+                    className="text-xs font-semibold px-3 py-1.5 rounded-full shrink-0 flex items-center gap-1"
+                    style={{ background: "var(--accent-soft-bg)", color: "var(--accent-soft-text)" }}
+                  >
+                    {ActionIcon && <ActionIcon size={12} />}
+                    {a.action}
+                  </button>
+                )}
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Everything else, folded away */}
+      <button
+        onClick={() => setShowInsights((v) => !v)}
+        aria-expanded={showInsights}
+        className="w-full flex items-center justify-between text-sm font-semibold py-2"
+        style={{ color: "var(--text-secondary)" }}
+      >
+        More insights
+        <ChevronDown size={16} className={`transition-transform ${showInsights ? "rotate-180" : ""}`} />
+      </button>
+
+      {showInsights && (
+        <div className="space-y-4 mt-2 ks-fade-up">
+          <div className="grid grid-cols-2 gap-3">
+            <StatCard
+              icon={<Package size={16} />}
+              bar="var(--accent)" tintBg="var(--accent-soft-bg)" tintFg="var(--accent)"
+              label="Items in stock"
+              value={items.length}
+              onClick={() => setDetail("items")}
+            />
+            <StatCard
+              icon={<Wallet size={16} />}
+              bar="var(--success-solid)" tintBg="var(--success-soft)" tintFg="var(--success)"
+              label="Stock value"
+              value={rupee(stockValue)}
+              onClick={() => setDetail("value")}
+            />
+            <StatCard
+              icon={<TrendingUp size={16} />}
+              bar="var(--gold)" tintBg="var(--gold-soft)" tintFg="var(--gold)"
+              label="Today's profit"
+              value={rupee(todaysProfit)}
+              onClick={() => setDetail("profit")}
+            />
+            <StatCard
+              icon={<AlertTriangle size={16} />}
+              bar="var(--danger-solid)" tintBg="var(--danger-soft)" tintFg="var(--danger)"
+              label="Low stock"
+              value={lowStockCount}
+              onClick={() => setDetail("low")}
+            />
+          </div>
+
+          <div className="ks-card p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="ks-display font-bold">Sales this week</h2>
+              <span className="ks-mono text-xs text-[var(--text-secondary)]">last 7 days</span>
+            </div>
+            <MiniBarChart data={last7Days} color="var(--accent)" formatValue={(v) => `₹${v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}`} />
+          </div>
+
+          {categorySales.length > 0 && (
+            <div className="ks-card p-5">
+              <h2 className="ks-display font-bold mb-4">Top categories <span className="text-xs font-normal text-[var(--text-secondary)]">· 30 days</span></h2>
+              <div className="space-y-2.5">
+                {categorySales.map(([cat, total]) => {
+                  const c = categoryColor(cat);
+                  const pct = Math.round((total / categorySales[0][1]) * 100);
+                  return (
+                    <div key={cat}>
+                      <div className="flex items-center justify-between text-sm mb-1">
+                        <span className="font-semibold" style={{ color: c.text }}>{cat}</span>
+                        <span className="ks-mono text-xs text-[var(--text-secondary)]">{rupee(total)}</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-[var(--bg-surface-alt)] overflow-hidden">
+                        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: c.base }} />
+                      </div>
                     </div>
-                    <div className="h-2 rounded-full bg-[var(--bg-surface-alt)] overflow-hidden">
-                      <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: c.text }} />
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {bestCustomers.length > 0 && (
+            <div className="ks-card p-5">
+              <h2 className="ks-display font-bold mb-3">Top customers</h2>
+              <div className="space-y-1">
+                {bestCustomers.map((c, i) => (
+                  <button
+                    key={c.phone}
+                    onClick={() => setCustomerDetail(c)}
+                    className="w-full flex items-center justify-between text-sm py-1.5 -mx-1 px-1 rounded-lg hover:bg-[var(--bg-surface-alt)] text-left"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className={`ks-medal ${i === 0 ? "gold" : i === 1 ? "silver" : i === 2 ? "bronze" : "plain"}`}>{i + 1}</span>
+                      <div>
+                        <div className="font-medium">{c.name}</div>
+                        <div className="text-[11px] text-[var(--text-secondary)]">
+                          {c.visits} visit{c.visits === 1 ? "" : "s"}
+                        </div>
+                      </div>
                     </div>
+                    <span className="ks-mono font-semibold">{rupee(c.total)}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {movements.length > 0 && (
+            <div className="ks-card p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Activity size={15} style={{ color: "var(--accent-soft-text)" }} />
+                <h2 className="ks-display font-bold">Recent stock movement</h2>
+              </div>
+              <div className="space-y-3">
+                {movements.map((m) => (
+                  <div key={m.id} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2 min-w-0">
+                      {m.type === "in" ? (
+                        <ArrowUpCircle size={16} style={{ color: "var(--success)" }} />
+                      ) : (
+                        <ArrowDownCircle size={16} style={{ color: "var(--danger)" }} />
+                      )}
+                      <span className="font-medium truncate">{m.item_name}</span>
+                      <span className="text-[var(--text-secondary)] ks-mono text-xs shrink-0">{m.reason}</span>
+                    </div>
+                    <span className="ks-mono font-semibold shrink-0" style={{ color: m.type === "in" ? "var(--success)" : "var(--danger)" }}>
+                      {m.type === "in" ? "+" : "−"}
+                      {m.qty}
+                    </span>
                   </div>
-                );
-              })}
+                ))}
+              </div>
             </div>
           )}
         </div>
-      </div>
       )}
-
-      <div className="grid md:grid-cols-3 gap-4 mt-5">
-        <div className="ks-card ks-panel-wash overflow-hidden" style={{ "--wash": "rgba(193,63,69,0.06)" }}>
-          <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="ks-tint-icon" style={{ "--tint-bg": "rgba(193,63,69,0.10)", "--tint-fg": "var(--danger)" }}>
-                <AlertTriangle size={15} />
-              </div>
-              <h2 className="ks-display font-bold">Stock alerts</h2>
-              {lowItems.length > 0 && (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "var(--danger-soft)", color: "var(--danger)" }}>
-                  {lowItems.length}
-                </span>
-              )}
-            </div>
-            {lowItems.length > 0 && (
-              <button
-                onClick={() => router.push("/inventory")}
-                className="text-xs font-semibold px-2.5 py-1 rounded-full"
-                style={{ background: "var(--accent-soft-bg)", color: "var(--accent)" }}
-              >
-                View all
-              </button>
-            )}
-          </div>
-          <div className="divide-y divide-[var(--border)]">
-            {lowItems.length === 0 && (
-              <p className="text-sm text-[var(--text-secondary)] px-5 py-6">Nothing running low right now. 🎉</p>
-            )}
-            {[...lowItems].sort((a, b) => a.stock - b.stock).slice(0, 6).map((i) => {
-              const isOut = i.stock === 0;
-              return (
-                <div key={i.id} className="flex items-center justify-between px-5 py-3 hover:bg-[var(--bg-surface-alt)] transition-colors">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span
-                      className={`shrink-0 text-[9px] font-extrabold px-1.5 py-0.5 rounded tracking-wide ${isOut ? "ks-pulse" : ""}`}
-                      style={isOut
-                        ? { background: "var(--danger-soft)", color: "var(--danger)" }
-                        : { background: "var(--warn-soft)", color: "var(--warn)" }}
-                    >
-                      {isOut ? "OUT" : "LOW"}
-                    </span>
-                    <span className="font-medium text-sm truncate">{i.name}</span>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0 ml-2">
-                    <span className="ks-mono text-xs font-semibold" style={{ color: isOut ? "var(--danger)" : "var(--warn)" }}>
-                      {i.stock} {i.unit}
-                    </span>
-                    <button
-                      onClick={() => router.push("/inventory")}
-                      className="text-[11px] font-bold px-2 py-1 rounded-lg"
-                      style={{ background: "var(--accent-soft-bg)", color: "var(--accent)" }}
-                    >
-                      + Stock
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="ks-card ks-panel-wash" style={{ "--wash": "var(--accent-soft-bg)" }}>
-          <div className="px-5 py-4 border-b border-[var(--border)] flex items-center gap-2.5">
-            <div className="ks-tint-icon" style={{ "--tint-bg": "var(--accent-soft-bg)", "--tint-fg": "var(--accent)" }}>
-              <Activity size={15} />
-            </div>
-            <h2 className="ks-display font-bold">Recent stock movement</h2>
-          </div>
-          <div className="p-5 space-y-3 max-h-72 overflow-y-auto ks-scroll">
-            {movements.length === 0 && <p className="text-sm text-[var(--text-secondary)]">No stock movement logged yet.</p>}
-            {movements.map((m) => (
-              <div key={m.id} className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  {m.type === "in" ? (
-                    <ArrowUpCircle size={16} style={{ color: "var(--accent)" }} />
-                  ) : (
-                    <ArrowDownCircle size={16} className="text-[var(--danger)]" />
-                  )}
-                  <div>
-                    <span className="font-medium">{m.item_name}</span>
-                    <span className="text-[var(--text-secondary)] ks-mono text-xs ml-2">{m.reason}</span>
-                  </div>
-                </div>
-                <span className="ks-mono font-semibold" style={{ color: m.type === "in" ? "var(--accent)" : "var(--danger)" }}>
-                  {m.type === "in" ? "+" : "−"}
-                  {m.qty}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="ks-card ks-panel-wash" style={{ "--wash": "var(--gold-soft)" }}>
-          <div className="px-5 py-4 border-b border-[var(--border)] flex items-center gap-2.5">
-            <div className="ks-tint-icon" style={{ "--tint-bg": "var(--gold-soft)", "--tint-fg": "var(--gold)" }}>
-              <Users size={15} />
-            </div>
-            <h2 className="ks-display font-bold">Top customers</h2>
-          </div>
-          <div className="p-5 space-y-1 max-h-72 overflow-y-auto ks-scroll">
-            {bestCustomers.length === 0 && <p className="text-sm text-[var(--text-secondary)]">No customer purchases recorded yet.</p>}
-            {bestCustomers.map((c, i) => (
-              <button
-                key={c.phone}
-                onClick={() => setCustomerDetail(c)}
-                className="w-full flex items-center justify-between text-sm py-1.5 -mx-1 px-1 rounded-lg hover:bg-[var(--bg-surface-alt)] text-left"
-              >
-                <div className="flex items-center gap-2">
-                  <span className={`ks-medal ${i === 0 ? "gold" : i === 1 ? "silver" : i === 2 ? "bronze" : "plain"}`}>
-                    {i + 1}
-                  </span>
-                  <div>
-                    <div className="font-medium">{c.name}</div>
-                    <div className="text-[11px] text-[var(--text-secondary)]">
-                      {c.visits} visit{c.visits === 1 ? "" : "s"}
-                    </div>
-                  </div>
-                </div>
-                <span className="ks-mono font-semibold">{rupee(c.total)}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
 
       {detail && (
         <StatDetailModal

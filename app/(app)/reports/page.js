@@ -104,7 +104,7 @@ function ReportsPageInner() {
     <div className="pt-6 pb-10">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div>
-          <h1 className="ks-display font-bold text-xl">Reports</h1>
+          <h1 className="ks-display font-bold text-xl">Reports &amp; GST</h1>
           <p className="text-sm mt-0.5" style={{ color: "var(--text-secondary)" }}>
             GST collected on your sales, ready to hand off or file.
           </p>

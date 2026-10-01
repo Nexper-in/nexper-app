@@ -15,6 +15,8 @@ import {
   QrCode,
   CreditCard,
   Landmark,
+  BookOpen,
+  ChevronDown,
 } from "lucide-react";
 import { useShop } from "@/components/ShopContext";
 import ItemThumb from "@/components/ItemThumb";
@@ -62,6 +64,17 @@ function BillingPageInner() {
   const [voiceLang, setVoiceLang] = useState("en-IN");
   const [generating, setGenerating] = useState(false);
   const [showVoiceBilling, setShowVoiceBilling] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
+  // Phones: hide the floating checkout bar while the Save bill button is on screen.
+  const [billInView, setBillInView] = useState(false);
+  useEffect(() => {
+    const el = typeof document !== "undefined" ? document.getElementById("save-bill") : null;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    // The bottom ~150px is covered by the tab bar and the checkout bar itself.
+    const obs = new IntersectionObserver(([entry]) => setBillInView(entry.isIntersecting), { threshold: 1, rootMargin: "0px 0px -150px 0px" });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [loading, lastBill, cart.length > 0]);
   const recognitionRef = useRef(null);
   const voiceSupported = typeof window !== "undefined" && !!(window.SpeechRecognition || window.webkitSpeechRecognition);
 
@@ -315,10 +328,9 @@ function BillingPageInner() {
       if (offline) {
         showToast("You're offline — this bill will sync automatically once you're back online", "warn");
       } else if (billType === "credit") {
-        showToast(`Bill generated on udhaar — ${rupee(total)} added to ${customer.name || "customer"}'s balance`);
-      } else {
-        showToast("Bill generated");
+        showToast(`Udhaar bill saved — ${rupee(total)} added to ${customer.name || "customer"}'s balance`);
       }
+      // A normal bill needs no toast: the bill panel itself turns into "Bill saved".
 
       setItems((prev) =>
         prev.map((p) => {
@@ -333,6 +345,7 @@ function BillingPageInner() {
       setBillType("cash");
       setLoyaltyDiscount(false);
       setManualDiscount({ type: "pct", value: "" });
+      setShowDetails(false);
     } catch (err) {
       showToast(err.message, "err");
     } finally {
@@ -437,66 +450,70 @@ function BillingPageInner() {
     setLastBill(null);
     setQuery("");
     setActiveCategory(null);
+    setShowDetails(false);
+  }
+
+  // Quick tiles: items marked "quick", then best sellers, in stock only.
+  const salesCount = new Map();
+  bills.forEach((b) => (b.items || []).forEach((l) => salesCount.set(l.shop_product_id, (salesCount.get(l.shop_product_id) || 0) + l.qty)));
+  const quickItems = [...pricedItems]
+    .filter((i) => i.stock > 0)
+    .sort((a, b) => (b.quick ? 1 : 0) - (a.quick ? 1 : 0) || (salesCount.get(b.id) || 0) - (salesCount.get(a.id) || 0))
+    .slice(0, 8);
+  const cartQty = cart.reduce((s, c) => s + c.qty, 0);
+  const pay = billType === "credit" ? "udhaar" : paymentMethod;
+  function choosePay(id) {
+    if (id === "udhaar") {
+      setBillType("credit");
+      setShowDetails(true); // udhaar needs the customer's phone
+    } else {
+      setBillType("cash");
+      setPaymentMethod(id);
+    }
   }
 
   return (
     <div className="pt-4">
-      {/* Page header */}
-      <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-        <h1 className="ks-display font-bold text-xl">New Sale</h1>
-        <div className="flex items-center gap-3">
-          <span className="text-sm" style={{ color: "var(--text-secondary)" }}>
-            {new Date().toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "long", year: "numeric" })}
-          </span>
-          <button onClick={clearCart} className="ks-btn-primary flex items-center gap-1.5 text-sm py-2">
-            <Plus size={14} /> New Sale
-          </button>
-        </div>
+      <div className="flex items-baseline justify-between mb-3">
+        {/* Phones already show "New bill" in the top bar */}
+        <h1 className="ks-display font-bold text-xl hidden lg:block">New bill</h1>
+        <span className="ks-mono text-xs ml-auto" style={{ color: "var(--text-secondary)" }}>{nextBillNo}</span>
       </div>
 
       <div className="ks-billing-grid">
-        {/* ── Left: search / scan / voice to find an item ── */}
+        {/* ── Find items: search, scan or speak; quick tiles below ── */}
         <div>
-          {/* Search + category + voice */}
-          <div className="flex gap-2 mb-3">
-            <div className="relative flex-1">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--text-secondary)" }} />
-              <input
-                className="ks-input"
-                style={{ paddingLeft: "2.25rem", paddingRight: "2.5rem" }}
-                placeholder="Search products..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
+          <div className="relative mb-3">
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "var(--text-secondary)" }} />
+            <input
+              className="ks-input"
+              style={{ paddingLeft: "2.5rem", paddingRight: "5.25rem", paddingTop: 12, paddingBottom: 12, fontSize: 15 }}
+              placeholder="Search item or code"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex gap-1">
               <button
                 onClick={startBarcodeScanner}
+                aria-label="Scan barcode"
                 title="Scan barcode"
-                className={`absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center ${scannerActive ? "ks-pulse" : ""}`}
-                style={{ background: scannerActive ? "var(--accent)" : "transparent", color: scannerActive ? "#fff" : "var(--text-secondary)" }}
+                className={`w-9 h-9 rounded-lg flex items-center justify-center ${scannerActive ? "ks-pulse" : ""}`}
+                style={{ background: scannerActive ? "var(--accent)" : "var(--bg-surface-alt)", color: scannerActive ? "#fff" : "var(--text-primary)" }}
               >
-                <ScanLine size={14} />
+                <ScanLine size={16} />
+              </button>
+              <button
+                onClick={() => setShowVoiceBilling(true)}
+                aria-label="Say the items"
+                title="Say the items"
+                className="w-9 h-9 rounded-lg flex items-center justify-center"
+                style={{ background: "var(--grad)", color: "#fff" }}
+              >
+                <Mic size={16} />
               </button>
             </div>
-            <select
-              className="ks-input shrink-0"
-              style={{ width: "148px" }}
-              value={activeCategory || ""}
-              onChange={(e) => setActiveCategory(e.target.value || null)}
-            >
-              <option value="">All Categories</option>
-              {categories.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <button
-              onClick={() => setShowVoiceBilling(true)}
-              title="Voice billing"
-              className="w-10 h-10 flex items-center justify-center rounded-xl shrink-0"
-              style={{ background: "var(--accent)", color: "#fff" }}
-            >
-              <Mic size={16} />
-            </button>
           </div>
 
-          {/* Search / category results — a list, not a browsable catalog */}
           {browsing ? (
             <div className="ks-card divide-y divide-[var(--border)] overflow-hidden">
               {displayItems.map((item) => (
@@ -504,7 +521,7 @@ function BillingPageInner() {
                   key={item.id}
                   onClick={() => item.stock > 0 && setPickerItem(item)}
                   disabled={item.stock <= 0}
-                  className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--bg-surface-alt)] disabled:opacity-50 disabled:cursor-default disabled:hover:bg-transparent"
+                  className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--bg-surface-alt)] disabled:opacity-50"
                 >
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
@@ -513,278 +530,306 @@ function BillingPageInner() {
                         <span className="ks-mono text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0" style={{ background: "var(--danger-solid)", color: "#fff" }}>
                           −{item.clearancePct}%
                         </span>
-                      ) : item.mrp > item.price ? (
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0" style={{ background: "var(--success-soft)", color: "var(--success)" }}>
-                          {Math.round(((item.mrp - item.price) / item.mrp) * 100)}% OFF
-                        </span>
                       ) : null}
                     </div>
-                    <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{item.category}</p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="font-bold text-sm" style={{ color: "var(--warn)" }}>
-                      {item.originalPrice ? (
-                        <span className="line-through mr-1 font-normal opacity-60">{rupee(item.originalPrice)}</span>
-                      ) : item.mrp > item.price ? (
-                        <span className="line-through mr-1 font-normal opacity-60">{rupee(item.mrp)}</span>
-                      ) : null}
-                      {rupee(item.price)}
-                      <span className="font-normal text-[11px] ml-0.5">/{item.unit}</span>
-                    </p>
                     <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>
-                      {item.stock > 0 ? `${item.stock} in stock` : "Out of stock"}
+                      {item.stock > 0 ? `${item.stock} ${item.unit} in stock` : "Out of stock"}
                     </p>
                   </div>
+                  <p className="font-bold text-sm shrink-0 ks-mono">
+                    {item.originalPrice ? <span className="line-through mr-1 font-normal opacity-60">{rupee(item.originalPrice)}</span> : null}
+                    {rupee(item.price)}
+                  </p>
                 </button>
               ))}
               {displayItems.length === 0 && (
                 <div className="py-10 text-center text-sm" style={{ color: "var(--text-secondary)" }}>
-                  No products found
+                  No item called &quot;{query}&quot;
                 </div>
               )}
             </div>
+          ) : quickItems.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {quickItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setPickerItem(item)}
+                  className="ks-card text-left px-3 py-3 transition-transform active:scale-[.97]"
+                >
+                  <p className="text-sm font-semibold leading-snug line-clamp-2 min-h-[2.5em]">{item.name}</p>
+                  <p className="ks-mono text-sm font-bold mt-1" style={{ color: "var(--accent-soft-text)" }}>{rupee(item.price)}</p>
+                </button>
+              ))}
+            </div>
           ) : (
-            <div className="ks-card py-14 text-center text-sm" style={{ color: "var(--text-secondary)" }}>
-              Search a product, scan a barcode, or pick a category to add it to the bill.
+            <div className="ks-card py-12 text-center text-sm" style={{ color: "var(--text-secondary)" }}>
+              Search, scan or speak to add items.
             </div>
           )}
         </div>
 
-        {/* ── Right: current bill panel ── */}
+        {/* ── The bill ── */}
         <div>
-          <div className="ks-card p-5 sticky top-20">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-bold text-base">Current Bill</h2>
-              <span className="ks-mono text-sm font-bold" style={{ color: "var(--warn)" }}>{nextBillNo}</span>
-            </div>
-
-            {/* Cart items */}
-            {cart.length === 0 ? (
-              <div className="py-8 text-center text-sm" style={{ color: "var(--text-secondary)" }}>
-                Tap a product to add it
-              </div>
-            ) : (
-              <div className="space-y-2.5 mb-4 max-h-52 overflow-y-auto ks-scroll">
-                {cart.map((c) => (
-                  <div key={c.shop_product_id} className="flex items-center gap-2">
-                    <span className="text-sm flex-1 font-medium truncate">{c.name}</span>
-                    {c.clearancePct && (
-                      <span className="ks-mono text-[9px] font-bold px-1 py-0.5 rounded-full shrink-0" style={{ background: "var(--danger-solid)", color: "#fff" }}>
-                        −{c.clearancePct}%
-                      </span>
-                    )}
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button onClick={() => updateQty(c.shop_product_id, c.qty - 1)} className="ks-qtybtn"><Minus size={11} /></button>
-                      <span className="ks-mono w-5 text-center text-xs font-bold">{c.qty}</span>
-                      <button onClick={() => updateQty(c.shop_product_id, c.qty + 1)} className="ks-qtybtn"><Plus size={11} /></button>
-                    </div>
-                    <span className="ks-mono text-xs font-semibold w-14 text-right shrink-0">{rupee(c.qty * c.price)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Totals */}
-            {cart.length > 0 && (
-              <div className="py-3 border-t border-b mb-4 space-y-1.5" style={{ borderColor: "var(--border)" }}>
-                <div className="flex justify-between text-sm">
-                  <span>Subtotal</span>
-                  <span className="ks-mono">{rupee(subtotal)}</span>
-                </div>
-                {cartGst > 0 && (
-                  <div className="flex justify-between text-sm" style={{ color: "var(--text-secondary)" }}>
-                    <span>GST</span>
-                    <span className="ks-mono">{rupee(cartGst)}</span>
-                  </div>
-                )}
-                {clearanceSavings > 0 && (
-                  <div className="flex justify-between text-xs" style={{ color: "var(--danger)" }}>
-                    <span>Clearance savings</span>
-                    <span className="ks-mono">−{rupee(clearanceSavings)}</span>
-                  </div>
-                )}
-                {discountAmount > 0 && (
-                  <div className="flex justify-between text-xs" style={{ color: "var(--warn)" }}>
-                    <span>Discount</span>
-                    <span className="ks-mono">−{rupee(discountAmount)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between font-bold text-base pt-1">
-                  <span>Total</span>
-                  <span className="ks-mono">{rupee(total)}</span>
-                </div>
-              </div>
-            )}
-
-            {/* Customer */}
-            <p className="text-[10px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "var(--text-secondary)" }}>
-              Customer Name (Optional)
-            </p>
-            <input
-              className="ks-input mb-2"
-              placeholder="Walk-in Customer"
-              value={customer.name}
-              onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
-            />
-            <input
-              className="ks-input mb-3"
-              placeholder="Phone number"
-              value={customer.phone}
-              onChange={(e) => setCustomer({ ...customer, phone: e.target.value })}
-            />
-
-            {/* Loyalty */}
-            {isLoyal && (
-              <div className="rounded-xl px-3 py-2 mb-3 flex items-center justify-between gap-2" style={{ background: "var(--warn-soft)" }}>
-                <span className="text-xs font-semibold text-[var(--warn)]">⭐ Loyal · visit #{previousVisits + 1}</span>
-                <button
-                  onClick={() => setLoyaltyDiscount((v) => !v)}
-                  className="text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0"
-                  style={{ background: loyaltyDiscount ? "var(--warn-solid)" : "var(--bg-surface)", color: loyaltyDiscount ? "#fff" : "var(--warn)" }}
-                >
-                  {loyaltyDiscount ? "5% ✓" : "Apply 5%"}
-                </button>
-              </div>
-            )}
-
-            {/* Extra discount */}
-            <div className="flex gap-1.5 items-center mb-3">
-              <button
-                onClick={() => setManualDiscount((d) => ({ ...d, type: "pct" }))}
-                className="text-xs font-bold px-2.5 py-1.5 rounded-full shrink-0"
-                style={{ background: manualDiscount.type === "pct" ? "var(--strong)" : "var(--bg-surface-alt)", color: manualDiscount.type === "pct" ? "var(--on-strong)" : "var(--text-secondary)" }}
-              >%</button>
-              <button
-                onClick={() => setManualDiscount((d) => ({ ...d, type: "amt" }))}
-                className="text-xs font-bold px-2.5 py-1.5 rounded-full shrink-0"
-                style={{ background: manualDiscount.type === "amt" ? "var(--strong)" : "var(--bg-surface-alt)", color: manualDiscount.type === "amt" ? "var(--on-strong)" : "var(--text-secondary)" }}
-              >₹</button>
-              <input
-                type="number"
-                min="0"
-                placeholder="Discount"
-                value={manualDiscount.value}
-                onChange={(e) => setManualDiscount((d) => ({ ...d, value: e.target.value }))}
-                className="ks-input text-sm py-1.5 flex-1"
-              />
-            </div>
-
-            {/* Payment type */}
-            <div className="flex gap-1.5 mb-3 p-1 rounded-full" style={{ background: "var(--bg-surface-alt)" }}>
-              <button
-                onClick={() => setBillType("cash")}
-                className="flex-1 text-xs font-semibold py-1.5 rounded-full transition-colors"
-                style={{ background: billType === "cash" ? "var(--strong)" : "transparent", color: billType === "cash" ? "var(--on-strong)" : "var(--text-secondary)" }}
-              >
-                Cash / Paid
-              </button>
-              <button
-                onClick={() => setBillType("credit")}
-                className="flex-1 text-xs font-semibold py-1.5 rounded-full transition-colors"
-                style={{ background: billType === "credit" ? "var(--udhaar-solid)" : "transparent", color: billType === "credit" ? "#fff" : "var(--text-secondary)" }}
-              >
-                Udhaar
-              </button>
-            </div>
-            {billType === "credit" && !cleanPhone && (
-              <p className="text-[11px] font-medium mb-2" style={{ color: "var(--danger)" }}>Add a phone number for udhaar.</p>
-            )}
-
-            {/* Payment method — only meaningful once money has actually changed hands */}
-            {billType === "cash" && (
-              <div className="grid grid-cols-4 gap-1.5 mb-3">
-                {[
-                  { id: "cash", label: "Cash", icon: Banknote },
-                  { id: "upi", label: "UPI", icon: QrCode },
-                  { id: "card", label: "Card", icon: CreditCard },
-                  { id: "bank", label: "Bank", icon: Landmark },
-                ].map((m) => (
-                  <button
-                    key={m.id}
-                    onClick={() => setPaymentMethod(m.id)}
-                    className="flex flex-col items-center gap-1 py-2 rounded-xl text-[10px] font-semibold transition-colors"
-                    style={
-                      paymentMethod === m.id
-                        ? { background: "var(--accent-soft-bg)", color: "var(--accent-soft-text)", border: "1.5px solid var(--accent)" }
-                        : { background: "var(--bg-surface-alt)", color: "var(--text-secondary)", border: "1.5px solid transparent" }
-                    }
-                  >
-                    <m.icon size={15} />
-                    {m.label}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* UPI QR at checkout — shown as soon as UPI is picked, using the
-                live cart total, so the customer can scan and pay while the
-                bill is being finalized instead of waiting for the receipt. */}
-            {billType === "cash" && paymentMethod === "upi" && total > 0 && (
-              <div className="mb-3">
-                {activeShop?.upi_id ? (
-                  <UpiQrCard upiId={activeShop.upi_id} payeeName={activeShop.name} amount={total} note="Checkout" />
-                ) : (
-                  <p className="text-[11px] font-medium text-center py-2" style={{ color: "var(--danger)" }}>
-                    Add a UPI ID in Store settings to show a QR code here.
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Generate Bill */}
-            <button
-              disabled={cart.length === 0 || generating}
-              onClick={generateBill}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm mb-2 disabled:opacity-40 transition-opacity"
-              style={{ background: "var(--grad)", color: "#ffffff", boxShadow: "0 12px 28px -14px rgba(236, 72, 153, 0.8)" }}
-            >
-              {generating ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}
-              {billType === "credit" ? "Generate Udhaar Bill" : "Generate Bill"}
-            </button>
-
-            {cart.length > 0 && (
-              <button onClick={clearCart} className="w-full text-sm text-center py-1" style={{ color: "var(--text-secondary)" }}>
-                Clear Cart
-              </button>
-            )}
-
-            {/* Last bill actions */}
-            {lastBill && (
-              <div className="mt-4 pt-4 border-t ks-pop" style={{ borderColor: "var(--border)" }}>
-                <div className="flex items-center gap-2 mb-3">
-                  <CheckCircle2 size={16} style={{ color: "var(--accent-soft-text)" }} />
-                  <p className="text-sm font-bold" style={{ color: "var(--accent-soft-text)" }}>Bill generated!</p>
-                  <span className="ks-mono text-xs ml-auto" style={{ color: "var(--text-secondary)" }}>{lastBill.bill_no} · {rupee(lastBill.total)}</span>
-                </div>
-                {taxBreakup(lastBill.items).taxAmt > 0 && (
-                  <p className="text-[11px] mb-2 ks-mono" style={{ color: "var(--text-secondary)" }}>
-                    GST {rupee(taxBreakup(lastBill.items).taxAmt)} included
-                  </p>
-                )}
-                <div className="grid grid-cols-2 gap-2">
-                  <button onClick={() => printBill(lastBill)} className="ks-btn-outline flex items-center justify-center gap-1.5 text-xs py-2">
-                    <Printer size={13} /> Print
-                  </button>
+          <div id="bill-panel" className="ks-card p-4 sm:p-5 sticky top-20 scroll-mt-20">
+            {lastBill && cart.length === 0 ? (
+              <div className="ks-pop text-center py-2">
+                <CheckCircle2 size={36} className="mx-auto" style={{ color: "var(--success)" }} />
+                <p className="font-bold text-lg mt-2">Bill saved</p>
+                <p className="ks-mono text-sm" style={{ color: "var(--text-secondary)" }}>
+                  {lastBill.bill_no} · {rupee(lastBill.total)}
+                  {lastBill.payment_type === "credit" ? " · udhaar" : lastBill.payment_method ? ` · ${lastBill.payment_method.toUpperCase()}` : ""}
+                </p>
+                <div className="grid grid-cols-2 gap-2 mt-4">
                   <button
                     onClick={() => window.open(whatsappLink(lastBill.customer_phone, billMessageText(lastBill, activeShop?.name, activeShop?.gstin)), "_blank")}
                     disabled={!lastBill.customer_phone}
-                    className="flex items-center justify-center gap-1.5 text-xs py-2 rounded-xl font-semibold disabled:opacity-40"
+                    className="flex items-center justify-center gap-1.5 text-sm py-2.5 rounded-xl font-semibold disabled:opacity-40"
                     style={{ background: "#25D366", color: "#fff" }}
                   >
-                    <MessageCircle size={13} /> WhatsApp
+                    <MessageCircle size={15} /> WhatsApp
+                  </button>
+                  <button onClick={() => printBill(lastBill)} className="ks-btn-outline flex items-center justify-center gap-1.5 text-sm py-2.5">
+                    <Printer size={15} /> Print
                   </button>
                 </div>
-                {activeShop?.upi_id && lastBill.payment_method === "upi" && (
+                {activeShop?.upi_id && lastBill.payment_method === "upi" && lastBill.payment_type !== "credit" && (
                   <div className="mt-3">
                     <UpiQrCard upiId={activeShop.upi_id} payeeName={activeShop.name} amount={lastBill.total} note={lastBill.bill_no} />
                   </div>
                 )}
+                <button onClick={clearCart} className="ks-btn-primary w-full mt-3 py-3 flex items-center justify-center gap-2">
+                  <Plus size={16} /> New bill
+                </button>
               </div>
+            ) : (
+              <>
+                {/* Items */}
+                {cart.length === 0 ? (
+                  <div className="py-6 text-center text-sm" style={{ color: "var(--text-secondary)" }}>
+                    Tap an item to add it to the bill
+                  </div>
+                ) : (
+                  <div className="space-y-2.5 mb-3 max-h-60 overflow-y-auto ks-scroll">
+                    {cart.map((c) => (
+                      <div key={c.shop_product_id} className="flex items-center gap-2">
+                        <span className="text-sm flex-1 font-medium truncate">{c.name}</span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button onClick={() => updateQty(c.shop_product_id, c.qty - 1)} className="ks-qtybtn" aria-label={`One less ${c.name}`} style={{ width: 30, height: 30 }}>
+                            <Minus size={13} />
+                          </button>
+                          <span className="ks-mono w-6 text-center text-sm font-bold">{c.qty}</span>
+                          <button onClick={() => updateQty(c.shop_product_id, c.qty + 1)} className="ks-qtybtn" aria-label={`One more ${c.name}`} style={{ width: 30, height: 30 }}>
+                            <Plus size={13} />
+                          </button>
+                        </div>
+                        <span className="ks-mono text-sm font-semibold w-16 text-right shrink-0">{rupee(c.qty * c.price)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Total */}
+                <div className="flex items-end justify-between py-3 border-t" style={{ borderColor: "var(--border)" }}>
+                  <div>
+                    <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                      Total{cartQty > 0 ? ` · ${cartQty} item${cartQty === 1 ? "" : "s"}` : ""}
+                    </p>
+                    {(discountAmount > 0 || clearanceSavings > 0 || cartGst > 0) && (
+                      <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>
+                        {[
+                          discountAmount > 0 ? `−${rupee(discountAmount)} discount` : null,
+                          clearanceSavings > 0 ? `−${rupee(clearanceSavings)} offer` : null,
+                          cartGst > 0 ? `incl. GST ${rupee(cartGst)}` : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                    )}
+                  </div>
+                  <span className="ks-display text-3xl font-extrabold ks-mono">{rupee(total)}</span>
+                </div>
+
+                {/* How they pay */}
+                <div className="grid grid-cols-3 gap-2 mb-3">
+                  {[
+                    { id: "cash", label: "Cash", icon: Banknote },
+                    { id: "upi", label: "UPI", icon: QrCode },
+                    { id: "udhaar", label: "Udhaar", icon: BookOpen },
+                  ].map((m) => {
+                    const on = pay === m.id || (m.id === "cash" && (pay === "card" || pay === "bank"));
+                    const tone = m.id === "udhaar" ? "var(--udhaar)" : "var(--accent-soft-text)";
+                    return (
+                      <button
+                        key={m.id}
+                        onClick={() => choosePay(m.id)}
+                        aria-pressed={on}
+                        className="flex flex-col items-center gap-1 py-3 rounded-xl text-sm font-semibold transition-colors"
+                        style={
+                          on
+                            ? { background: m.id === "udhaar" ? "var(--udhaar-soft)" : "var(--accent-soft-bg)", color: tone, border: `1.5px solid ${tone}` }
+                            : { background: "var(--bg-surface-alt)", color: "var(--text-secondary)", border: "1.5px solid transparent" }
+                        }
+                      >
+                        <m.icon size={18} />
+                        {m.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {billType === "cash" && paymentMethod === "upi" && total > 0 && (
+                  <div className="mb-3">
+                    {activeShop?.upi_id ? (
+                      <UpiQrCard upiId={activeShop.upi_id} payeeName={activeShop.name} amount={total} note="Checkout" />
+                    ) : (
+                      <p className="text-[11px] font-medium text-center py-1" style={{ color: "var(--warn)" }}>
+                        Add your UPI ID in Store settings to show a QR here.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Customer, discount and other payment types, folded away */}
+                <button
+                  onClick={() => setShowDetails((v) => !v)}
+                  aria-expanded={showDetails}
+                  className="w-full flex items-center justify-between text-sm font-semibold py-2"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  <span>
+                    {customer.name || cleanPhone ? `Customer: ${customer.name || cleanPhone}` : "+ Customer, discount"}
+                    {discountAmount > 0 ? ` · −${rupee(discountAmount)}` : ""}
+                  </span>
+                  <ChevronDown size={16} className={`transition-transform ${showDetails ? "rotate-180" : ""}`} />
+                </button>
+
+                {showDetails && (
+                  <div className="space-y-2 pb-2 ks-fade-up">
+                    <input
+                      className="ks-input"
+                      placeholder="Customer name"
+                      value={customer.name}
+                      onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
+                    />
+                    <input
+                      className="ks-input"
+                      placeholder={billType === "credit" ? "Phone number (needed for udhaar)" : "Phone number (for WhatsApp bill)"}
+                      inputMode="tel"
+                      value={customer.phone}
+                      onChange={(e) => setCustomer({ ...customer, phone: e.target.value })}
+                    />
+                    {isLoyal && (
+                      <div className="rounded-xl px-3 py-2 flex items-center justify-between gap-2" style={{ background: "var(--warn-soft)" }}>
+                        <span className="text-xs font-semibold text-[var(--warn)]">⭐ Regular customer · visit #{previousVisits + 1}</span>
+                        <button
+                          onClick={() => setLoyaltyDiscount((v) => !v)}
+                          className="text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0"
+                          style={{ background: loyaltyDiscount ? "var(--warn-solid)" : "var(--bg-surface)", color: loyaltyDiscount ? "#fff" : "var(--warn)" }}
+                        >
+                          {loyaltyDiscount ? "5% off ✓" : "Give 5% off"}
+                        </button>
+                      </div>
+                    )}
+                    <div className="flex gap-1.5 items-center">
+                      <div className="flex p-0.5 rounded-full shrink-0" style={{ background: "var(--bg-surface-alt)" }}>
+                        {[
+                          ["pct", "%"],
+                          ["amt", "₹"],
+                        ].map(([t, label]) => (
+                          <button
+                            key={t}
+                            onClick={() => setManualDiscount((d) => ({ ...d, type: t }))}
+                            className="text-xs font-bold w-8 py-1.5 rounded-full"
+                            style={{ background: manualDiscount.type === t ? "var(--strong)" : "transparent", color: manualDiscount.type === t ? "var(--on-strong)" : "var(--text-secondary)" }}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                      <input
+                        type="number"
+                        min="0"
+                        inputMode="decimal"
+                        placeholder="Discount"
+                        value={manualDiscount.value}
+                        onChange={(e) => setManualDiscount((d) => ({ ...d, value: e.target.value }))}
+                        className="ks-input text-sm flex-1"
+                      />
+                    </div>
+                    {billType === "cash" && (
+                      <div className="flex gap-1.5 items-center text-xs" style={{ color: "var(--text-secondary)" }}>
+                        Paid by
+                        {[
+                          ["card", "Card", CreditCard],
+                          ["bank", "Bank transfer", Landmark],
+                        ].map(([id, label, Icon]) => (
+                          <button
+                            key={id}
+                            onClick={() => choosePay(paymentMethod === id ? "cash" : id)}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-full font-semibold"
+                            style={
+                              paymentMethod === id
+                                ? { background: "var(--accent-soft-bg)", color: "var(--accent-soft-text)" }
+                                : { background: "var(--bg-surface-alt)" }
+                            }
+                          >
+                            <Icon size={12} /> {label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {billType === "credit" && !cleanPhone && (
+                  <p className="text-xs font-medium mb-2" style={{ color: "var(--danger)" }}>Add the customer&apos;s phone number for udhaar.</p>
+                )}
+
+                <button
+                  id="save-bill"
+                  disabled={cart.length === 0 || generating}
+                  onClick={generateBill}
+                  className="ks-btn-primary w-full flex items-center justify-center gap-2 py-3.5 text-base mt-1 disabled:opacity-40"
+                >
+                  {generating ? <Loader2 size={17} className="animate-spin" /> : <CheckCircle2 size={17} />}
+                  {billType === "credit" ? "Save udhaar bill" : "Save bill"}
+                  {total > 0 ? ` · ${rupee(total)}` : ""}
+                </button>
+                {cart.length > 0 && (
+                  <button onClick={clearCart} className="w-full text-sm text-center pt-2.5" style={{ color: "var(--text-secondary)" }}>
+                    Clear bill
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>
       </div>
+
+      {/* Phones: total and checkout always at hand while adding items */}
+      {/* Spacer is fixed while items are in the bill, so showing or hiding the
+          bar never shifts the page (which would make it flicker). */}
+      {cart.length > 0 && <div className="lg:hidden h-16" />}
+      {cart.length > 0 && !billInView && (
+        <>
+          <div className="ks-no-print lg:hidden fixed left-3 right-3 z-20 ks-card flex items-center justify-between gap-3 px-4 py-2.5 ks-fade-up"
+            style={{ bottom: "calc(74px + env(safe-area-inset-bottom, 0px))", boxShadow: "0 12px 30px rgba(0,0,0,0.35)" }}
+          >
+            <div>
+              <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>
+                {cartQty} item{cartQty === 1 ? "" : "s"}
+              </p>
+              <p className="ks-mono text-lg font-extrabold leading-tight">{rupee(total)}</p>
+            </div>
+            <button
+              onClick={() => document.getElementById("bill-panel")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+              className="ks-btn-primary px-5 py-2.5"
+            >
+              Checkout
+            </button>
+          </div>
+        </>
+      )}
 
       {lastBill && (
         <div className="ks-print-only">
