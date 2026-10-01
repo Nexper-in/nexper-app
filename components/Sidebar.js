@@ -20,6 +20,8 @@ import {
   SlidersHorizontal,
   FileBarChart2,
   Sparkles,
+  CalendarClock,
+  Megaphone,
 } from "lucide-react";
 import { useShop } from "@/components/ShopContext";
 import { T, useT } from "@/lib/i18n";
@@ -27,6 +29,7 @@ import ShopTypeIcon from "@/components/ShopTypeIcon";
 import SyncStatusBadge from "@/components/SyncStatusBadge";
 import { shopTypeInfo } from "@/lib/shopTypes";
 import { isPro } from "@/lib/pricing";
+import { isModuleEnabled } from "@/lib/modules";
 
 // What a shopkeeper needs every hour sits at the top; everything else is
 // grouped below by what it's about. Names match the bottom tab bar.
@@ -53,7 +56,9 @@ const GROUPS = [
     items: [
       { href: "/suppliers", key: "suppliers", label: T("Suppliers"), icon: Truck, pro: true },
       { href: "/purchase-orders", key: "purchase_orders", label: T("Purchase orders"), icon: ClipboardList, pro: true },
+      { href: "/expiry", key: "inventory", label: T("Expiry"), icon: CalendarClock },
       { href: "/clearance", key: "clearance", label: T("Clearance offers"), icon: Tag, ownerOnly: true },
+      { href: "/offers", key: "clearance", label: T("Offers & group"), icon: Megaphone, ownerOnly: true },
       // Same "inventory" permission as Stock: batches/expiry and barcode labels.
       { href: "/inventory/config", key: "inventory", label: T("Batches & barcodes"), icon: SlidersHorizontal },
     ],
@@ -90,9 +95,8 @@ export default function Sidebar({ onOpenSettings, onNavigate }) {
 
   if (!activeShop) return null;
 
-  const enabledModules = activeShop.enabled_modules || MAIN_NAV.map((i) => i.key);
   const allowed = (item) =>
-    item.ownerOnly ? isOwner && enabledModules.includes(item.key) : enabledModules.includes(item.key) && hasPermission(item.key);
+    item.ownerOnly ? isOwner && isModuleEnabled(activeShop, item.key) : isModuleEnabled(activeShop, item.key) && hasPermission(item.key);
   const mainNav = MAIN_NAV.filter(allowed);
   const groups = GROUPS.map((g) => ({ ...g, items: g.items.filter(allowed) })).filter((g) => g.items.length);
 
@@ -138,7 +142,7 @@ export default function Sidebar({ onOpenSettings, onNavigate }) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold truncate ks-sidebar-text-strong">{activeShop.name}</p>
-              <p className="text-[10px] font-medium ks-sidebar-text">{shopTypeInfo(activeShop.type).label}</p>
+              <p className="text-[10px] font-medium ks-sidebar-text">{t(shopTypeInfo(activeShop.type).label)}</p>
             </div>
           </div>
         </div>

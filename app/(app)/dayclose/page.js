@@ -8,6 +8,7 @@ import AddDrawModal from "@/components/AddDrawModal";
 import { rupee } from "@/lib/format";
 import ModuleGuard from "@/components/ModuleGuard";
 
+import { useT } from "@/lib/i18n";
 export default function DayClosePage() {
   return (
     <ModuleGuard module="dayclose">
@@ -17,6 +18,7 @@ export default function DayClosePage() {
 }
 
 function DayClosePageInner() {
+  const t = useT();
   const { supabase, activeShopId, showToast } = useShop();
   const [bills, setBills] = useState([]);
   const [draws, setDraws] = useState([]);
@@ -48,8 +50,8 @@ function DayClosePageInner() {
   // UPI/card/bank collections are non-credit too, but that money never
   // touches the drawer, so counting it here would overstate expected cash.
   const todaysNonCreditBills = useMemo(() => {
-    const t = new Date().toDateString();
-    return bills.filter((b) => new Date(b.date).toDateString() === t && b.payment_type !== "credit");
+    const today = new Date().toDateString();
+    return bills.filter((b) => new Date(b.date).toDateString() === today && b.payment_type !== "credit");
   }, [bills]);
   const todaysCashSales = useMemo(
     () => todaysNonCreditBills.filter((b) => (b.payment_method || "cash") === "cash").reduce((s, b) => s + b.total, 0),
@@ -61,8 +63,8 @@ function DayClosePageInner() {
   );
 
   const todaysDrawList = useMemo(() => {
-    const t = new Date().toDateString();
-    return draws.filter((d) => new Date(d.date).toDateString() === t);
+    const today = new Date().toDateString();
+    return draws.filter((d) => new Date(d.date).toDateString() === today);
   }, [draws]);
   const todaysDraws = todaysDrawList.reduce((s, d) => s + d.amount, 0);
 
@@ -70,8 +72,8 @@ function DayClosePageInner() {
   // today's starting float — reconciliations is already ordered newest
   // first, so this is just "the newest one that isn't today's own."
   const openingFloat = useMemo(() => {
-    const t = new Date().toDateString();
-    const past = reconciliations.filter((r) => new Date(r.date).toDateString() !== t);
+    const today = new Date().toDateString();
+    const past = reconciliations.filter((r) => new Date(r.date).toDateString() !== today);
     return past.length > 0 ? Number(past[0].cash_counted) : 0;
   }, [reconciliations]);
 
@@ -95,7 +97,7 @@ function DayClosePageInner() {
       if (error) throw error;
       setReconciliations((prev) => [data, ...prev]);
       setCashCounted("");
-      showToast("Day close saved");
+      showToast(t("Day close saved"));
     } catch (err) {
       showToast(err.message, "err");
     } finally {
@@ -113,7 +115,7 @@ function DayClosePageInner() {
   if (loading) {
     return (
       <div className="pt-6 flex items-center gap-2 text-sm text-muted">
-        <Loader2 size={16} className="animate-spin" /> Loading day close…
+        <Loader2 size={16} className="animate-spin" /> {t("Loading day close…")}
       </div>
     );
   }
@@ -122,32 +124,32 @@ function DayClosePageInner() {
     <div className="pt-6 grid md:grid-cols-2 gap-5">
       <div className="space-y-4">
         <div className="ks-card p-5">
-          <h2 className="ks-display font-bold mb-4">Today&apos;s cash reconciliation</h2>
+          <h2 className="ks-display font-bold mb-4">{t("Today's cash reconciliation")}</h2>
           <div className="flex items-center justify-between text-sm mb-2">
-            <span className="text-[var(--text-secondary)] font-medium">Opening float (from last close)</span>
+            <span className="text-[var(--text-secondary)] font-medium">{t("Opening float (from last close)")}</span>
             <span className="ks-mono font-bold">{rupee(openingFloat)}</span>
           </div>
           <div className="flex items-center justify-between text-sm mb-2">
-            <span className="text-[var(--text-secondary)] font-medium">Cash sales today (app)</span>
+            <span className="text-[var(--text-secondary)] font-medium">{t("Cash sales today (app)")}</span>
             <span className="ks-mono font-bold">{rupee(todaysCashSales)}</span>
           </div>
           {todaysDigitalSales > 0 && (
             <div className="flex items-center justify-between text-xs mb-2">
-              <span style={{ color: "var(--text-secondary)" }}>Digital sales today (UPI/Card/Bank — not in drawer)</span>
+              <span style={{ color: "var(--text-secondary)" }}>{t("Digital sales today (UPI/Card/Bank — not in drawer)")}</span>
               <span className="ks-mono">{rupee(todaysDigitalSales)}</span>
             </div>
           )}
           <div className="flex items-center justify-between text-sm mb-3">
-            <span className="text-[var(--text-secondary)] font-medium">Less: personal draws</span>
+            <span className="text-[var(--text-secondary)] font-medium">{t("Less: personal draws")}</span>
             <span className="ks-mono font-bold" style={{ color: "var(--danger)" }}>
               −{rupee(todaysDraws)}
             </span>
           </div>
           <div className="flex items-center justify-between text-sm mb-3 pt-2 border-t border-[var(--border)]">
-            <span className="font-semibold">Expected cash in register</span>
+            <span className="font-semibold">{t("Expected cash in register")}</span>
             <span className="ks-mono font-bold">{rupee(expectedCash)}</span>
           </div>
-          <Field label="Cash actually counted in register (₹)">
+          <Field label={t("Cash actually counted in register (₹)")}>
             <input
               type="number"
               autoFocus
@@ -169,23 +171,23 @@ function DayClosePageInner() {
           )}
           <button disabled={cashCounted === "" || saving} onClick={saveClose} className="ks-btn-primary w-full mt-4 flex items-center justify-center gap-2">
             {saving && <Loader2 size={16} className="animate-spin" />}
-            Save today&apos;s close
+            {t("Save today's close")}
           </button>
         </div>
 
         <div className="ks-card p-5">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="ks-display font-bold">Personal draws today</h2>
+            <h2 className="ks-display font-bold">{t("Personal draws today")}</h2>
             <button
               onClick={() => setShowDraw(true)}
               className="text-xs font-semibold px-2.5 py-1.5 rounded-full flex items-center gap-1"
               style={{ background: "var(--bg-surface-alt)", color: "var(--text-primary)" }}
             >
-              <Plus size={13} /> Add draw
+              <Plus size={13} /> {t("Add draw")}
             </button>
           </div>
           <div className="space-y-2">
-            {todaysDrawList.length === 0 && <p className="text-sm text-[var(--text-secondary)]">No money taken out for personal use today.</p>}
+            {todaysDrawList.length === 0 && <p className="text-sm text-[var(--text-secondary)]">{t("No money taken out for personal use today.")}</p>}
             {todaysDrawList.map((d) => (
               <div key={d.id} className="flex items-center justify-between text-sm">
                 <span className="text-[var(--text-secondary)]">{d.note || "Personal draw"}</span>
@@ -200,16 +202,16 @@ function DayClosePageInner() {
 
       <div className="ks-card overflow-hidden h-fit">
         <div className="px-5 py-4 border-b border-[var(--border)]">
-          <h2 className="ks-display font-bold">Past reconciliations</h2>
+          <h2 className="ks-display font-bold">{t("Past reconciliations")}</h2>
         </div>
         <div className="p-5 space-y-3 max-h-96 overflow-y-auto ks-scroll">
-          {reconciliations.length === 0 && <p className="text-sm text-[var(--text-secondary)]">No closes saved yet.</p>}
+          {reconciliations.length === 0 && <p className="text-sm text-[var(--text-secondary)]">{t("No closes saved yet.")}</p>}
           {reconciliations.map((r) => (
             <div key={r.id} className="flex items-center justify-between text-sm">
               <div>
                 <div className="font-medium">{new Date(r.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}</div>
                 <div className="text-xs text-[var(--text-secondary)] ks-mono">
-                  Expected {rupee(r.expected_cash)} · Cash {rupee(r.cash_counted)}
+                  {t("Expected {expected} · Cash {cash}", { expected: rupee(r.expected_cash), cash: rupee(r.cash_counted) })}
                 </div>
               </div>
               <span className="ks-mono font-bold" style={{ color: r.diff === 0 ? "var(--accent-soft-text)" : "var(--danger)" }}>

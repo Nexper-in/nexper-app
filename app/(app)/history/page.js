@@ -8,6 +8,7 @@ import { billMessageText, whatsappLink } from "@/lib/messaging";
 import PrintBillContent from "@/components/PrintBillContent";
 import ModuleGuard from "@/components/ModuleGuard";
 
+import { useT } from "@/lib/i18n";
 export default function HistoryPage() {
   return (
     <ModuleGuard module="history">
@@ -17,6 +18,7 @@ export default function HistoryPage() {
 }
 
 function HistoryPageInner() {
+  const t = useT();
   const { supabase, activeShopId, activeShop } = useShop();
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -45,7 +47,7 @@ function HistoryPageInner() {
   if (loading) {
     return (
       <div className="pt-6 flex items-center gap-2 text-sm text-muted">
-        <Loader2 size={16} className="animate-spin" /> Loading history…
+        <Loader2 size={16} className="animate-spin" /> {t("Loading history…")}
       </div>
     );
   }
@@ -56,11 +58,11 @@ function HistoryPageInner() {
         <table className="ks-stack w-full text-sm">
           <thead>
             <tr className="text-left ks-mono text-[11px] uppercase tracking-wide text-[var(--text-secondary)] border-b border-[var(--border)]">
-              <th className="px-5 py-3 font-medium">Bill No.</th>
-              <th className="px-5 py-3 font-medium">Date</th>
-              <th className="px-5 py-3 font-medium">Customer</th>
-              <th className="px-5 py-3 font-medium">Items</th>
-              <th className="px-5 py-3 font-medium">Total</th>
+              <th className="px-5 py-3 font-medium">{t("Bill No.")}</th>
+              <th className="px-5 py-3 font-medium">{t("Date")}</th>
+              <th className="px-5 py-3 font-medium">{t("Customer")}</th>
+              <th className="px-5 py-3 font-medium">{t("Items")}</th>
+              <th className="px-5 py-3 font-medium">{t("Total")}</th>
               <th className="px-5 py-3 font-medium"></th>
             </tr>
           </thead>
@@ -74,7 +76,7 @@ function HistoryPageInner() {
                     {b.customer_name || "—"}
                     {b.payment_type === "credit" && (
                       <span className="ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "var(--udhaar-soft)", color: "var(--udhaar)" }}>
-                        UDHAAR
+                        {t("UDHAAR")}
                       </span>
                     )}
                     {b.payment_type !== "credit" && b.payment_method && b.payment_method !== "cash" && (
@@ -95,18 +97,18 @@ function HistoryPageInner() {
                         className="text-xs px-2.5 py-1.5 rounded-full font-semibold flex items-center gap-1"
                         style={{ background: "var(--bg-surface-alt)", color: "var(--text-primary)" }}
                       >
-                        <Printer size={13} /> Print
+                        <Printer size={13} /> {t("Print")}
                       </button>
                       {b.customer_phone && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            window.open(whatsappLink(b.customer_phone, billMessageText(b, activeShop?.name, activeShop?.gstin)), "_blank");
+                            window.open(whatsappLink(b.customer_phone, billMessageText(b, activeShop?.name, activeShop?.gstin, activeShop?.whatsapp_group_url)), "_blank");
                           }}
                           className="text-xs px-2.5 py-1.5 rounded-full font-semibold flex items-center gap-1 text-white"
                           style={{ background: "#25D366" }}
                         >
-                          <MessageCircle size={13} /> Send
+                          <MessageCircle size={13} /> {t("Send")}
                         </button>
                       )}
                     </div>
@@ -134,7 +136,7 @@ function HistoryPageInner() {
             {bills.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-5 py-12 text-center text-[var(--text-secondary)] text-sm">
-                  🧾 No bills yet — generate one from the &quot;New Bill&quot; tab.
+                  {t("🧾 No bills yet — generate one from the \"New Bill\" tab.")}
                 </td>
               </tr>
             )}
@@ -143,7 +145,7 @@ function HistoryPageInner() {
       </div>
       {printing && (
         <div className="ks-print-only">
-          <PrintBillContent bill={printing} storeName={activeShop?.name} gstin={activeShop?.gstin} />
+          <PrintBillContent bill={printing} storeName={activeShop?.name} gstin={activeShop?.gstin} groupUrl={activeShop?.whatsapp_group_url} />
         </div>
       )}
     </div>

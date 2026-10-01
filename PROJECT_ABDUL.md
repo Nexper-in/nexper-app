@@ -99,6 +99,28 @@ screens, same app and same login.** Do not go back to one stretched layout.
   works on phone and laptop in both themes, every language fits at 320 and
   360px, resizing switches screens cleanly.
 
+### Added after that (branch work, 2026-10-01)
+
+- Language carry-over from the website (link parameter + shared cookie).
+- Scan APIs require sign-in, are rate limited and size checked (`lib/aiGuard.js`);
+  photos are shrunk before upload.
+- New owners: starter items on by default, land on New bill, Getting started card.
+- Expiry screen (`/expiry`) and "expires in" chip in Stock.
+- Offers & group (`/offers`): WhatsApp group invite link, QR poster, offer/arrival/
+  special composer with preview and send, post log; group link on bills.
+- Purchase orders: suggest from low stock, send on WhatsApp, receive with
+  quantities and expiry.
+- Handwritten list to bill (New bill, "Scan a written list").
+- Every remaining screen translated into the five languages (683 texts).
+- Fixed: Purchase orders, Clearance and Offers were hidden for most shops
+  (`lib/modules.js` `isModuleEnabled`).
+
+**Database updates to run (maqbool), in order, after 023:**
+`024_write_off_batch.sql`, `025_offers_whatsapp_group.sql`,
+`026_receive_po_with_quantities.sql`, `027_default_modules_include_reports.sql`.
+The app works without them but removing expired stock, saving the group link,
+receiving with expiry and Reports for new shops need them.
+
 ## 7. Google sign-in (built, switched off)
 
 The button shows with a "Soon" label and does nothing. To turn on:
@@ -127,14 +149,14 @@ Then "Continue with Google" shows first and email becomes a fallback link.
 - Native-speaker review of the Hindi, Telugu, Kannada, Tamil, Malayalam text
   (site and app) and of Privacy/Terms (plain drafts, no company name or
   address).
-- Still English only in the app: Reports, Expenses, Cashbook, Suppliers, Staff,
-  Day close, Bills detail and most pop-up forms. Translate when touching them.
+- Still English on purpose: voice-billing pop-up, platform admin, printed bills.
 - `nexper-logo.jpg` still carries the old tagline.
 - The GitHub Pages copy of the site is unused.
 
 **Security:**
-- `/api/scan-supplier-bill` has no sign-in check: anyone can spend the
-  Anthropic budget. Fix before building anything more on it.
+- Scan APIs are signed-in only now. The rate limit is in memory (best effort);
+  add a shared limiter (Upstash/Vercel KV) before heavy public use.
+- Support contact and legal pages still need real details (see above).
 
 **Backlog (agreed, build feature by feature):** fast first bill and onboarding
 (starter items on, Getting started card), expiry dates screen, offers and a

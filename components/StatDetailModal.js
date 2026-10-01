@@ -3,7 +3,9 @@
 import Modal from "@/components/ui/Modal";
 import { rupee } from "@/lib/format";
 
+import { useT } from "@/lib/i18n";
 export default function StatDetailModal({ mode, items, todaysBills, stockValue, onClose, onGoInventory, onAddItems }) {
+  const t = useT();
   const titles = { items: "Items in stock", value: "Stock value breakdown", low: "Low stock items", profit: "Today's profit breakdown" };
   let rows = items;
   if (mode === "low") rows = items.filter((i) => i.stock <= i.low_at);
@@ -34,20 +36,20 @@ export default function StatDetailModal({ mode, items, todaysBills, stockValue, 
       <div className="space-y-3">
         {mode === "value" && (
           <div className="flex items-center justify-between pb-2 border-b border-[var(--border)]">
-            <span className="text-sm font-semibold text-[var(--text-secondary)]">Total stock value</span>
+            <span className="text-sm font-semibold text-[var(--text-secondary)]">{t("Total stock value")}</span>
             <span className="ks-mono text-lg font-bold text-[var(--accent-soft-text)]">{rupee(stockValue)}</span>
           </div>
         )}
         {mode === "profit" && (
           <div className="flex items-center justify-between pb-2 border-b border-[var(--border)]">
-            <span className="text-sm font-semibold text-[var(--text-secondary)]">Total profit today</span>
+            <span className="text-sm font-semibold text-[var(--text-secondary)]">{t("Total profit today")}</span>
             <span className="ks-mono text-lg font-bold text-[var(--accent-soft-text)]">{rupee(totalProfit)}</span>
           </div>
         )}
 
         {mode === "profit" ? (
           <div className="max-h-80 overflow-y-auto ks-scroll space-y-2.5 pr-1">
-            {profitRows.length === 0 && <p className="text-sm text-[var(--text-secondary)] text-center py-6">No sales yet today.</p>}
+            {profitRows.length === 0 && <p className="text-sm text-[var(--text-secondary)] text-center py-6">{t("No sales yet today.")}</p>}
             {profitRows.map((r) => (
               <div key={r.name} className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2 min-w-0">
@@ -64,10 +66,10 @@ export default function StatDetailModal({ mode, items, todaysBills, stockValue, 
           <div className="max-h-80 overflow-y-auto ks-scroll space-y-2.5 pr-1">
             {rows.length === 0 && (
               <div className="text-center py-6 space-y-3">
-                <p className="text-sm text-[var(--text-secondary)]">Nothing to show here. 🎉</p>
+                <p className="text-sm text-[var(--text-secondary)]">{t("Nothing to show here. 🎉")}</p>
                 {(mode === "items" || mode === "value") && (
                   <button onClick={onAddItems} className="ks-btn-primary">
-                    Add items
+                    {t("Add items")}
                   </button>
                 )}
               </div>
@@ -93,7 +95,7 @@ export default function StatDetailModal({ mode, items, todaysBills, stockValue, 
         )}
         {mode === "low" && rows.length > 0 && (
           <button onClick={onGoInventory} className="ks-btn-primary w-full mt-1">
-            Go to Inventory to restock
+            {t("Go to Inventory to restock")}
           </button>
         )}
       </div>

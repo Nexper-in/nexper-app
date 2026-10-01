@@ -5,7 +5,9 @@ import { Loader2 } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import Field from "@/components/ui/Field";
 
+import { useT } from "@/lib/i18n";
 export default function AdjustStockModal({ item, type, suppliers, onClose, onConfirm }) {
+  const t = useT();
   const [qty, setQty] = useState("");
   const [reason, setReason] = useState(type === "in" ? "Purchase" : "Damage/Wastage");
   const [supplier, setSupplier] = useState("");
@@ -27,15 +29,15 @@ export default function AdjustStockModal({ item, type, suppliers, onClose, onCon
   }
 
   return (
-    <Modal title={`${type === "in" ? "Stock in" : "Stock out"}: ${item.name}`} onClose={onClose}>
+    <Modal title={`${type === "in" ? t("Stock in") : t("Stock out")}: ${item.name}`} onClose={onClose}>
       <div className="space-y-3.5">
         <p className="text-xs text-[var(--text-secondary)]">
-          Current stock: <span className="ks-mono font-semibold text-[var(--text-primary)]">{item.stock} {item.unit}</span>
+          {t("Current stock:")} <span className="ks-mono font-semibold text-[var(--text-primary)]">{item.stock} {item.unit}</span>
         </p>
-        <Field label={`Quantity (${item.unit})`}>
+        <Field label={t("Quantity ({unit})", { unit: item.unit })}>
           <input autoFocus type="number" className="ks-input" value={qty} onChange={(e) => setQty(e.target.value)} />
         </Field>
-        <Field label="Reason">
+        <Field label={t("Reason")}>
           <select className="ks-input" value={reason} onChange={(e) => setReason(e.target.value)}>
             {reasons.map((r) => (
               <option key={r}>{r}</option>
@@ -43,13 +45,13 @@ export default function AdjustStockModal({ item, type, suppliers, onClose, onCon
           </select>
         </Field>
         {type === "in" && reason === "Purchase" && (
-          <Field label="Supplier (optional)">
+          <Field label={t("Supplier (optional)")}>
             <input
               className="ks-input"
               list="ks-supplier-list"
               value={supplier}
               onChange={(e) => setSupplier(e.target.value)}
-              placeholder="e.g. Ramesh Distributors"
+              placeholder={t("e.g. Ramesh Distributors")}
             />
             <datalist id="ks-supplier-list">
               {(suppliers || []).map((s) => (
@@ -59,7 +61,7 @@ export default function AdjustStockModal({ item, type, suppliers, onClose, onCon
           </Field>
         )}
         {type === "in" && (
-          <Field label="Expiry date (optional)">
+          <Field label={t("Expiry date (optional)")}>
             <input type="date" className="ks-input" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} />
           </Field>
         )}

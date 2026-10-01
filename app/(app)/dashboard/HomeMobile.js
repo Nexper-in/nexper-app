@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
-import { TodayHero, NewBillAndQuick, AttentionList, StatCards, WeekChart, TopCategories, TopCustomers, RecentMovement } from "./HomeParts";
+import { StartedCard, TodayHero, NewBillAndQuick, AttentionList, StatCards, WeekChart, TopCategories, TopCustomers, RecentMovement } from "./HomeParts";
 
 // Phone view: today's sales, New bill, three shortcuts and what needs you.
 // Charts and stats are one tap away under "More insights".
@@ -11,6 +11,7 @@ export default function HomeMobile({ vm }) {
     <div className="pt-5 pb-4 max-w-2xl">
       <TodayHero vm={vm} />
       <NewBillAndQuick vm={vm} />
+      <StartedCard vm={vm} />
       <AttentionList vm={vm} />
 
       {/* Everything else, folded away */}

@@ -163,3 +163,18 @@ export function StockModals({ vm }) {
     </>
   );
 }
+
+// "Expires in 3d" / "Expired" chip for an item with a batch expiring within 14 days.
+export function ExpiryChip({ vm, id }) {
+  const { t, expiryDays } = vm;
+  const days = expiryDays[id];
+  if (days === undefined) return null;
+  return (
+    <span
+      className="text-[10px] px-1.5 py-0.5 rounded-full font-bold"
+      style={days <= 0 ? { background: "var(--danger-soft)", color: "var(--danger)" } : { background: "var(--warn-soft)", color: "var(--warn)" }}
+    >
+      {days < 0 ? t("Expired") : days === 0 ? t("expires today") : t("expires in {n}d", { n: days })}
+    </span>
+  );
+}

@@ -7,6 +7,7 @@ import { rupee } from "@/lib/format";
 import { fetchShopItems } from "@/lib/products";
 import ModuleGuard from "@/components/ModuleGuard";
 
+import { useT } from "@/lib/i18n";
 export default function CashbookPage() {
   return (
     <ModuleGuard module="cashbook">
@@ -16,6 +17,7 @@ export default function CashbookPage() {
 }
 
 function CashbookPageInner() {
+  const t = useT();
   const { supabase, activeShopId } = useShop();
   const [bills, setBills] = useState([]);
   const [draws, setDraws] = useState([]);
@@ -54,15 +56,15 @@ function CashbookPageInner() {
   const entries = useMemo(() => {
     const rows = [];
     bills.forEach((b) => {
-      if (b.payment_type !== "credit") rows.push({ id: b.id, date: b.date, type: "in", label: `Sale — ${b.bill_no}`, amount: b.total });
+      if (b.payment_type !== "credit") rows.push({ id: b.id, date: b.date, type: "in", label: t("Sale — {no}", { no: b.bill_no }), amount: b.total });
     });
     credits
       .filter((c) => c.type === "payment")
       .forEach((c) => {
-        rows.push({ id: c.id, date: c.date, type: "in", label: `Udhaar payment — ${c.name}`, amount: c.amount });
+        rows.push({ id: c.id, date: c.date, type: "in", label: t("Udhaar payment — {name}", { name: c.name }), amount: c.amount });
       });
     draws.forEach((d) => {
-      rows.push({ id: d.id, date: d.date, type: "out", label: d.note || "Personal draw", amount: d.amount });
+      rows.push({ id: d.id, date: d.date, type: "out", label: d.note || t("Personal draw"), amount: d.amount });
     });
     expenses.forEach((e) => {
       rows.push({ id: e.id, date: e.date, type: "out", label: `${e.category}${e.note ? " — " + e.note : ""}`, amount: e.amount });
@@ -77,13 +79,13 @@ function CashbookPageInner() {
             id: m.id,
             date: m.date,
             type: "out",
-            label: `Stock purchase — ${m.item_name}${m.supplier ? " (" + m.supplier + ")" : ""}`,
+            label: `${t("Stock purchase — {item}", { item: m.item_name })}${m.supplier ? " (" + m.supplier + ")" : ""}`,
             amount: cost,
           });
         }
       });
     return rows.sort((a, b) => new Date(a.date) - new Date(b.date));
-  }, [bills, draws, expenses, credits, movements, items]);
+  }, [bills, draws, expenses, credits, movements, items, t]);
 
   // Balance is a true running total computed over ALL history, not just
   // the entries inside the selected date range — otherwise switching
@@ -105,7 +107,7 @@ function CashbookPageInner() {
   if (loading) {
     return (
       <div className="pt-6 flex items-center gap-2 text-sm text-muted">
-        <Loader2 size={16} className="animate-spin" /> Loading cashbook…
+        <Loader2 size={16} className="animate-spin" /> {t("Loading cashbook…")}
       </div>
     );
   }
@@ -115,19 +117,19 @@ function CashbookPageInner() {
       <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
         <div className="grid grid-cols-3 gap-3 flex-1">
           <div className="ks-card p-4">
-            <div className="text-[11px] uppercase tracking-wide text-[var(--text-secondary)] font-semibold">Cash in</div>
+            <div className="text-[11px] uppercase tracking-wide text-[var(--text-secondary)] font-semibold">{t("Cash in")}</div>
             <div className="ks-display text-xl font-bold mt-0.5" style={{ color: "var(--accent-soft-text)" }}>
               {rupee(totalIn)}
             </div>
           </div>
           <div className="ks-card p-4">
-            <div className="text-[11px] uppercase tracking-wide text-[var(--text-secondary)] font-semibold">Cash out</div>
+            <div className="text-[11px] uppercase tracking-wide text-[var(--text-secondary)] font-semibold">{t("Cash out")}</div>
             <div className="ks-display text-xl font-bold mt-0.5" style={{ color: "var(--danger)" }}>
               {rupee(totalOut)}
             </div>
           </div>
           <div className="ks-card p-4">
-            <div className="text-[11px] uppercase tracking-wide text-[var(--text-secondary)] font-semibold">Net</div>
+            <div className="text-[11px] uppercase tracking-wide text-[var(--text-secondary)] font-semibold">{t("Net")}</div>
             <div className="ks-display text-xl font-bold mt-0.5">{rupee(totalIn - totalOut)}</div>
           </div>
         </div>
@@ -153,10 +155,10 @@ function CashbookPageInner() {
         <table className="ks-stack w-full text-sm">
           <thead>
             <tr className="text-left ks-mono text-[11px] uppercase tracking-wide text-[var(--text-secondary)] border-b border-[var(--border)]">
-              <th className="px-5 py-3 font-medium">Date</th>
-              <th className="px-5 py-3 font-medium">Entry</th>
-              <th className="px-5 py-3 font-medium">Amount</th>
-              <th className="px-5 py-3 font-medium">Balance</th>
+              <th className="px-5 py-3 font-medium">{t("Date")}</th>
+              <th className="px-5 py-3 font-medium">{t("Entry")}</th>
+              <th className="px-5 py-3 font-medium">{t("Amount")}</th>
+              <th className="px-5 py-3 font-medium">{t("Balance")}</th>
             </tr>
           </thead>
           <tbody>
@@ -174,7 +176,7 @@ function CashbookPageInner() {
             {withBalance.length === 0 && (
               <tr>
                 <td colSpan={4} className="px-5 py-10 text-center text-[var(--text-secondary)] text-sm">
-                  Nothing in this period yet.
+                  {t("Nothing in this period yet.")}
                 </td>
               </tr>
             )}

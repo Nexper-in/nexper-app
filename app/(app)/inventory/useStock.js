@@ -28,6 +28,7 @@ export function useStock() {
   const [showCatalogPicker, setShowCatalogPicker] = useState(false);
   const [showTools, setShowTools] = useState(false);
   const [showScanUpgrade, setShowScanUpgrade] = useState(false);
+  const [expiryDays, setExpiryDays] = useState({});
 
   // Supports a "?add=1" deep link that jumps straight into the add-item flow.
   useEffect(() => {
@@ -44,10 +45,28 @@ export function useStock() {
   const load = useCallback(async () => {
     if (!activeShopId) return;
     setLoading(true);
-    const [itemsData, { data: shopSuppliersData }] = await Promise.all([
+    const horizon = new Date();
+    horizon.setDate(horizon.getDate() + 14);
+    const [itemsData, { data: shopSuppliersData }, { data: expiring }] = await Promise.all([
       fetchShopItems(supabase, activeShopId),
       supabase.from("shop_suppliers").select("supplier:suppliers(*)").eq("shop_id", activeShopId),
+      supabase
+        .from("stock_batches")
+        .select("shop_product_id, expiry_date")
+        .eq("shop_id", activeShopId)
+        .gt("qty_remaining", 0)
+        .not("expiry_date", "is", null)
+        .lte("expiry_date", horizon.toISOString().slice(0, 10)),
     ]);
+    // Days until the soonest expiry per item (negative = already expired).
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const soonest = {};
+    (expiring || []).forEach((b) => {
+      const days = Math.round((new Date(`${b.expiry_date}T00:00:00`) - today) / 86400000);
+      if (soonest[b.shop_product_id] === undefined || days < soonest[b.shop_product_id]) soonest[b.shop_product_id] = days;
+    });
+    setExpiryDays(soonest);
     setItems(itemsData);
     setSuppliers((shopSuppliersData || []).map((r) => r.supplier));
     setLoading(false);
@@ -159,6 +178,6 @@ export function useStock() {
     showAdd, setShowAdd, adjustItem, setAdjustItem, editPriceItem, setEditPriceItem,
     showScanBill, setShowScanBill, showInsights, setShowInsights, showBulkImport, setShowBulkImport,
     showCatalogPicker, setShowCatalogPicker, showTools, setShowTools, showScanUpgrade, setShowScanUpgrade,
-    addItem, savePrice, logMovement, load,
+    expiryDays, addItem, savePrice, logMovement, load,
   };
 }

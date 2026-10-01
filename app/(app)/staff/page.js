@@ -12,9 +12,11 @@ import UpgradePrompt from "@/components/UpgradePrompt";
 import { MODULES } from "@/lib/modules";
 import { isPro } from "@/lib/pricing";
 
+import { useT } from "@/lib/i18n";
 const FREE_STAFF_LIMIT = 1;
 
 export default function StaffPage() {
+  const t = useT();
   const { supabase, activeShopId, activeShop, currentMember, isOwner, callStaffApi, showToast } = useShop();
   const router = useRouter();
   const [members, setMembers] = useState([]);
@@ -55,7 +57,7 @@ export default function StaffPage() {
   async function handleSave({ name, permissions, newPin }) {
     await callStaffApi("/api/staff/update", { memberId: editing.id, name, permissions, newPin });
     setEditing(null);
-    showToast("Staff member updated");
+    showToast(t("Staff member updated"));
     load();
   }
 
@@ -82,7 +84,7 @@ export default function StaffPage() {
   if (loading) {
     return (
       <div className="pt-6 flex items-center gap-2 text-sm text-muted">
-        <Loader2 size={16} className="animate-spin" /> Loading staff…
+        <Loader2 size={16} className="animate-spin" /> {t("Loading staff…")}
       </div>
     );
   }
@@ -94,14 +96,13 @@ export default function StaffPage() {
     <div className="pt-6">
       <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
         <p className="text-sm text-[var(--text-secondary)] max-w-md">
-          Workers sign in with a staff code and PIN — from the login screen&apos;s &quot;Staff sign in&quot; tab — and only see
-          the sections you allow.
+          {t("Workers sign in with a staff code and PIN — from the login screen's \"Staff sign in\" tab — and only see the sections you allow.")}
         </p>
         <button
           onClick={() => (!isPro(activeShop) && staff.length >= FREE_STAFF_LIMIT ? setShowStaffUpgrade(true) : setShowAdd(true))}
           className="ks-btn-primary flex items-center gap-1.5 shrink-0"
         >
-          <Plus size={16} /> Add staff member
+          <Plus size={16} /> {t("Add staff member")}
         </button>
       </div>
 
@@ -113,10 +114,10 @@ export default function StaffPage() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-bold text-sm">{owner.name}</p>
-              <p className="text-xs text-[var(--text-secondary)] mt-0.5">Full access to everything</p>
+              <p className="text-xs text-[var(--text-secondary)] mt-0.5">{t("Full access to everything")}</p>
             </div>
             <span className="text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0" style={{ background: "var(--accent-soft-bg)", color: "var(--accent-soft-text)" }}>
-              OWNER
+              {t("OWNER")}
             </span>
           </div>
         )}
@@ -134,15 +135,15 @@ export default function StaffPage() {
                   <div className="flex items-center gap-2 flex-wrap mb-1">
                     <p className="font-bold text-sm">{m.name}</p>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "var(--bg-surface-alt)", color: "var(--text-secondary)" }}>
-                      STAFF
+                      {t("STAFF")}
                     </span>
                     <span className="ks-mono text-xs font-bold px-2 py-0.5 rounded-md" style={{ background: "var(--bg-surface-alt)", color: "var(--text-primary)" }}>
-                      Code: {m.staff_code}
+                      {t("Code: {code}", { code: m.staff_code })}
                     </span>
                   </div>
                   <div className="flex flex-wrap gap-1 mt-1.5">
                     {allowed.length === 0 ? (
-                      <span className="text-xs text-[var(--text-secondary)]">No access granted yet</span>
+                      <span className="text-xs text-[var(--text-secondary)]">{t("No access granted yet")}</span>
                     ) : (
                       allowed.map((mod) => (
                         <span key={mod.key} className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--accent-soft-bg)", color: "var(--accent-soft-text)" }}>
@@ -157,7 +158,7 @@ export default function StaffPage() {
                     onClick={() => setEditing(m)}
                     className="w-8 h-8 rounded-full flex items-center justify-center"
                     style={{ background: "var(--bg-surface-alt)", color: "var(--text-primary)" }}
-                    title="Edit"
+                    title={t("Edit")}
                   >
                     <Pencil size={14} />
                   </button>
@@ -165,7 +166,7 @@ export default function StaffPage() {
                     onClick={() => setRemoving(m)}
                     className="w-8 h-8 rounded-full flex items-center justify-center"
                     style={{ background: "var(--danger-soft)", color: "var(--danger)" }}
-                    title="Remove"
+                    title={t("Remove")}
                   >
                     <Trash2 size={14} />
                   </button>
@@ -177,17 +178,17 @@ export default function StaffPage() {
 
         {staff.length === 0 && (
           <div className="ks-card p-10 text-center text-[var(--text-secondary)] text-sm">
-            No staff added yet — tap &quot;Add staff member&quot; to get started.
+            {t("No staff added yet — tap \"Add staff member\" to get started.")}
           </div>
         )}
       </div>
 
       {showAdd && <AddStaffModal onClose={() => setShowAdd(false)} onAdd={handleAdd} />}
       {showStaffUpgrade && (
-        <Modal title="Add staff member" onClose={() => setShowStaffUpgrade(false)}>
+        <Modal title={t("Add staff member")} onClose={() => setShowStaffUpgrade(false)}>
           <UpgradePrompt
-            feature="More than 1 staff login"
-            description="The free plan includes you plus 1 staff member. Upgrade to add more."
+            feature={t("More than 1 staff login")}
+            description={t("The free plan includes you plus 1 staff member. Upgrade to add more.")}
           />
         </Modal>
       )}
@@ -196,15 +197,14 @@ export default function StaffPage() {
         <StaffCreatedModal name={created.name} staffCode={created.staffCode} pin={created.pin} onClose={() => setCreated(null)} />
       )}
       {removing && (
-        <Modal title={`Remove ${removing.name}?`} onClose={() => setRemoving(null)}>
+        <Modal title={t("Remove {name}?", { name: removing.name })} onClose={() => setRemoving(null)}>
           <div className="space-y-3.5">
             <p className="text-sm text-[var(--text-secondary)]">
-              They&apos;ll immediately lose access — their staff code and PIN stop working. This can&apos;t be undone; you&apos;d need
-              to add them again with a new code.
+              {t("They'll immediately lose access — their staff code and PIN stop working. This can't be undone; you'd need to add them again with a new code.")}
             </p>
             <div className="flex gap-2">
               <button onClick={() => setRemoving(null)} className="ks-btn-outline flex-1">
-                Cancel
+                {t("Cancel")}
               </button>
               <button
                 onClick={confirmRemove}
@@ -213,7 +213,7 @@ export default function StaffPage() {
                 style={{ background: "var(--danger-solid)" }}
               >
                 {removeLoading && <Loader2 size={16} className="animate-spin" />}
-                Remove
+                {t("Remove")}
               </button>
             </div>
           </div>

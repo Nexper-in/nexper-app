@@ -6,7 +6,9 @@ import Modal from "@/components/ui/Modal";
 import Field from "@/components/ui/Field";
 import UpiQrCard from "@/components/UpiQrCard";
 
+import { useT } from "@/lib/i18n";
 export default function RecordPaymentModal({ customer, upiId, storeName, onClose, onAdd }) {
+  const t = useT();
   const [amount, setAmount] = useState(String(customer.balance));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -24,9 +26,9 @@ export default function RecordPaymentModal({ customer, upiId, storeName, onClose
   }
 
   return (
-    <Modal title={`Record payment: ${customer.name}`} onClose={onClose}>
+    <Modal title={t("Record payment: {name}", { name: customer.name })} onClose={onClose}>
       <div className="space-y-3.5">
-        <Field label="Amount received (₹)">
+        <Field label={t("Amount received (₹)")}>
           <input autoFocus type="number" className="ks-input" value={amount} onChange={(e) => setAmount(e.target.value)} />
         </Field>
         {upiId && Number(amount) > 0 && <UpiQrCard upiId={upiId} payeeName={storeName} amount={Number(amount)} note={`Udhaar - ${customer.name}`} />}
@@ -35,7 +37,7 @@ export default function RecordPaymentModal({ customer, upiId, storeName, onClose
         )}
         <button disabled={!valid || saving} onClick={handleAdd} className="ks-btn-primary w-full flex items-center justify-center gap-2">
           {saving && <Loader2 size={16} className="animate-spin" />}
-          Record payment
+          {t("Record payment")}
         </button>
       </div>
     </Modal>

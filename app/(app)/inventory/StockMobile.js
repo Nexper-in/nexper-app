@@ -4,7 +4,7 @@ import { Search, Plus, MoreHorizontal } from "lucide-react";
 import CategoryChip from "@/components/CategoryChip";
 import { rupee } from "@/lib/format";
 import { STOCK_META, stockLevelOf } from "./stockShared";
-import { StockActions, InsightsPanel } from "./StockParts";
+import { StockActions, InsightsPanel, ExpiryChip } from "./StockParts";
 
 // Phone view: search, Add item and one "⋯" menu, then one card per item.
 export default function StockMobile({ vm }) {
@@ -78,6 +78,7 @@ export default function StockMobile({ vm }) {
                     <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: stockMeta.bg, color: stockMeta.text }}>
                       {i.stock} {i.unit} · {t(stockMeta.label)}
                     </span>
+                    <ExpiryChip vm={vm} id={i.id} />
                   </div>
                 </div>
                 <div className="text-right shrink-0">

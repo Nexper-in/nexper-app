@@ -3,6 +3,7 @@
 import {
   Package, Wallet, AlertTriangle, TrendingUp, ArrowUpCircle, ArrowDownCircle, Activity, Share2, Receipt, CheckCircle2,
 } from "lucide-react";
+import GettingStarted from "@/components/GettingStarted";
 import StatCard from "@/components/StatCard";
 import StatDetailModal from "@/components/StatDetailModal";
 import CustomerDetailModal from "@/components/CustomerDetailModal";
@@ -326,4 +327,10 @@ export function HomeModals({ vm }) {
       {customerDetail && <CustomerDetailModal customer={customerDetail} bills={bills} onClose={() => setCustomerDetail(null)} />}
     </>
   );
+}
+
+// First-week checklist for a new shop; hides itself when done or dismissed.
+export function StartedCard({ vm }) {
+  const { activeShop, items, bills } = vm;
+  return <GettingStarted shop={activeShop} items={items} bills={bills} />;
 }

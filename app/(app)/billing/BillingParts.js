@@ -1,12 +1,13 @@
 "use client";
 
 import {
-  Search, Plus, Minus, Mic, Printer, MessageCircle, CheckCircle2, Loader2, ScanLine, Banknote, QrCode, CreditCard, Landmark, BookOpen, ChevronDown,
+  Search, FileText, Plus, Minus, Mic, Printer, MessageCircle, CheckCircle2, Loader2, ScanLine, Banknote, QrCode, CreditCard, Landmark, BookOpen, ChevronDown,
 } from "lucide-react";
 import QtyPickerModal from "@/components/QtyPickerModal";
 import UpiQrCard from "@/components/UpiQrCard";
 import PrintBillContent from "@/components/PrintBillContent";
 import VoiceBillingModal from "@/components/VoiceBillingModal";
+import HandwrittenBillModal from "@/components/HandwrittenBillModal";
 import { rupee } from "@/lib/format";
 import { whatsappLink, billMessageText } from "@/lib/messaging";
 
@@ -54,7 +55,7 @@ export function SearchBox({ vm, autoFocus }) {
 
 // Search results, or the quick item tiles when nothing is typed.
 export function FindItems({ vm, wide }) {
-  const { t, query, browsing, displayItems, quickItems, setPickerItem } = vm;
+  const { t, query, browsing, displayItems, quickItems, setPickerItem, setShowHandwritten } = vm;
   return (
     <>
       {browsing ? (
@@ -109,6 +110,15 @@ export function FindItems({ vm, wide }) {
             {t("Search, scan or speak to add items.")}
           </div>
         )}
+      {!browsing && (
+        <button
+          onClick={() => setShowHandwritten(true)}
+          className="mt-3 flex items-center gap-1.5 text-xs font-semibold"
+          style={{ color: "var(--accent-soft-text)" }}
+        >
+          <FileText size={14} /> {t("Scan a written list")}
+        </button>
+      )}
     </>
   );
 }
@@ -136,7 +146,7 @@ export function BillPanel({ vm, wide, alwaysDetails }) {
           </p>
           <div className="grid grid-cols-2 gap-2 mt-4">
             <button
-              onClick={() => window.open(whatsappLink(lastBill.customer_phone, billMessageText(lastBill, activeShop?.name, activeShop?.gstin)), "_blank")}
+              onClick={() => window.open(whatsappLink(lastBill.customer_phone, billMessageText(lastBill, activeShop?.name, activeShop?.gstin, activeShop?.whatsapp_group_url)), "_blank")}
               disabled={!lastBill.customer_phone}
               className="flex items-center justify-center gap-1.5 text-sm py-2.5 rounded-xl font-semibold disabled:opacity-40"
               style={{ background: "#25D366", color: "#fff" }}
@@ -398,12 +408,12 @@ export function CheckoutBar({ vm }) {
 
 // Printable copy of the last bill, and the pop-ups.
 export function BillingModals({ vm }) {
-  const { activeShop, lastBill, showVoiceBilling, setShowVoiceBilling, pricedItems, handleVoiceBillingConfirm, pickerItem, setPickerItem, addToCart } = vm;
+  const { activeShop, supabase, lastBill, showVoiceBilling, setShowVoiceBilling, pricedItems, handleVoiceBillingConfirm, pickerItem, setPickerItem, addToCart, showHandwritten, setShowHandwritten, addMatched } = vm;
   return (
     <>
       {lastBill && (
         <div className="ks-print-only">
-          <PrintBillContent bill={lastBill} storeName={activeShop?.name} gstin={activeShop?.gstin} />
+          <PrintBillContent bill={lastBill} storeName={activeShop?.name} gstin={activeShop?.gstin} groupUrl={activeShop?.whatsapp_group_url} />
         </div>
       )}
 
@@ -416,6 +426,9 @@ export function BillingModals({ vm }) {
           onClose={() => setPickerItem(null)}
           onConfirm={(qty) => { addToCart(pickerItem, qty); setPickerItem(null); }}
         />
+      )}
+      {showHandwritten && (
+        <HandwrittenBillModal supabase={supabase} items={pricedItems} onAdd={addMatched} onClose={() => setShowHandwritten(false)} />
       )}
     </>
   );

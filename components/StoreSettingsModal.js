@@ -7,7 +7,9 @@ import Field from "@/components/ui/Field";
 import { useShop } from "@/components/ShopContext";
 import { MODULES } from "@/lib/modules";
 
+import { useT } from "@/lib/i18n";
 export default function StoreSettingsModal({ onClose }) {
+  const t = useT();
   const { activeShop, updateActiveShop, deleteActiveShop, user, updateProfile, showToast } = useShop();
   const [fullName, setFullName] = useState(user?.user_metadata?.full_name || "");
   const [name, setName] = useState(activeShop?.name || "");
@@ -42,7 +44,7 @@ export default function StoreSettingsModal({ onClose }) {
         upi_id: upiId.trim() || null,
         enabled_modules: enabledModules,
       });
-      showToast("Settings saved");
+      showToast(t("Settings saved"));
       onClose();
     } catch (err) {
       setError(err.message);
@@ -64,26 +66,26 @@ export default function StoreSettingsModal({ onClose }) {
   }
 
   return (
-    <Modal title="Store settings" onClose={onClose}>
+    <Modal title={t("Store settings")} onClose={onClose}>
       <div className="space-y-3.5">
-        <Field label="Your name (shown on the dashboard greeting)">
-          <input className="ks-input" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="e.g. Suresh Sharma" />
+        <Field label={t("Your name (shown on the dashboard greeting)")}>
+          <input className="ks-input" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder={t("e.g. Suresh Sharma")} />
         </Field>
-        <Field label="Store name">
+        <Field label={t("Store name")}>
           <input className="ks-input" value={name} onChange={(e) => setName(e.target.value)} />
         </Field>
-        <Field label="UPI ID (optional — lets customers pay by scanning a QR code)">
-          <input className="ks-input" value={upiId} onChange={(e) => setUpiId(e.target.value)} placeholder="e.g. shopname@upi" />
+        <Field label={t("UPI ID (optional — lets customers pay by scanning a QR code)")}>
+          <input className="ks-input" value={upiId} onChange={(e) => setUpiId(e.target.value)} placeholder={t("e.g. shopname@upi")} />
         </Field>
-        <Field label="GSTIN (optional — shows on printed/WhatsApp bills)">
+        <Field label={t("GSTIN (optional — shows on printed/WhatsApp bills)")}>
           <input
             className="ks-input ks-mono"
             value={gstin}
             onChange={(e) => setGstin(e.target.value.toUpperCase())}
-            placeholder="e.g. 07AAAAA0000A1Z5"
+            placeholder={t("e.g. 07AAAAA0000A1Z5")}
           />
         </Field>
-        <Field label="Enabled features for this shop">
+        <Field label={t("Enabled features for this shop")}>
           <div className="grid grid-cols-2 gap-2">
             {MODULES.map((m) => (
               <label
@@ -106,7 +108,7 @@ export default function StoreSettingsModal({ onClose }) {
         )}
         <button onClick={handleSave} disabled={saving} className="ks-btn-primary w-full flex items-center justify-center gap-2">
           {saving && <Loader2 size={16} className="animate-spin" />}
-          Save settings
+          {t("Save settings")}
         </button>
 
         <div className="pt-3 mt-1 border-t" style={{ borderColor: "var(--border)" }}>
@@ -115,18 +117,17 @@ export default function StoreSettingsModal({ onClose }) {
               onClick={() => setShowDelete(true)}
               className="text-xs font-semibold text-[var(--danger)] flex items-center gap-1.5"
             >
-              <AlertTriangle size={13} /> Delete this shop
+              <AlertTriangle size={13} /> {t("Delete this shop")}
             </button>
           ) : (
             <div className="space-y-2.5">
               <div className="flex items-start gap-2 text-xs text-[var(--danger)] bg-[var(--danger-soft)] rounded-lg px-3 py-2.5">
                 <AlertTriangle size={14} className="shrink-0 mt-0.5" />
                 <span>
-                  This permanently deletes <strong>{activeShop?.name}</strong> and everything in it — items, bills,
-                  udhaar, day-close history, expenses. This cannot be undone.
+                  {t("This permanently deletes {name} and everything in it — items, bills, udhaar, day-close history, expenses. This cannot be undone.", { name: activeShop?.name })}
                 </span>
               </div>
-              <Field label={`Type "${activeShop?.name}" to confirm`}>
+              <Field label={t("Type \"{name}\" to confirm", { name: activeShop?.name })}>
                 <input className="ks-input" value={confirmText} onChange={(e) => setConfirmText(e.target.value)} />
               </Field>
               {deleteError && (
@@ -141,7 +142,7 @@ export default function StoreSettingsModal({ onClose }) {
                   }}
                   className="ks-btn-outline flex-1"
                 >
-                  Cancel
+                  {t("Cancel")}
                 </button>
                 <button
                   onClick={handleDelete}
@@ -150,7 +151,7 @@ export default function StoreSettingsModal({ onClose }) {
                   style={{ background: "var(--danger-solid)" }}
                 >
                   {deleting && <Loader2 size={16} className="animate-spin" />}
-                  Delete permanently
+                  {t("Delete permanently")}
                 </button>
               </div>
             </div>

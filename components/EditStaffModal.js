@@ -6,7 +6,9 @@ import Modal from "@/components/ui/Modal";
 import Field from "@/components/ui/Field";
 import { MODULES } from "@/lib/modules";
 
+import { useT } from "@/lib/i18n";
 export default function EditStaffModal({ member, onClose, onSave }) {
+  const t = useT();
   const [name, setName] = useState(member.name);
   const [permissions, setPermissions] = useState(member.permissions || {});
   const [resetPin, setResetPin] = useState(false);
@@ -32,12 +34,12 @@ export default function EditStaffModal({ member, onClose, onSave }) {
   }
 
   return (
-    <Modal title={`Edit ${member.name}`} onClose={onClose}>
+    <Modal title={t("Edit {name}", { name: member.name })} onClose={onClose}>
       <div className="space-y-3.5">
-        <Field label="Worker's name">
+        <Field label={t("Worker's name")}>
           <input className="ks-input" value={name} onChange={(e) => setName(e.target.value)} />
         </Field>
-        <Field label="What can they access?">
+        <Field label={t("What can they access?")}>
           <div className="grid grid-cols-2 gap-2">
             {MODULES.map((m) => (
               <label
@@ -57,10 +59,10 @@ export default function EditStaffModal({ member, onClose, onSave }) {
         </Field>
         {!resetPin ? (
           <button type="button" onClick={() => setResetPin(true)} className="text-xs font-semibold text-[var(--accent-soft-text)]">
-            Reset their PIN
+            {t("Reset their PIN")}
           </button>
         ) : (
-          <Field label="New PIN (6+ digits)">
+          <Field label={t("New PIN (6+ digits)")}>
             <input
               className="ks-input ks-mono"
               inputMode="numeric"
@@ -71,7 +73,7 @@ export default function EditStaffModal({ member, onClose, onSave }) {
             />
             {pinTooShort && (
               <p className="text-xs text-[var(--danger)] font-medium mt-1">
-                {6 - newPin.length} more digit{6 - newPin.length === 1 ? "" : "s"} needed
+                {t("{n} more digits needed", { n: 6 - newPin.length })}
               </p>
             )}
           </Field>
@@ -81,7 +83,7 @@ export default function EditStaffModal({ member, onClose, onSave }) {
         )}
         <button disabled={!valid || saving} onClick={handleSave} className="ks-btn-primary w-full flex items-center justify-center gap-2">
           {saving && <Loader2 size={16} className="animate-spin" />}
-          Save changes
+          {t("Save changes")}
         </button>
       </div>
     </Modal>

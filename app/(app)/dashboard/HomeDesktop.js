@@ -1,6 +1,6 @@
 "use client";
 
-import { TodayHero, NewBillAndQuick, AttentionList, StatCards, WeekChart, TopCategories, TopCustomers, RecentMovement } from "./HomeParts";
+import { StartedCard, TodayHero, NewBillAndQuick, AttentionList, StatCards, WeekChart, TopCategories, TopCustomers, RecentMovement } from "./HomeParts";
 
 // Laptop view: the whole dashboard at once. Today, New bill and what needs
 // you on the left; the numbers, the week's chart and the lists on the right.
@@ -10,6 +10,7 @@ export default function HomeDesktop({ vm }) {
       <div className="min-w-0">
         <TodayHero vm={vm} />
         <NewBillAndQuick vm={vm} />
+        <StartedCard vm={vm} />
         <AttentionList vm={vm} />
       </div>
       <div className="min-w-0 space-y-4">

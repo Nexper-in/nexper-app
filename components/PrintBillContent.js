@@ -31,7 +31,7 @@ function numberToWords(num) {
   return result.trim();
 }
 
-export default function PrintBillContent({ bill, storeName, gstin }) {
+export default function PrintBillContent({ bill, storeName, gstin, groupUrl }) {
   const { taxable, taxAmt } = taxBreakup(bill.items);
   const halfTax = Math.round((taxAmt / 2) * 100) / 100;
   const discount = bill.discount_amount || 0;
@@ -161,6 +161,7 @@ export default function PrintBillContent({ bill, storeName, gstin }) {
       {/* Footer */}
       <div style={{ marginTop: 28, paddingTop: 16, borderTop: "1px dashed #D1D5DB", textAlign: "center" }}>
         <div style={{ fontWeight: 600 }}>Thank you for shopping with us!</div>
+        {groupUrl && <div style={{ fontSize: 10, marginTop: 4 }}>Join our WhatsApp group for offers: {groupUrl}</div>}
         <div style={{ fontSize: 11, color: "#9CA3AF", marginTop: 4 }}>This is a computer-generated invoice and does not require a signature.</div>
       </div>
     </div>

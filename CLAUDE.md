@@ -114,15 +114,27 @@ phone's language.
 - Same style as the website: warm counter talk, not bookish. Keep Nexper,
   WhatsApp, UPI, GST, PIN, MRP, CSV, Pro and Google in Latin letters.
   Udhaar: उधार / అప్పు / ಸಾಲ / கடன் / കടം.
-- **Screens translated so far:** menus and tabs, account menu, Home, New bill
-  (and the quantity picker), the Stock and Udhaar lists, sign-in, offline
-  banner. The other screens (reports, expenses, suppliers, staff, the pop-up
-  forms…) are still English: when you touch one, wrap its text in `t()` and
-  add the translations.
+- **All screens are translated** except the voice-billing pop-up, the platform
+  admin pages and printed bills (these stay English on purpose). When you add or
+  touch a screen, every visible text goes through `t()` (whole sentences with
+  `{placeholders}`, never fragments joined around a value). Technical labels
+  that must stay as they are (CSV column names, `T()` keys' English) are not
+  translated.
+- **The language follows the visitor from the website:** website links carry
+  `?lang=`, both sites write the `nexper_lang` cookie on `.nexper.in`, and
+  `lib/i18n.js` reads URL, then cookie, then this device, then the phone.
 - Dates, amounts and names from the database are shown as they are. Don't
   translate user data.
 - Look at a changed screen in one Indian language on a 360px phone: scripts
   run longer than English, so check nothing overflows.
+
+## Database changes (migrations)
+
+New tables and functions go in `supabase/migrations/NNN_*.sql`, run by hand in
+the Supabase SQL editor in order. Code that depends on a new migration must fail
+politely when it is missing (show "needs the latest database update"), because
+the app can be deployed before the SQL is run. Current pending list is in
+`PROJECT_ABDUL.md`.
 
 ## Before you push
 

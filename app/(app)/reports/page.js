@@ -10,6 +10,7 @@ import ModuleGuard from "@/components/ModuleGuard";
 import UpgradePrompt from "@/components/UpgradePrompt";
 import { isPro } from "@/lib/pricing";
 
+import { useT } from "@/lib/i18n";
 export default function ReportsPage() {
   return (
     <ModuleGuard module="reports">
@@ -30,6 +31,7 @@ function monthRange(month) {
 }
 
 function ReportsPageInner() {
+  const t = useT();
   const { supabase, activeShopId, activeShop, showToast } = useShop();
   const [tab, setTab] = useState("summary");
   const [month, setMonth] = useState(currentMonth());
@@ -104,9 +106,9 @@ function ReportsPageInner() {
     <div className="pt-6 pb-10">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div>
-          <h1 className="ks-display font-bold text-xl">Reports &amp; GST</h1>
+          <h1 className="ks-display font-bold text-xl">{t("Reports & GST")}</h1>
           <p className="text-sm mt-0.5" style={{ color: "var(--text-secondary)" }}>
-            GST collected on your sales, ready to hand off or file.
+            {t("GST collected on your sales, ready to hand off or file.")}
           </p>
         </div>
         <input
@@ -123,39 +125,37 @@ function ReportsPageInner() {
           className="px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-colors"
           style={tab === "summary" ? { background: "var(--accent)", color: "#fff" } : { color: "var(--text-secondary)" }}
         >
-          <FileBarChart2 size={14} /> Summary report
+          <FileBarChart2 size={14} /> {t("Summary report")}
         </button>
         <button
           onClick={() => setTab("filing")}
           className="px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-colors"
           style={tab === "filing" ? { background: "var(--accent)", color: "#fff" } : { color: "var(--text-secondary)" }}
         >
-          <FileJson size={14} /> GST filing export
+          <FileJson size={14} /> {t("GST filing export")}
         </button>
       </div>
 
       {loading ? (
         <div className="pt-6 flex items-center gap-2 text-sm text-muted">
-          <Loader2 size={16} className="animate-spin" /> Loading {monthLabel} data…
+          <Loader2 size={16} className="animate-spin" /> {t("Loading {month} data…", { month: monthLabel })}
         </div>
       ) : tab === "summary" ? (
         <div className="space-y-4">
           <div className="ks-card p-4 text-sm" style={{ color: "var(--text-secondary)" }}>
-            <strong style={{ color: "var(--text-primary)" }}>What this is:</strong> your GST collected in {monthLabel},
-            split by tax slab, with the CGST/SGST halves worked out for you. Use it to fill GSTR-3B by hand or hand the
-            numbers to your accountant — no setup needed, works right now.
+            <strong style={{ color: "var(--text-primary)" }}>{t("What this is:")}</strong> {t("your GST collected in {month}, split by tax slab, with the CGST/SGST halves worked out for you. Use it to fill GSTR-3B by hand or hand the numbers to your accountant — no setup needed, works right now.", { month: monthLabel })}
           </div>
 
           <div className="ks-card overflow-hidden overflow-x-auto">
             <table className="ks-stack w-full text-sm">
               <thead>
                 <tr className="text-left ks-mono text-[11px] uppercase tracking-wide text-[var(--text-secondary)] border-b border-[var(--border)]">
-                  <th className="px-5 py-3 font-medium">GST Rate</th>
-                  <th className="px-5 py-3 font-medium">Taxable value</th>
-                  <th className="px-5 py-3 font-medium">CGST</th>
-                  <th className="px-5 py-3 font-medium">SGST</th>
-                  <th className="px-5 py-3 font-medium">Total tax</th>
-                  <th className="px-5 py-3 font-medium">Total sales</th>
+                  <th className="px-5 py-3 font-medium">{t("GST Rate")}</th>
+                  <th className="px-5 py-3 font-medium">{t("Taxable value")}</th>
+                  <th className="px-5 py-3 font-medium">{t("CGST")}</th>
+                  <th className="px-5 py-3 font-medium">{t("SGST")}</th>
+                  <th className="px-5 py-3 font-medium">{t("Total tax")}</th>
+                  <th className="px-5 py-3 font-medium">{t("Total sales")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -172,7 +172,7 @@ function ReportsPageInner() {
                 {summary.length === 0 && (
                   <tr>
                     <td colSpan={6} className="px-5 py-10 text-center text-[var(--text-secondary)] text-sm">
-                      No bills recorded in {monthLabel}.
+                      {t("No bills recorded in {month}.", { month: monthLabel })}
                     </td>
                   </tr>
                 )}
@@ -180,10 +180,10 @@ function ReportsPageInner() {
               {summary.length > 0 && (
                 <tfoot>
                   <tr className="border-t-2 border-[var(--border)] font-bold">
-                    <td className="px-5 py-3">TOTAL</td>
+                    <td className="px-5 py-3">{t("TOTAL")}</td>
                     <td className="px-5 py-3 ks-mono">{rupee(totals.taxable)}</td>
                     <td className="px-5 py-3 ks-mono" colSpan={2}>
-                      {rupee(totals.tax)} tax
+                      {t("{amt} tax", { amt: rupee(totals.tax) })}
                     </td>
                     <td className="px-5 py-3 ks-mono">{rupee(totals.tax)}</td>
                     <td className="px-5 py-3 ks-mono">{rupee(totals.total)}</td>
@@ -198,26 +198,22 @@ function ReportsPageInner() {
             disabled={summary.length === 0}
             className="ks-btn-primary inline-flex items-center gap-2 disabled:opacity-40"
           >
-            <Download size={15} /> Download CSV
+            <Download size={15} /> {t("Download CSV")}
           </button>
         </div>
       ) : !isPro(activeShop) ? (
         <UpgradePrompt
-          feature="GSTR-1 filing export"
-          description="The rate-wise summary on the left tab is free. The upload-ready JSON file for the GST Offline Tool is part of Nexper Pro."
+          feature={t("GSTR-1 filing export")}
+          description={t("The rate-wise summary on the left tab is free. The upload-ready JSON file for the GST Offline Tool is part of Nexper Pro.")}
         />
       ) : (
         <div className="space-y-4">
           <div className="ks-card p-4 text-sm" style={{ color: "var(--text-secondary)" }}>
-            <strong style={{ color: "var(--text-primary)" }}>What this is:</strong> a GSTR-1 JSON file in the format
-            the government&apos;s GST Offline Utility accepts, so you or your CA can upload it instead of retyping every
-            invoice. It covers your B2C rate-wise sales and an HSN-wise summary.
+            <strong style={{ color: "var(--text-primary)" }}>{t("What this is:")}</strong> {t("a GSTR-1 JSON file in the format the government's GST Offline Utility accepts, so you or your CA can upload it instead of retyping every invoice. It covers your B2C rate-wise sales and an HSN-wise summary.")}
             <div className="flex items-start gap-2 mt-3 px-3 py-2.5 rounded-lg" style={{ background: "var(--warn-soft)", color: "var(--warn)" }}>
               <AlertTriangle size={14} className="shrink-0 mt-0.5" />
               <span>
-                Best-effort export — GSTN&apos;s schema changes over time, and this assumes every sale is B2C and
-                within your own state (no separate buyer GSTIN is captured). Always open the file in the GST Offline
-                Tool and check it before filing.
+                {t("Best-effort export — GSTN's schema changes over time, and this assumes every sale is B2C and within your own state (no separate buyer GSTIN is captured). Always open the file in the GST Offline Tool and check it before filing.")}
               </span>
             </div>
           </div>
@@ -226,8 +222,7 @@ function ReportsPageInner() {
             <div className="ks-card p-4 flex items-start gap-2 text-sm" style={{ color: "var(--danger)", background: "var(--danger-soft)" }}>
               <AlertTriangle size={16} className="shrink-0 mt-0.5" />
               <span>
-                Your shop&apos;s GSTIN isn&apos;t set. Add it under <strong>Store settings</strong> — the export needs it to
-                fill the GSTIN and place-of-supply fields.
+                {t("Your shop's GSTIN isn't set. Add it under Store settings. The export needs it to fill the GSTIN and place-of-supply fields.")}
               </span>
             </div>
           )}
@@ -235,11 +230,10 @@ function ReportsPageInner() {
           {missingHsn.length > 0 && (
             <div className="ks-card p-4">
               <p className="text-sm font-semibold mb-1">
-                {missingHsn.length} of {items.length} products are missing an HSN code
+                {t("{n} of {total} products are missing an HSN code", { n: missingHsn.length, total: items.length })}
               </p>
               <p className="text-xs mb-3" style={{ color: "var(--text-secondary)" }}>
-                The HSN-wise summary section will leave these blank until you add one. Add them here, or when you next
-                add/edit an item.
+                {t("The HSN-wise summary section will leave these blank until you add one. Add them here, or when you next add/edit an item.")}
               </p>
               <div className="space-y-2">
                 {missingHsn.map((i) => (
@@ -247,7 +241,7 @@ function ReportsPageInner() {
                     <span className="flex-1 text-sm truncate">{i.name}</span>
                     <input
                       className="ks-input ks-mono w-28"
-                      placeholder="HSN code"
+                      placeholder={t("HSN code")}
                       value={hsnDrafts[i.id] ?? ""}
                       onChange={(e) => setHsnDrafts((p) => ({ ...p, [i.id]: e.target.value }))}
                     />
@@ -270,7 +264,7 @@ function ReportsPageInner() {
             disabled={bills.length === 0}
             className="ks-btn-primary inline-flex items-center gap-2 disabled:opacity-40"
           >
-            <Download size={15} /> Download GSTR-1 JSON ({monthLabel})
+            <Download size={15} /> {t("Download GSTR-1 JSON ({month})", { month: monthLabel })}
           </button>
         </div>
       )}

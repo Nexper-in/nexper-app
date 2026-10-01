@@ -38,6 +38,7 @@ export function useBilling() {
   const [generating, setGenerating] = useState(false);
   const [showVoiceBilling, setShowVoiceBilling] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const [showHandwritten, setShowHandwritten] = useState(false);
   // Phones: hide the floating checkout bar while the Save bill button is on screen.
   const [billInView, setBillInView] = useState(false);
   useEffect(() => {
@@ -206,6 +207,11 @@ export function useBilling() {
       ];
     });
     setQuery("");
+  }
+
+  // Items read from a customer's written list, already checked by the owner.
+  function addMatched(lines) {
+    lines.forEach(({ item, qty }) => addToCart(item, qty));
   }
 
   function updateQty(id, qty) {
@@ -446,5 +452,6 @@ export function useBilling() {
     pricedItems, cleanPhone, previousVisits, isLoyal, updateQty, total, discountAmount, clearanceSavings,
     cartGst, nextBillNo, clearCart, quickItems, cartQty, pay, choosePay, displayItems, browsing,
     generateBill, handleVoiceBillingConfirm, startBarcodeScanner, printBill, addToCart,
+    showHandwritten, setShowHandwritten, addMatched,
   };
 }

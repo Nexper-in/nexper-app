@@ -6,6 +6,7 @@ import Modal from "@/components/ui/Modal";
 import Field from "@/components/ui/Field";
 import { rupee } from "@/lib/format";
 
+import { useT } from "@/lib/i18n";
 function addDays(dateStr, days) {
   const d = new Date(dateStr);
   d.setDate(d.getDate() + days);
@@ -15,6 +16,7 @@ function addDays(dateStr, days) {
 const todayStr = () => new Date().toISOString().slice(0, 10);
 
 export default function ClearanceOfferModal({ items, suggestedIds = [], initialSelectedIds = [], onClose, onConfirm }) {
+  const t = useT();
   const [name, setName] = useState("Clearance offer");
   const [discountPct, setDiscountPct] = useState("20");
   const [startDate, setStartDate] = useState(todayStr());
@@ -55,19 +57,19 @@ export default function ClearanceOfferModal({ items, suggestedIds = [], initialS
   }
 
   return (
-    <Modal title="New clearance offer" onClose={onClose}>
+    <Modal title={t("New clearance offer")} onClose={onClose}>
       <div className="space-y-3.5">
-        <Field label="Offer name">
-          <input className="ks-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Weekend clearance" />
+        <Field label={t("Offer name")}>
+          <input className="ks-input" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("e.g. Weekend clearance")} />
         </Field>
         <div className="grid grid-cols-3 gap-2.5">
-          <Field label="Discount %">
+          <Field label={t("Discount %")}>
             <input type="number" min="1" max="90" className="ks-input" value={discountPct} onChange={(e) => setDiscountPct(e.target.value)} />
           </Field>
-          <Field label="Starts">
+          <Field label={t("Starts")}>
             <input type="date" className="ks-input" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
           </Field>
-          <Field label="Ends">
+          <Field label={t("Ends")}>
             <input type="date" className="ks-input" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
           </Field>
         </div>
@@ -75,7 +77,7 @@ export default function ClearanceOfferModal({ items, suggestedIds = [], initialS
         {suggested.length > 0 && (
           <div className="rounded-xl p-2.5" style={{ background: "var(--warn-soft)" }}>
             <p className="text-[11px] font-bold flex items-center gap-1.5 mb-1.5" style={{ color: "var(--warn)" }}>
-              <Sparkles size={12} /> Expiring soon — tap to add
+              <Sparkles size={12} /> {t("Expiring soon — tap to add")}
             </p>
             <div className="flex flex-wrap gap-1.5">
               {suggested.map((i) => (
@@ -96,11 +98,11 @@ export default function ClearanceOfferModal({ items, suggestedIds = [], initialS
           </div>
         )}
 
-        <Field label={`Items (${selected.size} selected)`}>
+        <Field label={t("Items ({n} selected)", { n: selected.size })}>
           <div className="relative mb-1.5">
             <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
             <input
-              placeholder="Search items..."
+              placeholder={t("Search items...")}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="ks-input text-xs"
@@ -115,7 +117,7 @@ export default function ClearanceOfferModal({ items, suggestedIds = [], initialS
                 <span className="ks-mono text-[var(--text-secondary)]">{rupee(i.price)}</span>
               </label>
             ))}
-            {filtered.length === 0 && <p className="text-xs text-[var(--text-secondary)] text-center py-4">No items match.</p>}
+            {filtered.length === 0 && <p className="text-xs text-[var(--text-secondary)] text-center py-4">{t("No items match.")}</p>}
           </div>
         </Field>
 
@@ -126,7 +128,7 @@ export default function ClearanceOfferModal({ items, suggestedIds = [], initialS
           className="ks-btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-40"
         >
           {saving && <Loader2 size={16} className="animate-spin" />}
-          Start clearance offer
+          {t("Start clearance offer")}
         </button>
       </div>
     </Modal>

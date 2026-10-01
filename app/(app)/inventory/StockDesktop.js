@@ -4,7 +4,7 @@ import { Search, Plus } from "lucide-react";
 import CategoryChip from "@/components/CategoryChip";
 import { rupee } from "@/lib/format";
 import { STOCK_META, stockLevelOf } from "./stockShared";
-import { StockActions, InsightsPanel } from "./StockParts";
+import { StockActions, InsightsPanel, ExpiryChip } from "./StockParts";
 
 // Laptop view: totals up top, every tool as a button, full table below.
 export default function StockDesktop({ vm }) {
@@ -95,6 +95,7 @@ export default function StockDesktop({ vm }) {
                     <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: stockMeta.bg, color: stockMeta.text }}>
                       {t(stockMeta.label)}
                     </span>
+                    <span className="ml-2"><ExpiryChip vm={vm} id={i.id} /></span>
                   </td>
                   <td className="px-5 py-3">
                     <StockActions vm={vm} i={i} />

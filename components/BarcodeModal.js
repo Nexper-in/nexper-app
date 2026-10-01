@@ -3,7 +3,9 @@
 import { useEffect, useRef } from "react";
 import { X, Printer } from "lucide-react";
 
+import { useT } from "@/lib/i18n";
 export default function BarcodeModal({ item, onClose }) {
+  const t = useT();
   const svgRef = useRef(null);
 
   useEffect(() => {
@@ -73,7 +75,7 @@ export default function BarcodeModal({ item, onClose }) {
           onClick={printBarcode}
           className="ks-btn-outline w-full flex items-center justify-center gap-1.5"
         >
-          <Printer size={15} /> Print barcode
+          <Printer size={15} /> {t("Print barcode")}
         </button>
       </div>
     </div>

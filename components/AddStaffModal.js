@@ -6,7 +6,9 @@ import Modal from "@/components/ui/Modal";
 import Field from "@/components/ui/Field";
 import { MODULES, defaultPermissions } from "@/lib/modules";
 
+import { useT } from "@/lib/i18n";
 export default function AddStaffModal({ onClose, onAdd }) {
+  const t = useT();
   const [name, setName] = useState("");
   const [pin, setPin] = useState("");
   const [permissions, setPermissions] = useState(defaultPermissions(false));
@@ -31,12 +33,12 @@ export default function AddStaffModal({ onClose, onAdd }) {
   }
 
   return (
-    <Modal title="Add staff member" onClose={onClose}>
+    <Modal title={t("Add staff member")} onClose={onClose}>
       <div className="space-y-3.5">
-        <Field label="Worker's name">
-          <input className="ks-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Ramesh" />
+        <Field label={t("Worker's name")}>
+          <input className="ks-input" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("e.g. Ramesh")} />
         </Field>
-        <Field label="PIN (6+ digits — this is their login password)">
+        <Field label={t("PIN (6+ digits — this is their login password)")}>
           <input
             className="ks-input ks-mono"
             inputMode="numeric"
@@ -45,10 +47,10 @@ export default function AddStaffModal({ onClose, onAdd }) {
             placeholder="e.g. 483920"
           />
           {pinTooShort && (
-            <p className="text-xs text-[var(--danger)] font-medium mt-1">{6 - pin.length} more digit{6 - pin.length === 1 ? "" : "s"} needed</p>
+            <p className="text-xs text-[var(--danger)] font-medium mt-1">{t("{n} more digits needed", { n: 6 - pin.length })}</p>
           )}
         </Field>
-        <Field label="What can they access?">
+        <Field label={t("What can they access?")}>
           <div className="grid grid-cols-2 gap-2">
             {MODULES.map((m) => (
               <label
@@ -71,7 +73,7 @@ export default function AddStaffModal({ onClose, onAdd }) {
         )}
         <button disabled={!valid || saving} onClick={handleAdd} className="ks-btn-primary w-full flex items-center justify-center gap-2">
           {saving && <Loader2 size={16} className="animate-spin" />}
-          Add staff member
+          {t("Add staff member")}
         </button>
       </div>
     </Modal>

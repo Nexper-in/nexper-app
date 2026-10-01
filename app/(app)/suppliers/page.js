@@ -10,6 +10,7 @@ import { whatsappLink } from "@/lib/messaging";
 import { rupee } from "@/lib/format";
 import ModuleGuard from "@/components/ModuleGuard";
 
+import { useT } from "@/lib/i18n";
 export default function SuppliersPage() {
   return (
     <ModuleGuard module="suppliers" proOnly proLabel="Suppliers">
@@ -19,6 +20,7 @@ export default function SuppliersPage() {
 }
 
 function SuppliersPageInner() {
+  const t = useT();
   const { supabase, activeShopId, showToast } = useShop();
   const [allSuppliers, setAllSuppliers] = useState([]); // every supplier this owner has, any shop
   const [links, setLinks] = useState([]); // shop_suppliers rows for the active shop: { supplier_id, owed }
@@ -74,14 +76,14 @@ function SuppliersPageInner() {
     setAllSuppliers((prev) => [...prev, supplier]);
     setLinks((prev) => [...prev, { supplier_id: supplier.id, owed: 0 }]);
     setShowAdd(false);
-    showToast("Supplier added");
+    showToast(t("Supplier added"));
   }
 
   async function linkSupplier(supplier) {
     const { error } = await supabase.from("shop_suppliers").insert({ shop_id: activeShopId, supplier_id: supplier.id });
     if (error) throw error;
     setLinks((prev) => [...prev, { supplier_id: supplier.id, owed: 0 }]);
-    showToast(`${supplier.name} linked to this shop`);
+    showToast(t("{name} linked to this shop", { name: supplier.name }));
   }
 
   // Purchase: goods received on credit — owed goes up, no cash movement.
@@ -113,17 +115,17 @@ function SuppliersPageInner() {
     setAmountModal(null);
     showToast(
       mode === "purchase"
-        ? `${rupee(amount)} purchase logged for ${supplier.name}`
+        ? t("{amt} purchase logged for {name}", { amt: rupee(amount), name: supplier.name })
         : mode === "payment"
-        ? `${rupee(amount)} paid to ${supplier.name}`
-        : `${rupee(amount)} debit note logged against ${supplier.name}`
+        ? t("{amt} paid to {name}", { amt: rupee(amount), name: supplier.name })
+        : t("{amt} debit note logged against {name}", { amt: rupee(amount), name: supplier.name })
     );
   }
 
   if (loading) {
     return (
       <div className="pt-6 flex items-center gap-2 text-sm text-muted">
-        <Loader2 size={16} className="animate-spin" /> Loading suppliers…
+        <Loader2 size={16} className="animate-spin" /> {t("Loading suppliers…")}
       </div>
     );
   }
@@ -132,7 +134,7 @@ function SuppliersPageInner() {
     <div className="pt-6">
       <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
         <div className="ks-card p-4">
-          <div className="text-[11px] uppercase tracking-wide text-[var(--text-secondary)] font-semibold">Total payable</div>
+          <div className="text-[11px] uppercase tracking-wide text-[var(--text-secondary)] font-semibold">{t("Total payable")}</div>
           <div className="ks-display text-2xl font-bold mt-0.5" style={{ color: "var(--danger)" }}>
             {rupee(totalOwed)}
           </div>
@@ -140,11 +142,11 @@ function SuppliersPageInner() {
         <div className="flex gap-2">
           {linkableSuppliers.length > 0 && (
             <button onClick={() => setShowLink(true)} className="ks-btn-outline flex items-center gap-1.5">
-              <Link2 size={15} /> Link existing
+              <Link2 size={15} /> {t("Link existing")}
             </button>
           )}
           <button onClick={() => setShowAdd(true)} className="ks-btn-primary flex items-center gap-1.5">
-            <Plus size={16} /> Add supplier
+            <Plus size={16} /> {t("Add supplier")}
           </button>
         </div>
       </div>
@@ -153,11 +155,11 @@ function SuppliersPageInner() {
         <table className="ks-stack w-full text-sm">
           <thead>
             <tr className="text-left ks-mono text-[11px] uppercase tracking-wide text-[var(--text-secondary)] border-b border-[var(--border)]">
-              <th className="px-5 py-3 font-medium">Supplier</th>
-              <th className="px-5 py-3 font-medium">Phone</th>
-              <th className="px-5 py-3 font-medium">Supplies</th>
-              <th className="px-5 py-3 font-medium">Owed</th>
-              <th className="px-5 py-3 font-medium">Purchases logged</th>
+              <th className="px-5 py-3 font-medium">{t("Supplier")}</th>
+              <th className="px-5 py-3 font-medium">{t("Phone")}</th>
+              <th className="px-5 py-3 font-medium">{t("Supplies")}</th>
+              <th className="px-5 py-3 font-medium">{t("Owed")}</th>
+              <th className="px-5 py-3 font-medium">{t("Purchases logged")}</th>
               <th className="px-5 py-3 font-medium"></th>
             </tr>
           </thead>
@@ -177,7 +179,7 @@ function SuppliersPageInner() {
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <button
                         onClick={() => setAmountModal({ mode: "purchase", supplier: s })}
-                        title="Log purchase (increases owed)"
+                        title={t("Log purchase (increases owed)")}
                         className="w-7 h-7 rounded-full flex items-center justify-center"
                         style={{ background: "var(--accent-soft-bg)", color: "var(--accent-soft-text)" }}
                       >
@@ -185,7 +187,7 @@ function SuppliersPageInner() {
                       </button>
                       <button
                         onClick={() => setAmountModal({ mode: "payment", supplier: s })}
-                        title="Record payment"
+                        title={t("Record payment")}
                         className="w-7 h-7 rounded-full flex items-center justify-center"
                         style={{ background: "var(--success-soft)", color: "var(--success)" }}
                       >
@@ -193,7 +195,7 @@ function SuppliersPageInner() {
                       </button>
                       <button
                         onClick={() => setAmountModal({ mode: "debit", supplier: s })}
-                        title="Log return / debit note"
+                        title={t("Log return / debit note")}
                         className="w-7 h-7 rounded-full flex items-center justify-center"
                         style={{ background: "var(--danger-soft)", color: "var(--danger)" }}
                       >
@@ -205,7 +207,7 @@ function SuppliersPageInner() {
                           className="text-xs px-2.5 py-1.5 rounded-full font-semibold flex items-center gap-1 text-white"
                           style={{ background: "#25D366" }}
                         >
-                          <MessageCircle size={13} /> Message
+                          <MessageCircle size={13} /> {t("Message")}
                         </button>
                       )}
                     </div>
@@ -216,7 +218,7 @@ function SuppliersPageInner() {
             {suppliers.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-5 py-10 text-center text-[var(--text-secondary)] text-sm">
-                  No suppliers linked to this shop yet.
+                  {t("No suppliers linked to this shop yet.")}
                 </td>
               </tr>
             )}

@@ -1,12 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Plus, Loader2, Package, CheckCircle2, Send, ClipboardList, Copy } from "lucide-react";
+import { Plus, Loader2, Package, CheckCircle2, Send, ClipboardList, Copy, MessageCircle, Sparkles } from "lucide-react";
 import { useShop } from "@/components/ShopContext";
 import { rupee } from "@/lib/format";
 import { fetchShopItems } from "@/lib/products";
 import CreatePOModal from "@/components/CreatePOModal";
+import ReceivePOModal from "@/components/ReceivePOModal";
 import ModuleGuard from "@/components/ModuleGuard";
+import { whatsappLink, purchaseOrderText } from "@/lib/messaging";
+import { T, useT } from "@/lib/i18n";
 
 const SETUP_SQL = `-- Run this in your Supabase dashboard → SQL Editor
 
@@ -46,9 +49,9 @@ CREATE POLICY "po_items_owner" ON purchase_order_items FOR ALL
   ));`;
 
 const STATUS_META = {
-  draft:    { label: "Draft",    bg: "var(--warn-soft)", color: "var(--warn)" },
-  sent:     { label: "Sent",     bg: "var(--accent-soft-bg)", color: "var(--accent-soft-text)" },
-  received: { label: "Received", bg: "var(--success-soft)", color: "var(--success)" },
+  draft:    { label: T("Draft"),    bg: "var(--warn-soft)", color: "var(--warn)" },
+  sent:     { label: T("Sent"),     bg: "var(--accent-soft-bg)", color: "var(--accent-soft-text)" },
+  received: { label: T("Received"), bg: "var(--success-soft)", color: "var(--success)" },
 };
 
 export default function PurchaseOrdersPage() {
@@ -60,7 +63,9 @@ export default function PurchaseOrdersPage() {
 }
 
 function POPageInner() {
-  const { supabase, activeShopId, runQueued, showToast } = useShop();
+  const t = useT();
+  const { supabase, activeShop, activeShopId, runQueued, showToast } = useShop();
+  const [initialLines, setInitialLines] = useState(null); // lines pre-filled by "Suggest an order"
   const [pos, setPOs] = useState([]);
   const [items, setItems] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
@@ -68,7 +73,7 @@ function POPageInner() {
   const [needsSetup, setNeedsSetup] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [receiving, setReceiving] = useState(null); // po being received
+  const [receiving, setReceiving] = useState(null); // po being received (opens the quantities form)
 
   const load = useCallback(async () => {
     if (!activeShopId) return;
@@ -110,27 +115,15 @@ function POPageInner() {
       }
     }
     setShowCreate(false);
-    showToast("Purchase order created");
+    setInitialLines(null);
+    showToast(t("Purchase order created"));
     load();
   }
 
   async function updateStatus(po, status) {
     if (status === "received") {
-      // receive_purchase_order() does the stock updates, movement log
-      // entries, and status flip as one all-or-nothing transaction — so
-      // a failure partway (a deleted product, etc.) leaves the PO
-      // exactly as it was, not stuck "Received" with missing stock.
-      try {
-        await runQueued({
-          type: "rpc",
-          fn: "receive_purchase_order",
-          args: { p_po_id: po.id, p_shop_id: activeShopId },
-        });
-        showToast("Stock updated from purchase order");
-      } catch (err) {
-        showToast(err.message, "err");
-      }
-      load();
+      // Ask what actually arrived (and expiry dates) first.
+      setReceiving(po);
       return;
     }
 
@@ -142,6 +135,47 @@ function POPageInner() {
     load();
   }
 
+  // Adds the stock for what arrived. receive_purchase_order_lines (migration
+  // 026) records quantities and expiry as batches; if it isn't installed yet,
+  // fall back to the older receive-everything function.
+  async function confirmReceive(lines) {
+    let { error } = await supabase.rpc("receive_purchase_order_lines", { p_po_id: receiving.id, p_shop_id: activeShopId, p_lines: lines });
+    if (error && /does not exist|schema cache/i.test(error.message)) {
+      ({ error } = await supabase.rpc("receive_purchase_order", { p_po_id: receiving.id, p_shop_id: activeShopId }));
+    }
+    if (error) throw error;
+    setReceiving(null);
+    showToast(t("Stock updated from purchase order"));
+    load();
+  }
+
+  // Opens WhatsApp with the order ready for the supplier. A draft becomes "sent".
+  async function sendOnWhatsApp(po) {
+    const phone = suppliers.find((s) => s.id === po.supplier_id)?.phone || "";
+    const text = purchaseOrderText({ shopName: activeShop?.name, supplierName: po.supplier_name, lines: po.items || [], expectedDate: po.expected_date, notes: po.notes });
+    window.open(phone ? whatsappLink(phone, text) : `https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+    if (po.status === "draft") await updateStatus(po, "sent");
+  }
+
+  // Everything at or below its low-stock level, topped up to three times that.
+  function suggestOrder() {
+    const lines = items
+      .filter((i) => i.stock <= i.low_at)
+      .map((i) => ({
+        shop_product_id: i.id,
+        item_name: i.name,
+        unit: i.unit || "pcs",
+        qty: Math.max(1, Math.round(Number(i.low_at) * 3 - Number(i.stock))),
+        unit_price: i.cost_price ?? "",
+      }));
+    if (lines.length === 0) {
+      showToast(t("Nothing is low on stock right now."));
+      return;
+    }
+    setInitialLines(lines);
+    setShowCreate(true);
+  }
+
   function copySQL() {
     navigator.clipboard.writeText(SETUP_SQL).then(() => {
       setCopied(true);
@@ -151,7 +185,7 @@ function POPageInner() {
 
   if (loading) return (
     <div className="pt-6 flex items-center gap-2 text-sm text-muted">
-      <Loader2 size={16} className="animate-spin" /> Loading purchase orders…
+      <Loader2 size={16} className="animate-spin" /> {t("Loading purchase orders…")}
     </div>
   );
 
@@ -196,21 +230,26 @@ function POPageInner() {
     <div className="pt-6">
       <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
         <div>
-          <h1 className="ks-display font-bold text-lg">Purchase orders</h1>
-          <p className="text-sm text-[var(--text-secondary)]">{pos.length} total · {draft.length} draft · {sent.length} sent</p>
+          <h1 className="ks-display font-bold text-lg">{t("Purchase orders")}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">{t("{total} total · {draft} draft · {sent} sent", { total: pos.length, draft: draft.length, sent: sent.length })}</p>
         </div>
-        <button onClick={() => setShowCreate(true)} className="ks-btn-primary flex items-center gap-1.5">
-          <Plus size={16} /> New order
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button onClick={suggestOrder} className="ks-btn-outline flex items-center gap-1.5 text-sm">
+            <Sparkles size={15} /> {t("Suggest an order")}
+          </button>
+          <button onClick={() => { setInitialLines(null); setShowCreate(true); }} className="ks-btn-primary flex items-center gap-1.5">
+            <Plus size={16} /> {t("New order")}
+          </button>
+        </div>
       </div>
 
       {pos.length === 0 && (
         <div className="ks-card p-10 text-center">
           <Package size={36} className="mx-auto mb-3" style={{ color: "var(--text-secondary)" }} />
-          <p className="font-semibold text-[var(--text-primary)]">No purchase orders yet</p>
-          <p className="text-sm text-[var(--text-secondary)] mt-1 mb-4">Create an order to track what you&apos;re buying from suppliers.</p>
+          <p className="font-semibold text-[var(--text-primary)]">{t("No purchase orders yet")}</p>
+          <p className="text-sm text-[var(--text-secondary)] mt-1 mb-4">{t("Create an order to track what you're buying from suppliers.")}</p>
           <button onClick={() => setShowCreate(true)} className="ks-btn-primary">
-            <Plus size={15} className="mr-1.5" /> Create first order
+            <Plus size={15} className="mr-1.5" /> {t("Create first order")}
           </button>
         </div>
       )}
@@ -229,25 +268,34 @@ function POPageInner() {
                       className="text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wide"
                       style={{ background: meta.bg, color: meta.color }}
                     >
-                      {meta.label}
+                      {t(meta.label)}
                     </span>
-                    <span className="font-semibold text-sm">{po.supplier_name || "Unknown supplier"}</span>
+                    <span className="font-semibold text-sm">{po.supplier_name || t("Unknown supplier")}</span>
                   </div>
                   <p className="text-xs text-[var(--text-secondary)]">
-                    {itemCount} item{itemCount !== 1 ? "s" : ""}
-                    {total > 0 ? ` · ${rupee(total)} estimated` : ""}
-                    {po.expected_date ? ` · Expected ${new Date(po.expected_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}` : ""}
+                    {itemCount === 1 ? t("{n} item", { n: 1 }) : t("{n} items", { n: itemCount })}
+                    {total > 0 ? ` · ${t("{amt} estimated", { amt: rupee(total) })}` : ""}
+                    {po.expected_date ? ` · ${t("Expected {date}", { date: new Date(po.expected_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) })}` : ""}
                   </p>
                   {po.notes && <p className="text-xs text-[var(--text-secondary)] mt-0.5 italic">{po.notes}</p>}
                 </div>
                 <div className="flex gap-2 shrink-0">
+                  {po.status !== "received" && (
+                    <button
+                      onClick={() => sendOnWhatsApp(po)}
+                      className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl text-white"
+                      style={{ background: "#25D366" }}
+                    >
+                      <MessageCircle size={13} /> {t("Send on WhatsApp")}
+                    </button>
+                  )}
                   {po.status === "draft" && (
                     <button
                       onClick={() => updateStatus(po, "sent")}
                       className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl"
                       style={{ background: "var(--accent-soft-bg)", color: "var(--accent-soft-text)" }}
                     >
-                      <Send size={13} /> Mark sent
+                      <Send size={13} /> {t("Mark sent")}
                     </button>
                   )}
                   {po.status === "sent" && (
@@ -256,7 +304,7 @@ function POPageInner() {
                       className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl"
                       style={{ background: "var(--success-soft)", color: "var(--success)" }}
                     >
-                      <CheckCircle2 size={13} /> Mark received + stock up
+                      <CheckCircle2 size={13} /> {t("Mark received + stock up")}
                     </button>
                   )}
                 </div>
@@ -281,10 +329,12 @@ function POPageInner() {
         <CreatePOModal
           items={items}
           suppliers={suppliers}
-          onClose={() => setShowCreate(false)}
+          initialLines={initialLines}
+          onClose={() => { setShowCreate(false); setInitialLines(null); }}
           onCreate={createPO}
         />
       )}
+      {receiving && <ReceivePOModal po={receiving} onClose={() => setReceiving(null)} onConfirm={confirmReceive} />}
     </div>
   );
 }

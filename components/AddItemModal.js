@@ -8,7 +8,9 @@ import { nextCode } from "@/lib/inventoryHelpers";
 import { useShop } from "@/components/ShopContext";
 import { isPro } from "@/lib/pricing";
 
+import { useT } from "@/lib/i18n";
 export default function AddItemModal({ items, onClose, onAdd }) {
+  const t = useT();
   const { activeShop } = useShop();
   const pro = isPro(activeShop);
   const [form, setForm] = useState({
@@ -47,7 +49,7 @@ export default function AddItemModal({ items, onClose, onAdd }) {
 
   function startScan() {
     if (!("BarcodeDetector" in window)) {
-      alert("Barcode scanner not supported in this browser. Please type the barcode manually.");
+      alert(t("Barcode scanner not supported in this browser. Please type the barcode manually."));
       return;
     }
     setScanning(true);
@@ -63,7 +65,7 @@ export default function AddItemModal({ items, onClose, onAdd }) {
           const [result] = await detector.detect(video);
           if (result) {
             clearInterval(interval);
-            stream.getTracks().forEach((t) => t.stop());
+            stream.getTracks().forEach((track) => track.stop());
             active = false;
             setScanning(false);
             const val = result.rawValue;
@@ -75,7 +77,7 @@ export default function AddItemModal({ items, onClose, onAdd }) {
       setTimeout(() => {
         if (active) {
           clearInterval(interval);
-          stream.getTracks().forEach((t) => t.stop());
+          stream.getTracks().forEach((track) => track.stop());
           active = false;
           setScanning(false);
         }
@@ -152,7 +154,7 @@ export default function AddItemModal({ items, onClose, onAdd }) {
   // ── Quick mode: compact view shown right after a successful barcode scan ──
   if (quickMode) {
     return (
-      <Modal title="Set selling price" onClose={onClose}>
+      <Modal title={t("Set selling price")} onClose={onClose}>
         <div className="space-y-4">
           {/* Product preview */}
           <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: "var(--bg-surface-alt)" }}>
@@ -173,7 +175,7 @@ export default function AddItemModal({ items, onClose, onAdd }) {
 
           {/* Price — auto-focused */}
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Selling price (₹)">
+            <Field label={t("Selling price (₹)")}>
               <input
                 ref={priceRef}
                 type="number"
@@ -183,11 +185,11 @@ export default function AddItemModal({ items, onClose, onAdd }) {
                 onChange={(e) => setForm({ ...form, price: e.target.value })}
               />
             </Field>
-            <Field label="MRP (₹, optional)">
+            <Field label={t("MRP (₹, optional)")}>
               <input
                 type="number"
                 className="ks-input"
-                placeholder="Shows as a discount"
+                placeholder={t("Shows as a discount")}
                 value={form.mrp}
                 onChange={(e) => setForm({ ...form, mrp: e.target.value })}
               />
@@ -195,7 +197,7 @@ export default function AddItemModal({ items, onClose, onAdd }) {
           </div>
 
           {/* Stock — defaults to 1 */}
-          <Field label="Opening stock">
+          <Field label={t("Opening stock")}>
             <input
               type="number"
               className="ks-input"
@@ -214,7 +216,7 @@ export default function AddItemModal({ items, onClose, onAdd }) {
             className="ks-btn-primary w-full flex items-center justify-center gap-2"
           >
             {saving && <Loader2 size={16} className="animate-spin" />}
-            Add to inventory
+            {t("Add to inventory")}
           </button>
 
           {/* Escape hatch to full form */}
@@ -223,7 +225,7 @@ export default function AddItemModal({ items, onClose, onAdd }) {
             onClick={() => setQuickMode(false)}
             className="w-full text-xs text-[var(--text-secondary)] flex items-center justify-center gap-1 pt-1"
           >
-            <ChevronDown size={13} /> More details (category, GST, Hindi name…)
+            <ChevronDown size={13} /> {t("More details (category, GST, Hindi name…)")}
           </button>
         </div>
       </Modal>
@@ -232,10 +234,10 @@ export default function AddItemModal({ items, onClose, onAdd }) {
 
   // ── Full form ──
   return (
-    <Modal title="Add new item" onClose={onClose}>
+    <Modal title={t("Add new item")} onClose={onClose}>
       <div className="space-y-3.5">
         <div className="grid grid-cols-3 gap-3">
-          <Field label="Code">
+          <Field label={t("Code")}>
             <input
               className="ks-input ks-mono text-center"
               maxLength={2}
@@ -244,14 +246,14 @@ export default function AddItemModal({ items, onClose, onAdd }) {
             />
           </Field>
           <div className="col-span-2">
-            <Field label="Item name">
+            <Field label={t("Item name")}>
               <div className="relative">
                 <input
                   className="ks-input"
                   style={{ paddingRight: "2.5rem" }}
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="Type or speak"
+                  placeholder={t("Type or speak")}
                   autoComplete="off"
                 />
                 <button
@@ -259,7 +261,7 @@ export default function AddItemModal({ items, onClose, onAdd }) {
                   onClick={() => startVoice("name")}
                   className={`absolute right-2.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center transition-colors ${listeningField === "name" ? "ks-pulse" : ""}`}
                   style={{ background: listeningField === "name" ? "var(--danger-solid)" : "var(--bg-surface-alt)", color: listeningField === "name" ? "#fff" : "var(--text-secondary)" }}
-                  title="Speak item name"
+                  title={t("Speak item name")}
                 >
                   <Mic size={13} />
                 </button>
@@ -268,7 +270,7 @@ export default function AddItemModal({ items, onClose, onAdd }) {
           </div>
         </div>
 
-        <Field label="Barcode">
+        <Field label={t("Barcode")}>
           <div className="flex gap-2">
             <div className="relative flex-1">
               <input
@@ -278,7 +280,7 @@ export default function AddItemModal({ items, onClose, onAdd }) {
                   setForm({ ...form, barcode: e.target.value });
                   if (e.target.value.length >= 8) lookupByBarcode(e.target.value);
                 }}
-                placeholder="Scan the product or type barcode"
+                placeholder={t("Scan the product or type barcode")}
               />
               {lookingUp && (
                 <Loader2 size={13} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin" style={{ color: "var(--accent-soft-text)" }} />
@@ -289,23 +291,23 @@ export default function AddItemModal({ items, onClose, onAdd }) {
               onClick={startScan}
               className={`shrink-0 px-3 h-10 rounded-xl flex items-center gap-1.5 text-xs font-semibold transition-colors ${scanning ? "ks-pulse" : ""}`}
               style={{ background: scanning ? "var(--accent)" : "var(--bg-surface-alt)", color: scanning ? "#fff" : "var(--accent-soft-text)" }}
-              title="Scan barcode with camera"
+              title={t("Scan barcode with camera")}
             >
               <ScanLine size={15} />
               {scanning ? "Scanning…" : "Scan"}
             </button>
           </div>
-          {lookingUp && <p className="text-xs text-[var(--accent-soft-text)] mt-1">Looking up product…</p>}
+          {lookingUp && <p className="text-xs text-[var(--accent-soft-text)] mt-1">{t("Looking up product…")}</p>}
         </Field>
 
-        <Field label="Hindi / local name (optional)">
+        <Field label={t("Hindi / local name (optional)")}>
           <div className="relative">
             <input
               className="ks-input"
               style={{ paddingRight: "2.5rem" }}
               value={form.hindi_name}
               onChange={(e) => setForm({ ...form, hindi_name: e.target.value })}
-              placeholder="e.g. चीनी — tap mic to speak in Hindi"
+              placeholder={t("e.g. चीनी — tap mic to speak in Hindi")}
             />
             <button
               type="button"
@@ -321,10 +323,10 @@ export default function AddItemModal({ items, onClose, onAdd }) {
 
         <Field label={
           <span className="flex items-center gap-1.5">
-            Photo URL (optional)
+            {t("Photo URL (optional)")}
             {!pro && (
               <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "var(--gold-soft)", color: "var(--gold)" }}>
-                <Lock size={9} /> PRO
+                <Lock size={9} /> {t("PRO")}
               </span>
             )}
           </span>
@@ -344,47 +346,47 @@ export default function AddItemModal({ items, onClose, onAdd }) {
                 className="ks-input"
                 value={form.image_url}
                 onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-                placeholder="Paste an image link"
+                placeholder={t("Paste an image link")}
               />
             </div>
           ) : (
-            <input className="ks-input opacity-50 cursor-not-allowed" disabled placeholder="Upgrade to Pro to add product photos" />
+            <input className="ks-input opacity-50 cursor-not-allowed" disabled placeholder={t("Upgrade to Pro to add product photos")} />
           )}
         </Field>
 
-        <Field label="Category">
+        <Field label={t("Category")}>
           <input
             className="ks-input"
             value={form.category}
             onChange={(e) => setForm({ ...form, category: e.target.value })}
-            placeholder="e.g. Grocery"
+            placeholder={t("e.g. Grocery")}
           />
         </Field>
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Unit">
+          <Field label={t("Unit")}>
             <select className="ks-input" value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })}>
               {["pcs", "kg", "g", "l", "ml", "packet"].map((u) => (
                 <option key={u}>{u}</option>
               ))}
             </select>
           </Field>
-          <Field label="Selling price (₹)">
+          <Field label={t("Selling price (₹)")}>
             <input type="number" className="ks-input" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
           </Field>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label="MRP (₹, optional)">
+          <Field label={t("MRP (₹, optional)")}>
             <input
               type="number"
               className="ks-input"
-              placeholder="Shown struck through as a discount"
+              placeholder={t("Shown struck through as a discount")}
               value={form.mrp}
               onChange={(e) => setForm({ ...form, mrp: e.target.value })}
             />
           </Field>
-          <Field label="Purchase price (₹, optional)">
+          <Field label={t("Purchase price (₹, optional)")}>
             <input
               type="number"
               className="ks-input"
@@ -395,15 +397,15 @@ export default function AddItemModal({ items, onClose, onAdd }) {
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label="GST % (optional)">
+          <Field label={t("GST % (optional)")}>
             <select className="ks-input" value={form.gst} onChange={(e) => setForm({ ...form, gst: e.target.value })}>
-              <option value="">None</option>
+              <option value="">{t("None")}</option>
               {[0, 5, 12, 18, 28].map((r) => (
                 <option key={r} value={r}>{r}%</option>
               ))}
             </select>
           </Field>
-          <Field label="HSN code (optional)">
+          <Field label={t("HSN code (optional)")}>
             <input
               className="ks-input ks-mono"
               value={form.hsn_code}
@@ -414,10 +416,10 @@ export default function AddItemModal({ items, onClose, onAdd }) {
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Opening stock">
+          <Field label={t("Opening stock")}>
             <input type="number" className="ks-input" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
           </Field>
-          <Field label="Low stock alert at">
+          <Field label={t("Low stock alert at")}>
             <input type="number" className="ks-input" value={form.low_at} onChange={(e) => setForm({ ...form, low_at: e.target.value })} />
           </Field>
         </div>
@@ -427,7 +429,7 @@ export default function AddItemModal({ items, onClose, onAdd }) {
         )}
         <button disabled={!valid || saving} onClick={handleAdd} className="ks-btn-primary w-full flex items-center justify-center gap-2">
           {saving && <Loader2 size={16} className="animate-spin" />}
-          Add item
+          {t("Add item")}
         </button>
       </div>
     </Modal>

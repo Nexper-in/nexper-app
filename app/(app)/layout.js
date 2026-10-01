@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Menu, Loader2, WifiOff, RefreshCw } from "lucide-react";
 import AuthGuard from "@/components/AuthGuard";
 import { ShopProvider, useShop } from "@/components/ShopContext";
@@ -79,6 +79,8 @@ const SCREEN_TITLES = {
   "/reports": T("Reports & GST"),
   "/suppliers": T("Suppliers"),
   "/purchase-orders": T("Purchase orders"),
+  "/expiry": T("Expiry"),
+  "/offers": T("Offers & group"),
   "/clearance": T("Clearance offers"),
   "/inventory/config": T("Batches & barcodes"),
   "/staff": T("Staff"),
@@ -90,7 +92,13 @@ function AppShell({ children }) {
   const t = useT();
   const { shops, activeShop, addShop, loading, toast } = useShop();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const router = useRouter();
   const [showStoreSettings, setShowStoreSettings] = useState(false);
+  useEffect(() => {
+    const open = () => setShowStoreSettings(true);
+    window.addEventListener("nexper:open-settings", open);
+    return () => window.removeEventListener("nexper:open-settings", open);
+  }, []);
 
   if (loading) {
     return (
@@ -101,7 +109,15 @@ function AppShell({ children }) {
   }
 
   if (shops.length === 0) {
-    return <AddShopOnboarding onAdd={addShop} />;
+    // A new owner lands straight on New bill (starter items are ready).
+    return (
+      <AddShopOnboarding
+        onAdd={async (name, type, opts) => {
+          await addShop(name, type, opts);
+          router.replace("/billing");
+        }}
+      />
+    );
   }
 
   return (

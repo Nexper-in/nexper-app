@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { X, Receipt, ArrowDownCircle, ArrowUpCircle, Loader2 } from "lucide-react";
 import { rupee } from "@/lib/format";
 
+import { useT } from "@/lib/i18n";
 function fmtDate(d) {
   if (!d) return "";
   const dt = new Date(d);
@@ -11,6 +12,7 @@ function fmtDate(d) {
 }
 
 export default function CustomerLedgerModal({ customer, credits, supabase, activeShopId, onClose, onRecordPayment }) {
+  const t = useT();
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -61,17 +63,17 @@ export default function CustomerLedgerModal({ customer, credits, supabase, activ
 
         <div className="grid grid-cols-3 divide-x divide-[var(--border)] shrink-0">
           <div className="px-4 py-3 text-center">
-            <div className="text-[11px] uppercase tracking-wide text-[var(--text-secondary)] font-semibold">Balance</div>
+            <div className="text-[11px] uppercase tracking-wide text-[var(--text-secondary)] font-semibold">{t("Balance")}</div>
             <div className="ks-mono font-bold text-lg" style={{ color: customer.balance > 0 ? "var(--danger)" : "var(--accent-soft-text)" }}>
               {rupee(customer.balance)}
             </div>
           </div>
           <div className="px-4 py-3 text-center">
-            <div className="text-[11px] uppercase tracking-wide text-[var(--text-secondary)] font-semibold">Total billed</div>
+            <div className="text-[11px] uppercase tracking-wide text-[var(--text-secondary)] font-semibold">{t("Total billed")}</div>
             <div className="ks-mono font-bold text-lg">{rupee(totalBilled)}</div>
           </div>
           <div className="px-4 py-3 text-center">
-            <div className="text-[11px] uppercase tracking-wide text-[var(--text-secondary)] font-semibold">Total paid</div>
+            <div className="text-[11px] uppercase tracking-wide text-[var(--text-secondary)] font-semibold">{t("Total paid")}</div>
             <div className="ks-mono font-bold text-lg" style={{ color: "var(--accent-soft-text)" }}>{rupee(totalPaid)}</div>
           </div>
         </div>
@@ -79,11 +81,11 @@ export default function CustomerLedgerModal({ customer, credits, supabase, activ
         <div className="overflow-y-auto flex-1 ks-scroll p-5 space-y-3">
           {loading && (
             <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
-              <Loader2 size={14} className="animate-spin" /> Loading transactions…
+              <Loader2 size={14} className="animate-spin" /> {t("Loading transactions…")}
             </div>
           )}
           {!loading && timeline.length === 0 && (
-            <p className="text-sm text-[var(--text-secondary)] text-center py-6">No transactions found for this customer.</p>
+            <p className="text-sm text-[var(--text-secondary)] text-center py-6">{t("No transactions found for this customer.")}</p>
           )}
           {!loading && timeline.map((entry) => {
             if (entry._type === "bill") {
@@ -153,7 +155,7 @@ export default function CustomerLedgerModal({ customer, credits, supabase, activ
               onClick={() => { onClose(); onRecordPayment(customer); }}
               className="ks-btn-primary w-full"
             >
-              Record payment · {rupee(customer.balance)} due
+              {t("Record payment · {amt} due", { amt: rupee(customer.balance) })}
             </button>
           </div>
         )}
