@@ -18,6 +18,7 @@ import { nextCode } from "@/lib/inventoryHelpers";
 import { rupee } from "@/lib/format";
 import { fetchShopItems, flattenShopProduct } from "@/lib/products";
 import ModuleGuard from "@/components/ModuleGuard";
+import { T, useT } from "@/lib/i18n";
 
 function stockLevelOf(i) {
   if (i.stock <= i.low_at) return "low";
@@ -26,9 +27,9 @@ function stockLevelOf(i) {
 }
 const STOCK_RANK = { low: 0, medium: 1, good: 2 };
 const STOCK_META = {
-  low: { label: "LOW", text: "var(--danger)", bg: "var(--danger-soft)" },
-  medium: { label: "MEDIUM", text: "var(--warn)", bg: "var(--warn-soft)" },
-  good: { label: "IN STOCK", text: "var(--success)", bg: "var(--success-soft)" },
+  low: { label: T("LOW"), text: "var(--danger)", bg: "var(--danger-soft)" },
+  medium: { label: T("MEDIUM"), text: "var(--warn)", bg: "var(--warn-soft)" },
+  good: { label: T("IN STOCK"), text: "var(--success)", bg: "var(--success-soft)" },
 };
 
 export default function InventoryPage() {
@@ -41,6 +42,7 @@ export default function InventoryPage() {
 
 function InventoryPageInner() {
   const router = useRouter();
+  const t = useT();
   const { supabase, activeShopId, activeShop, showToast, runQueued } = useShop();
   const [items, setItems] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
@@ -123,7 +125,7 @@ function InventoryPageInner() {
     const merged = flattenShopProduct({ ...shopProduct, product });
     setItems((prev) => [...prev, merged].sort((a, b) => a.code.localeCompare(b.code)));
     setShowAdd(false);
-    showToast(`${merged.name} added to inventory`);
+    showToast(t("{name} added to stock", { name: merged.name }));
   }
 
   async function savePrice(item, { price, mrp, cost_price }) {
@@ -137,7 +139,7 @@ function InventoryPageInner() {
     const merged = flattenShopProduct(data);
     setItems((prev) => prev.map((p) => (p.id === item.id ? merged : p)));
     setEditPriceItem(null);
-    showToast(`${merged.name}'s price updated`);
+    showToast(t("{name}'s price updated", { name: merged.name }));
   }
 
   async function logMovement(item, type, qty, reason, supplier, expiryDate) {
@@ -167,15 +169,15 @@ function InventoryPageInner() {
     setAdjustItem(null);
     showToast(
       result.queued
-        ? `${type === "in" ? "Stock added" : "Stock removed"} (offline — will sync): ${item.name}`
-        : `${type === "in" ? "Stock added" : "Stock removed"}: ${item.name}`
+        ? `${type === "in" ? t("Stock added") : t("Stock removed")} ${t("(offline — will sync)")}: ${item.name}`
+        : `${type === "in" ? t("Stock added") : t("Stock removed")}: ${item.name}`
     );
   }
 
   if (loading) {
     return (
       <div className="pt-6 flex items-center gap-2 text-sm text-muted">
-        <Loader2 size={16} className="animate-spin" /> Loading inventory…
+        <Loader2 size={16} className="animate-spin" /> {t("Loading stock…")}
       </div>
     );
   }
@@ -187,18 +189,18 @@ function InventoryPageInner() {
       <div className="flex gap-1.5">
         <button
           onClick={() => setEditPriceItem(i)}
-          title="Edit price / MRP"
-          aria-label={`Edit price of ${i.name}`}
+          title={t("Edit price / MRP")}
+          aria-label={t("Edit price of {name}", { name: i.name })}
           className={`${wide ? "w-9 h-9" : "w-7 h-7"} rounded-full flex items-center justify-center shrink-0`}
           style={{ background: "var(--bg-surface-alt)", color: "var(--text-secondary)" }}
         >
           <Pencil size={13} />
         </button>
         <button onClick={() => setAdjustItem({ item: i, type: "in" })} className={pill} style={{ background: "var(--success-soft)", color: "var(--success)" }}>
-          <ArrowUpCircle size={13} /> In
+          <ArrowUpCircle size={13} /> {t("In")}
         </button>
         <button onClick={() => setAdjustItem({ item: i, type: "out" })} className={pill} style={{ background: "var(--danger-soft)", color: "var(--danger)" }}>
-          <ArrowDownCircle size={13} /> Out
+          <ArrowDownCircle size={13} /> {t("Out")}
         </button>
       </div>
     );
@@ -210,7 +212,7 @@ function InventoryPageInner() {
         <div className="relative flex-1 min-w-0">
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
           <input
-            placeholder="Search stock"
+            placeholder={t("Search stock")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="ks-input"
@@ -218,13 +220,13 @@ function InventoryPageInner() {
           />
         </div>
         <button onClick={() => setShowAdd(true)} className="ks-btn-primary flex items-center gap-1.5 shrink-0 py-2.5">
-          <Plus size={16} /> Add item
+          <Plus size={16} /> {t("Add item")}
         </button>
         {/* Less-used tools live behind one button */}
         <div className="relative shrink-0">
           <button
             onClick={() => setShowTools((v) => !v)}
-            aria-label="More stock tools"
+            aria-label={t("More stock tools")}
             aria-expanded={showTools}
             className="ks-btn-outline w-11 h-11 !p-0 flex items-center justify-center"
           >
@@ -235,10 +237,10 @@ function InventoryPageInner() {
               <div className="fixed inset-0 z-40" onClick={() => setShowTools(false)} />
               <div className="ks-card absolute right-0 top-[calc(100%+6px)] z-50 w-60 p-1.5 ks-fade-up" style={{ boxShadow: "0 20px 50px rgba(0,0,0,0.35)" }}>
                 {[
-                  { icon: BookOpen, label: "Add from catalogue", sub: "Common Indian products", run: () => setShowCatalogPicker(true) },
-                  { icon: ScanLine, label: "Scan supplier bill", sub: "Photo of a printed bill", run: () => (isPro(activeShop) ? setShowScanBill(true) : setShowScanUpgrade(true)) },
-                  { icon: Upload, label: "Import a sheet", sub: "CSV of many items", run: () => setShowBulkImport(true) },
-                  { icon: BarChart2, label: showInsights ? "Hide profit per item" : "Profit per item", sub: "Margin on each item", run: () => setShowInsights((v) => !v) },
+                  { icon: BookOpen, label: t("Add from catalogue"), sub: t("Common Indian products"), run: () => setShowCatalogPicker(true) },
+                  { icon: ScanLine, label: t("Scan supplier bill"), sub: t("Photo of a printed bill"), run: () => (isPro(activeShop) ? setShowScanBill(true) : setShowScanUpgrade(true)) },
+                  { icon: Upload, label: t("Import a sheet"), sub: t("CSV of many items"), run: () => setShowBulkImport(true) },
+                  { icon: BarChart2, label: showInsights ? t("Hide profit per item") : t("Profit per item"), sub: t("Margin on each item"), run: () => setShowInsights((v) => !v) },
                 ].map(({ icon: Icon, label, sub, run }) => (
                   <button
                     key={label}
@@ -267,11 +269,11 @@ function InventoryPageInner() {
         <div className="ks-card p-5 mb-4">
           <div className="flex items-center gap-2 mb-4">
             <TrendingUp size={16} style={{ color: "var(--accent-soft-text)" }} />
-            <h2 className="ks-display font-bold">Profit per item</h2>
-            <span className="text-xs text-[var(--text-secondary)] ml-auto">margin % on selling price</span>
+            <h2 className="ks-display font-bold">{t("Profit per item")}</h2>
+            <span className="text-xs text-[var(--text-secondary)] ml-auto">{t("margin % on selling price")}</span>
           </div>
           {insightItems.length === 0 ? (
-            <p className="text-sm text-[var(--text-secondary)]">Add purchase prices to items to see profit insights.</p>
+            <p className="text-sm text-[var(--text-secondary)]">{t("Add purchase prices to items to see profit insights.")}</p>
           ) : (
             <div className="space-y-3">
               {insightItems.map((i, idx) => {
@@ -332,7 +334,7 @@ function InventoryPageInner() {
                   <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                     <CategoryChip category={i.category} />
                     <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: stockMeta.bg, color: stockMeta.text }}>
-                      {i.stock} {i.unit} · {stockMeta.label}
+                      {i.stock} {i.unit} · {t(stockMeta.label)}
                     </span>
                   </div>
                 </div>
@@ -350,7 +352,7 @@ function InventoryPageInner() {
           );
         })}
         {filtered.length === 0 && (
-          <p className="px-5 py-10 text-center text-[var(--text-secondary)] text-sm">No items match &quot;{query}&quot;.</p>
+          <p className="px-5 py-10 text-center text-[var(--text-secondary)] text-sm">{t("No items match \"{q}\".", { q: query })}</p>
         )}
       </div>
 
@@ -358,11 +360,11 @@ function InventoryPageInner() {
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left ks-mono text-[11px] uppercase tracking-wide text-[var(--text-secondary)] border-b border-[var(--border)]">
-              <th className="px-5 py-3 font-medium">Item</th>
-              <th className="px-5 py-3 font-medium">Category</th>
-              <th className="px-5 py-3 font-medium">Price</th>
-              <th className="px-5 py-3 font-medium">Stock</th>
-              <th className="px-5 py-3 font-medium">Actions</th>
+              <th className="px-5 py-3 font-medium">{t("Item")}</th>
+              <th className="px-5 py-3 font-medium">{t("Category")}</th>
+              <th className="px-5 py-3 font-medium">{t("Price")}</th>
+              <th className="px-5 py-3 font-medium">{t("Stock")}</th>
+              <th className="px-5 py-3 font-medium">{t("Actions")}</th>
             </tr>
           </thead>
           <tbody>
@@ -392,7 +394,7 @@ function InventoryPageInner() {
                       {i.stock} {i.unit}
                     </span>
                     <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: stockMeta.bg, color: stockMeta.text }}>
-                      {stockMeta.label}
+                      {t(stockMeta.label)}
                     </span>
                   </td>
                   <td className="px-5 py-3">
@@ -404,7 +406,7 @@ function InventoryPageInner() {
             {filtered.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-5 py-10 text-center text-[var(--text-secondary)] text-sm">
-                  No items match &quot;{query}&quot;.
+                  {t("No items match \"{q}\".", { q: query })}
                 </td>
               </tr>
             )}

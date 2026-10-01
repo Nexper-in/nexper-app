@@ -147,7 +147,7 @@ function ReportsPageInner() {
           </div>
 
           <div className="ks-card overflow-hidden overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="ks-stack w-full text-sm">
               <thead>
                 <tr className="text-left ks-mono text-[11px] uppercase tracking-wide text-[var(--text-secondary)] border-b border-[var(--border)]">
                   <th className="px-5 py-3 font-medium">GST Rate</th>

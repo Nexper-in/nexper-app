@@ -30,10 +30,12 @@ import { fetchShopItems } from "@/lib/products";
 import MiniBarChart from "@/components/MiniBarChart";
 import { categoryColor } from "@/components/CategoryChip";
 import { whatsappLink, dailyReportText, creditReminderText } from "@/lib/messaging";
+import { useT } from "@/lib/i18n";
 
 export default function DashboardPage() {
   const { supabase, activeShopId, activeShop, user, isOwner } = useShop();
   const router = useRouter();
+  const t = useT();
   const [items, setItems] = useState([]);
   const [bills, setBills] = useState([]);
   const [movements, setMovements] = useState([]);
@@ -173,7 +175,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="pt-6 flex items-center gap-2 text-sm text-muted">
-        <Loader2 size={16} className="animate-spin" /> Loading…
+        <Loader2 size={16} className="animate-spin" /> {t("Loading…")}
       </div>
     );
   }
@@ -188,8 +190,8 @@ export default function DashboardPage() {
         icon: AlertTriangle,
         tone: i.stock === 0 ? "danger" : "warn",
         title: i.name,
-        sub: i.stock === 0 ? "Out of stock" : `Only ${i.stock} ${i.unit} left`,
-        action: "Add stock",
+        sub: i.stock === 0 ? t("Out of stock") : t("Only {n} {unit} left", { n: i.stock, unit: i.unit }),
+        action: t("Add stock"),
         onClick: () => router.push(`/inventory?q=${encodeURIComponent(i.name)}`),
       })),
     ...expiringWithNames.slice(0, 1).map((b) => ({
@@ -197,8 +199,8 @@ export default function DashboardPage() {
       icon: CalendarClock,
       tone: b.days <= 0 ? "danger" : "warn",
       title: b.itemName,
-      sub: `${b.qty_remaining} ${b.unit} · ${b.days < 0 ? `expired ${Math.abs(b.days)}d ago` : b.days === 0 ? "expires today" : `expires in ${b.days}d`}`,
-      action: isOwner ? "Offer" : null,
+      sub: `${b.qty_remaining} ${b.unit} · ${b.days < 0 ? t("expired {n}d ago", { n: Math.abs(b.days) }) : b.days === 0 ? t("expires today") : t("expires in {n}d", { n: b.days })}`,
+      action: isOwner ? t("Offer") : null,
       onClick: () => router.push(`/clearance?items=${b.shop_product_id}`),
     })),
     ...dueCustomers.slice(0, 2).map((c) => ({
@@ -206,8 +208,8 @@ export default function DashboardPage() {
       icon: Wallet,
       tone: "udhaar",
       title: c.name,
-      sub: `Owes ${rupee(c.balance)}${c.days > 0 ? ` · ${c.days}d` : ""}`,
-      action: "Remind",
+      sub: `${t("Owes {amt}", { amt: rupee(c.balance) })}${c.days > 0 ? ` · ${t("{n}d", { n: c.days })}` : ""}`,
+      action: t("Remind"),
       actionIcon: MessageCircle,
       onClick: () => window.open(whatsappLink(c.phone, creditReminderText(activeShop?.name, c.name, c.balance)), "_blank"),
     })),
@@ -219,9 +221,9 @@ export default function DashboardPage() {
   };
 
   const quick = [
-    { label: "Stock", icon: PackagePlus, href: "/inventory", note: lowStockCount > 0 ? `${lowStockCount} low` : null, noteColor: "var(--warn)" },
-    { label: "Udhaar", icon: Wallet, href: "/credit", note: outstandingCredit > 0 ? rupee(outstandingCredit) : null, noteColor: "var(--udhaar)" },
-    { label: "Day close", icon: Calculator, href: "/dayclose" },
+    { label: t("Stock"), icon: PackagePlus, href: "/inventory", note: lowStockCount > 0 ? t("{n} low", { n: lowStockCount }) : null, noteColor: "var(--warn)" },
+    { label: t("Udhaar"), icon: Wallet, href: "/credit", note: outstandingCredit > 0 ? rupee(outstandingCredit) : null, noteColor: "var(--udhaar)" },
+    { label: t("Day close"), icon: Calculator, href: "/dayclose" },
   ];
 
   return (
@@ -230,33 +232,33 @@ export default function DashboardPage() {
       <div className="ks-hero p-5 sm:p-6 mb-3">
         <div className="flex items-start justify-between gap-3">
           <p className="text-sm" style={{ color: "rgba(255,255,255,0.75)" }}>
-            {greeting()}
+            {t(greeting())}
             {displayName(user) ? `, ${displayName(user)}` : ""}
           </p>
           <button
             onClick={() => window.open(whatsappLink("", dailyReportText(activeShop?.name || "Store", todaysBills, items)), "_blank")}
             className="ks-hero-btn w-8 h-8 flex items-center justify-center shrink-0"
-            aria-label="Share today's report on WhatsApp"
-            title="Share today's report"
+            aria-label={t("Share today's report on WhatsApp")}
+            title={t("Share today's report")}
           >
             <Share2 size={14} />
           </button>
         </div>
-        <p className="ks-eyebrow mt-3 mb-1" style={{ color: "var(--gold)" }}>Today</p>
+        <p className="ks-eyebrow mt-3 mb-1" style={{ color: "var(--gold)" }}>{t("Today")}</p>
         <div className="ks-hero-figure text-[44px] sm:text-5xl">
           <sup className="text-2xl">₹</sup>
           {rupee(todaysSales).slice(1)}
         </div>
         <p className="text-sm mt-1.5" style={{ color: "rgba(255,255,255,0.75)" }}>
-          {todaysBills.length} bill{todaysBills.length === 1 ? "" : "s"}
-          {todaysProfit > 0 ? ` · profit ~${rupee(todaysProfit)}` : ""}
+          {todaysBills.length === 1 ? t("{n} bill", { n: 1 }) : t("{n} bills", { n: todaysBills.length })}
+          {todaysProfit > 0 ? ` · ${t("profit ~{amt}", { amt: rupee(todaysProfit) })}` : ""}
         </p>
         {todaysBills.length > 0 && (
           <div className="grid grid-cols-3 gap-2 mt-4">
             {[
-              ["Cash", todaySplit.cash],
-              ["UPI", todaySplit.upi],
-              ["Udhaar", todaySplit.udhaar],
+              [t("Cash"), todaySplit.cash],
+              [t("UPI"), todaySplit.upi],
+              [t("Udhaar"), todaySplit.udhaar],
             ].map(([label, v]) => (
               <div key={label} className="rounded-xl px-3 py-2" style={{ background: "rgba(255,255,255,0.08)" }}>
                 <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.65)" }}>{label}</p>
@@ -272,7 +274,7 @@ export default function DashboardPage() {
         onClick={() => router.push("/billing")}
         className="ks-btn-primary w-full flex items-center justify-center gap-2 py-4 text-base mb-3"
       >
-        <Receipt size={19} /> New bill
+        <Receipt size={19} /> {t("New bill")}
       </button>
 
       <div className="grid grid-cols-3 gap-2.5 mb-5">
@@ -292,15 +294,15 @@ export default function DashboardPage() {
       </div>
 
       {/* Needs attention */}
-      <h2 className="ks-display font-bold text-base mb-2">Needs attention</h2>
+      <h2 className="ks-display font-bold text-base mb-2">{t("Needs attention")}</h2>
       <div className="ks-card overflow-hidden mb-5">
         {attention.length === 0 ? (
           <div className="flex items-center gap-3 px-4 py-5">
             <CheckCircle2 size={20} style={{ color: "var(--success)" }} />
             <div>
-              <p className="text-sm font-semibold">All clear</p>
+              <p className="text-sm font-semibold">{t("All clear")}</p>
               <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
-                {items.length === 0 ? "Add your stock to start billing." : "Nothing needs you right now."}
+                {items.length === 0 ? t("Add your stock to start billing.") : t("Nothing needs you right now.")}
               </p>
             </div>
           </div>
@@ -340,7 +342,7 @@ export default function DashboardPage() {
         className="w-full flex items-center justify-between text-sm font-semibold py-2"
         style={{ color: "var(--text-secondary)" }}
       >
-        More insights
+        {t("More insights")}
         <ChevronDown size={16} className={`transition-transform ${showInsights ? "rotate-180" : ""}`} />
       </button>
 
@@ -350,28 +352,28 @@ export default function DashboardPage() {
             <StatCard
               icon={<Package size={16} />}
               bar="var(--accent)" tintBg="var(--accent-soft-bg)" tintFg="var(--accent)"
-              label="Items in stock"
+              label={t("Items in stock")}
               value={items.length}
               onClick={() => setDetail("items")}
             />
             <StatCard
               icon={<Wallet size={16} />}
               bar="var(--success-solid)" tintBg="var(--success-soft)" tintFg="var(--success)"
-              label="Stock value"
+              label={t("Stock value")}
               value={rupee(stockValue)}
               onClick={() => setDetail("value")}
             />
             <StatCard
               icon={<TrendingUp size={16} />}
               bar="var(--gold)" tintBg="var(--gold-soft)" tintFg="var(--gold)"
-              label="Today's profit"
+              label={t("Today's profit")}
               value={rupee(todaysProfit)}
               onClick={() => setDetail("profit")}
             />
             <StatCard
               icon={<AlertTriangle size={16} />}
               bar="var(--danger-solid)" tintBg="var(--danger-soft)" tintFg="var(--danger)"
-              label="Low stock"
+              label={t("Low stock")}
               value={lowStockCount}
               onClick={() => setDetail("low")}
             />
@@ -379,15 +381,15 @@ export default function DashboardPage() {
 
           <div className="ks-card p-5">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="ks-display font-bold">Sales this week</h2>
-              <span className="ks-mono text-xs text-[var(--text-secondary)]">last 7 days</span>
+              <h2 className="ks-display font-bold">{t("Sales this week")}</h2>
+              <span className="ks-mono text-xs text-[var(--text-secondary)]">{t("last 7 days")}</span>
             </div>
             <MiniBarChart data={last7Days} color="var(--accent)" formatValue={(v) => `₹${v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}`} />
           </div>
 
           {categorySales.length > 0 && (
             <div className="ks-card p-5">
-              <h2 className="ks-display font-bold mb-4">Top categories <span className="text-xs font-normal text-[var(--text-secondary)]">· 30 days</span></h2>
+              <h2 className="ks-display font-bold mb-4">{t("Top categories")} <span className="text-xs font-normal text-[var(--text-secondary)]">· {t("30 days")}</span></h2>
               <div className="space-y-2.5">
                 {categorySales.map(([cat, total]) => {
                   const c = categoryColor(cat);
@@ -410,7 +412,7 @@ export default function DashboardPage() {
 
           {bestCustomers.length > 0 && (
             <div className="ks-card p-5">
-              <h2 className="ks-display font-bold mb-3">Top customers</h2>
+              <h2 className="ks-display font-bold mb-3">{t("Top customers")}</h2>
               <div className="space-y-1">
                 {bestCustomers.map((c, i) => (
                   <button
@@ -423,7 +425,7 @@ export default function DashboardPage() {
                       <div>
                         <div className="font-medium">{c.name}</div>
                         <div className="text-[11px] text-[var(--text-secondary)]">
-                          {c.visits} visit{c.visits === 1 ? "" : "s"}
+                          {c.visits === 1 ? t("{n} visit", { n: 1 }) : t("{n} visits", { n: c.visits })}
                         </div>
                       </div>
                     </div>
@@ -438,7 +440,7 @@ export default function DashboardPage() {
             <div className="ks-card p-5">
               <div className="flex items-center gap-2 mb-3">
                 <Activity size={15} style={{ color: "var(--accent-soft-text)" }} />
-                <h2 className="ks-display font-bold">Recent stock movement</h2>
+                <h2 className="ks-display font-bold">{t("Recent stock movement")}</h2>
               </div>
               <div className="space-y-3">
                 {movements.map((m) => (

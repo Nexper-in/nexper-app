@@ -5,8 +5,10 @@ import Modal from "@/components/ui/Modal";
 import Field from "@/components/ui/Field";
 import { rupee } from "@/lib/format";
 import { SMALLER_UNIT, UNIT_FACTOR } from "@/lib/voiceHelpers";
+import { useT } from "@/lib/i18n";
 
 export default function QtyPickerModal({ item, onClose, onConfirm }) {
+  const t = useT();
   const smallerUnit = SMALLER_UNIT[item.unit]; // 'g' for kg items, 'ml' for l items, undefined otherwise
   const [inputUnit, setInputUnit] = useState(item.unit);
   const isMeasured = ["kg", "g", "l", "ml"].includes(item.unit);
@@ -21,14 +23,14 @@ export default function QtyPickerModal({ item, onClose, onConfirm }) {
     <Modal title={item.name} onClose={onClose}>
       <div className="space-y-3.5">
         <p className="text-xs text-[var(--text-secondary)]">
-          Available: <span className="ks-mono font-semibold text-[var(--text-primary)]">{item.stock} {item.unit}</span> ·{" "}
+          {t("Available:")} <span className="ks-mono font-semibold text-[var(--text-primary)]">{item.stock} {item.unit}</span> ·{" "}
           {item.mrp > item.price && !item.originalPrice && (
             <span className="line-through mr-1 opacity-60 ks-mono">{rupee(item.mrp)}</span>
           )}
           {rupee(item.price)} / {item.unit}
           {item.mrp > item.price && !item.originalPrice && (
             <span className="ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "var(--success-soft)", color: "var(--success)" }}>
-              {Math.round(((item.mrp - item.price) / item.mrp) * 100)}% OFF
+              {t("{n}% OFF", { n: Math.round(((item.mrp - item.price) / item.mrp) * 100) })}
             </span>
           )}
         </p>
@@ -50,7 +52,7 @@ export default function QtyPickerModal({ item, onClose, onConfirm }) {
           </div>
         )}
 
-        <Field label={`How many ${inputUnit} to add?`}>
+        <Field label={t("How many {unit} to add?", { unit: inputUnit })}>
           <input
             autoFocus
             type="number"
@@ -67,13 +69,13 @@ export default function QtyPickerModal({ item, onClose, onConfirm }) {
             = <span className="ks-mono font-semibold text-[var(--text-primary)]">{num} {item.unit}</span>
           </p>
         )}
-        {num > item.stock && <p className="text-xs text-[var(--danger)] font-medium">Only {item.stock} {item.unit} in stock.</p>}
+        {num > item.stock && <p className="text-xs text-[var(--danger)] font-medium">{t("Only {n} {unit} in stock.", { n: item.stock, unit: item.unit })}</p>}
         <div className="flex items-center justify-between py-2 border-t border-[var(--border)]">
-          <span className="text-sm font-semibold text-[var(--text-secondary)]">Line total</span>
+          <span className="text-sm font-semibold text-[var(--text-secondary)]">{t("Line total")}</span>
           <span className="ks-mono text-lg font-bold text-[var(--accent-soft-text)]">{rupee((num > 0 ? num : 0) * item.price)}</span>
         </div>
         <button disabled={!valid} onClick={() => onConfirm(num)} className="ks-btn-primary w-full">
-          Add to bill
+          {t("Add to bill")}
         </button>
       </div>
     </Modal>

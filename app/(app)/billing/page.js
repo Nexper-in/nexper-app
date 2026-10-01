@@ -32,6 +32,7 @@ import { fetchShopItems } from "@/lib/products";
 import { fetchActiveOffers, activeDiscountMap, clearancePrice } from "@/lib/clearance";
 import { cacheProducts, getCachedProducts, cacheBills, getCachedBills } from "@/lib/productCache";
 import ModuleGuard from "@/components/ModuleGuard";
+import { useT } from "@/lib/i18n";
 
 export default function BillingPage() {
   return (
@@ -42,6 +43,7 @@ export default function BillingPage() {
 }
 
 function BillingPageInner() {
+  const t = useT();
   const { supabase, activeShopId, activeShop, showToast, runQueued } = useShop();
   const [items, setItems] = useState([]);
   const [bills, setBills] = useState([]);
@@ -136,24 +138,24 @@ function BillingPageInner() {
 
   function handleVoiceTranscript(transcript) {
     const item = matchItemFromSpeech(pricedItems, transcript);
-    if (!item) return showToast(`Couldn't match "${transcript}" to an item`, "warn");
+    if (!item) return showToast(t("Couldn't match \"{q}\" to an item", { q: transcript }), "warn");
     const qty = parseSpokenQuantity(transcript, item.unit);
     if (qty && qty > 0) {
       addToCart(item, qty);
-      showToast(`🎙️ Added ${qty}${item.unit} ${item.name}`);
+      showToast(t("🎙️ Added {qty}{unit} {name}", { qty, unit: item.unit, name: item.name }));
     } else {
       setPickerItem(item);
     }
   }
 
   function startVoiceAdd() {
-    if (!voiceSupported) return showToast("Voice input isn't supported in this browser", "err");
+    if (!voiceSupported) return showToast(t("Voice input isn't supported in this browser"), "err");
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     let recognition;
     try {
       recognition = new SR();
     } catch (e) {
-      showToast("Couldn't start voice input on this device", "err");
+      showToast(t("Couldn't start voice input on this device"), "err");
       return;
     }
     recognition.lang = voiceLang;
@@ -183,17 +185,17 @@ function BillingPageInner() {
       recognition.start();
     } catch (e) {
       setListening(false);
-      showToast("Couldn't start listening — try tapping the mic again", "err");
+      showToast(t("Couldn't start listening — try tapping the mic again"), "err");
     }
   }
 
   function addToCart(item, qty = 1) {
-    if (item.stock <= 0) return showToast(`${item.name} is out of stock`, "err");
+    if (item.stock <= 0) return showToast(t("{name} is out of stock", { name: item.name }), "err");
     setCart((prev) => {
       const exists = prev.find((c) => c.shop_product_id === item.id);
       const wanted = (exists ? exists.qty : 0) + qty;
       if (wanted > item.stock) {
-        showToast(`Only ${item.stock} ${item.unit} of ${item.name} in stock`, "warn");
+        showToast(t("Only {n} {unit} of {name} in stock", { n: item.stock, unit: item.unit, name: item.name }), "warn");
         const capped = item.stock;
         return exists
           ? prev.map((c) => (c.shop_product_id === item.id ? { ...c, qty: capped } : c))
@@ -239,7 +241,7 @@ function BillingPageInner() {
     const line = cart.find((c) => c.shop_product_id === id);
     if (!line) return;
     if (qty > line.stock) {
-      showToast(`Only ${line.stock} ${line.unit} in stock`, "warn");
+      showToast(t("Only {n} {unit} in stock", { n: line.stock, unit: line.unit }), "warn");
       qty = line.stock;
     }
     if (qty <= 0) setCart((prev) => prev.filter((c) => c.shop_product_id !== id));
@@ -260,7 +262,7 @@ function BillingPageInner() {
 
   async function generateBill() {
     if (cart.length === 0) return;
-    if (billType === "credit" && !cleanPhone) return showToast("Add a customer mobile number for udhaar bills", "err");
+    if (billType === "credit" && !cleanPhone) return showToast(t("Add a customer mobile number for udhaar bills"), "err");
 
     setGenerating(true);
     try {
@@ -326,9 +328,9 @@ function BillingPageInner() {
       }
 
       if (offline) {
-        showToast("You're offline — this bill will sync automatically once you're back online", "warn");
+        showToast(t("You're offline — this bill will sync automatically once you're back online"), "warn");
       } else if (billType === "credit") {
-        showToast(`Udhaar bill saved — ${rupee(total)} added to ${customer.name || "customer"}'s balance`);
+        showToast(t("Udhaar bill saved — {amt} added to {name}'s balance", { amt: rupee(total), name: customer.name || t("customer") }));
       }
       // A normal bill needs no toast: the bill panel itself turns into "Bill saved".
 
@@ -373,7 +375,7 @@ function BillingPageInner() {
 
   function startBarcodeScanner() {
     if (!("BarcodeDetector" in window)) {
-      showToast("Barcode scanner not supported in this browser — search by code or name instead", "warn");
+      showToast(t("Barcode scanner not supported in this browser — search by code or name instead"), "warn");
       return;
     }
     setScannerActive(true);
@@ -396,7 +398,7 @@ function BillingPageInner() {
               setPickerItem(matched);
             } else {
               setQuery(val);
-              showToast(`Scanned: ${val} — no exact match, showing search results`);
+              showToast(t("Scanned: {val} — no exact match, showing search results", { val }));
             }
           } else {
             requestAnimationFrame(scan);
@@ -407,7 +409,7 @@ function BillingPageInner() {
     }).catch(() => {
       active = false;
       setScannerActive(false);
-      showToast("Camera access denied — allow it in browser settings", "err");
+      showToast(t("Camera access denied — allow it in browser settings"), "err");
     });
   }
 
@@ -419,7 +421,7 @@ function BillingPageInner() {
   if (loading) {
     return (
       <div className="pt-6 flex items-center gap-2 text-sm text-muted">
-        <Loader2 size={16} className="animate-spin" /> Loading billing…
+        <Loader2 size={16} className="animate-spin" /> {t("Loading billing…")}
       </div>
     );
   }
@@ -476,7 +478,7 @@ function BillingPageInner() {
     <div className="pt-4">
       <div className="flex items-baseline justify-between mb-3">
         {/* Phones already show "New bill" in the top bar */}
-        <h1 className="ks-display font-bold text-xl hidden lg:block">New bill</h1>
+        <h1 className="ks-display font-bold text-xl hidden lg:block">{t("New bill")}</h1>
         <span className="ks-mono text-xs ml-auto" style={{ color: "var(--text-secondary)" }}>{nextBillNo}</span>
       </div>
 
@@ -488,15 +490,15 @@ function BillingPageInner() {
             <input
               className="ks-input"
               style={{ paddingLeft: "2.5rem", paddingRight: "5.25rem", paddingTop: 12, paddingBottom: 12, fontSize: 15 }}
-              placeholder="Search item or code"
+              placeholder={t("Search item or code")}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
             <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex gap-1">
               <button
                 onClick={startBarcodeScanner}
-                aria-label="Scan barcode"
-                title="Scan barcode"
+                aria-label={t("Scan barcode")}
+                title={t("Scan barcode")}
                 className={`w-9 h-9 rounded-lg flex items-center justify-center ${scannerActive ? "ks-pulse" : ""}`}
                 style={{ background: scannerActive ? "var(--accent)" : "var(--bg-surface-alt)", color: scannerActive ? "#fff" : "var(--text-primary)" }}
               >
@@ -504,8 +506,8 @@ function BillingPageInner() {
               </button>
               <button
                 onClick={() => setShowVoiceBilling(true)}
-                aria-label="Say the items"
-                title="Say the items"
+                aria-label={t("Say the items")}
+                title={t("Say the items")}
                 className="w-9 h-9 rounded-lg flex items-center justify-center"
                 style={{ background: "var(--grad)", color: "#fff" }}
               >
@@ -533,7 +535,7 @@ function BillingPageInner() {
                       ) : null}
                     </div>
                     <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>
-                      {item.stock > 0 ? `${item.stock} ${item.unit} in stock` : "Out of stock"}
+                      {item.stock > 0 ? t("{n} {unit} in stock", { n: item.stock, unit: item.unit }) : t("Out of stock")}
                     </p>
                   </div>
                   <p className="font-bold text-sm shrink-0 ks-mono">
@@ -544,7 +546,7 @@ function BillingPageInner() {
               ))}
               {displayItems.length === 0 && (
                 <div className="py-10 text-center text-sm" style={{ color: "var(--text-secondary)" }}>
-                  No item called &quot;{query}&quot;
+                  {t("No item called \"{q}\"", { q: query })}
                 </div>
               )}
             </div>
@@ -563,7 +565,7 @@ function BillingPageInner() {
             </div>
           ) : (
             <div className="ks-card py-12 text-center text-sm" style={{ color: "var(--text-secondary)" }}>
-              Search, scan or speak to add items.
+              {t("Search, scan or speak to add items.")}
             </div>
           )}
         </div>
@@ -574,10 +576,10 @@ function BillingPageInner() {
             {lastBill && cart.length === 0 ? (
               <div className="ks-pop text-center py-2">
                 <CheckCircle2 size={36} className="mx-auto" style={{ color: "var(--success)" }} />
-                <p className="font-bold text-lg mt-2">Bill saved</p>
+                <p className="font-bold text-lg mt-2">{t("Bill saved")}</p>
                 <p className="ks-mono text-sm" style={{ color: "var(--text-secondary)" }}>
                   {lastBill.bill_no} · {rupee(lastBill.total)}
-                  {lastBill.payment_type === "credit" ? " · udhaar" : lastBill.payment_method ? ` · ${lastBill.payment_method.toUpperCase()}` : ""}
+                  {lastBill.payment_type === "credit" ? ` · ${t("udhaar")}` : lastBill.payment_method ? ` · ${lastBill.payment_method.toUpperCase()}` : ""}
                 </p>
                 <div className="grid grid-cols-2 gap-2 mt-4">
                   <button
@@ -586,10 +588,10 @@ function BillingPageInner() {
                     className="flex items-center justify-center gap-1.5 text-sm py-2.5 rounded-xl font-semibold disabled:opacity-40"
                     style={{ background: "#25D366", color: "#fff" }}
                   >
-                    <MessageCircle size={15} /> WhatsApp
+                    <MessageCircle size={15} /> {t("WhatsApp")}
                   </button>
                   <button onClick={() => printBill(lastBill)} className="ks-btn-outline flex items-center justify-center gap-1.5 text-sm py-2.5">
-                    <Printer size={15} /> Print
+                    <Printer size={15} /> {t("Print")}
                   </button>
                 </div>
                 {activeShop?.upi_id && lastBill.payment_method === "upi" && lastBill.payment_type !== "credit" && (
@@ -598,7 +600,7 @@ function BillingPageInner() {
                   </div>
                 )}
                 <button onClick={clearCart} className="ks-btn-primary w-full mt-3 py-3 flex items-center justify-center gap-2">
-                  <Plus size={16} /> New bill
+                  <Plus size={16} /> {t("New bill")}
                 </button>
               </div>
             ) : (
@@ -606,7 +608,7 @@ function BillingPageInner() {
                 {/* Items */}
                 {cart.length === 0 ? (
                   <div className="py-6 text-center text-sm" style={{ color: "var(--text-secondary)" }}>
-                    Tap an item to add it to the bill
+                    {t("Tap an item to add it to the bill")}
                   </div>
                 ) : (
                   <div className="space-y-2.5 mb-3 max-h-60 overflow-y-auto ks-scroll">
@@ -614,11 +616,11 @@ function BillingPageInner() {
                       <div key={c.shop_product_id} className="flex items-center gap-2">
                         <span className="text-sm flex-1 font-medium truncate">{c.name}</span>
                         <div className="flex items-center gap-1.5 shrink-0">
-                          <button onClick={() => updateQty(c.shop_product_id, c.qty - 1)} className="ks-qtybtn" aria-label={`One less ${c.name}`} style={{ width: 30, height: 30 }}>
+                          <button onClick={() => updateQty(c.shop_product_id, c.qty - 1)} className="ks-qtybtn" aria-label={t("One less {name}", { name: c.name })} style={{ width: 30, height: 30 }}>
                             <Minus size={13} />
                           </button>
                           <span className="ks-mono w-6 text-center text-sm font-bold">{c.qty}</span>
-                          <button onClick={() => updateQty(c.shop_product_id, c.qty + 1)} className="ks-qtybtn" aria-label={`One more ${c.name}`} style={{ width: 30, height: 30 }}>
+                          <button onClick={() => updateQty(c.shop_product_id, c.qty + 1)} className="ks-qtybtn" aria-label={t("One more {name}", { name: c.name })} style={{ width: 30, height: 30 }}>
                             <Plus size={13} />
                           </button>
                         </div>
@@ -632,14 +634,14 @@ function BillingPageInner() {
                 <div className="flex items-end justify-between py-3 border-t" style={{ borderColor: "var(--border)" }}>
                   <div>
                     <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
-                      Total{cartQty > 0 ? ` · ${cartQty} item${cartQty === 1 ? "" : "s"}` : ""}
+                      {t("Total")}{cartQty > 0 ? ` · ${cartQty === 1 ? t("{n} item", { n: 1 }) : t("{n} items", { n: cartQty })}` : ""}
                     </p>
                     {(discountAmount > 0 || clearanceSavings > 0 || cartGst > 0) && (
                       <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>
                         {[
-                          discountAmount > 0 ? `−${rupee(discountAmount)} discount` : null,
-                          clearanceSavings > 0 ? `−${rupee(clearanceSavings)} offer` : null,
-                          cartGst > 0 ? `incl. GST ${rupee(cartGst)}` : null,
+                          discountAmount > 0 ? t("−{amt} discount", { amt: rupee(discountAmount) }) : null,
+                          clearanceSavings > 0 ? t("−{amt} offer", { amt: rupee(clearanceSavings) }) : null,
+                          cartGst > 0 ? t("incl. GST {amt}", { amt: rupee(cartGst) }) : null,
                         ]
                           .filter(Boolean)
                           .join(" · ")}
@@ -652,9 +654,9 @@ function BillingPageInner() {
                 {/* How they pay */}
                 <div className="grid grid-cols-3 gap-2 mb-3">
                   {[
-                    { id: "cash", label: "Cash", icon: Banknote },
-                    { id: "upi", label: "UPI", icon: QrCode },
-                    { id: "udhaar", label: "Udhaar", icon: BookOpen },
+                    { id: "cash", label: t("Cash"), icon: Banknote },
+                    { id: "upi", label: t("UPI"), icon: QrCode },
+                    { id: "udhaar", label: t("Udhaar"), icon: BookOpen },
                   ].map((m) => {
                     const on = pay === m.id || (m.id === "cash" && (pay === "card" || pay === "bank"));
                     const tone = m.id === "udhaar" ? "var(--udhaar)" : "var(--accent-soft-text)";
@@ -683,7 +685,7 @@ function BillingPageInner() {
                       <UpiQrCard upiId={activeShop.upi_id} payeeName={activeShop.name} amount={total} note="Checkout" />
                     ) : (
                       <p className="text-[11px] font-medium text-center py-1" style={{ color: "var(--warn)" }}>
-                        Add your UPI ID in Store settings to show a QR here.
+                        {t("Add your UPI ID in Store settings to show a QR here.")}
                       </p>
                     )}
                   </div>
@@ -697,7 +699,7 @@ function BillingPageInner() {
                   style={{ color: "var(--text-secondary)" }}
                 >
                   <span>
-                    {customer.name || cleanPhone ? `Customer: ${customer.name || cleanPhone}` : "+ Customer, discount"}
+                    {customer.name || cleanPhone ? t("Customer: {name}", { name: customer.name || cleanPhone }) : t("+ Customer, discount")}
                     {discountAmount > 0 ? ` · −${rupee(discountAmount)}` : ""}
                   </span>
                   <ChevronDown size={16} className={`transition-transform ${showDetails ? "rotate-180" : ""}`} />
@@ -707,26 +709,26 @@ function BillingPageInner() {
                   <div className="space-y-2 pb-2 ks-fade-up">
                     <input
                       className="ks-input"
-                      placeholder="Customer name"
+                      placeholder={t("Customer name")}
                       value={customer.name}
                       onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
                     />
                     <input
                       className="ks-input"
-                      placeholder={billType === "credit" ? "Phone number (needed for udhaar)" : "Phone number (for WhatsApp bill)"}
+                      placeholder={billType === "credit" ? t("Phone number (needed for udhaar)") : t("Phone number (for WhatsApp bill)")}
                       inputMode="tel"
                       value={customer.phone}
                       onChange={(e) => setCustomer({ ...customer, phone: e.target.value })}
                     />
                     {isLoyal && (
                       <div className="rounded-xl px-3 py-2 flex items-center justify-between gap-2" style={{ background: "var(--warn-soft)" }}>
-                        <span className="text-xs font-semibold text-[var(--warn)]">⭐ Regular customer · visit #{previousVisits + 1}</span>
+                        <span className="text-xs font-semibold text-[var(--warn)]">{t("⭐ Regular customer · visit #{n}", { n: previousVisits + 1 })}</span>
                         <button
                           onClick={() => setLoyaltyDiscount((v) => !v)}
                           className="text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0"
                           style={{ background: loyaltyDiscount ? "var(--warn-solid)" : "var(--bg-surface)", color: loyaltyDiscount ? "#fff" : "var(--warn)" }}
                         >
-                          {loyaltyDiscount ? "5% off ✓" : "Give 5% off"}
+                          {loyaltyDiscount ? t("5% off ✓") : t("Give 5% off")}
                         </button>
                       </div>
                     )}
@@ -750,7 +752,7 @@ function BillingPageInner() {
                         type="number"
                         min="0"
                         inputMode="decimal"
-                        placeholder="Discount"
+                        placeholder={t("Discount")}
                         value={manualDiscount.value}
                         onChange={(e) => setManualDiscount((d) => ({ ...d, value: e.target.value }))}
                         className="ks-input text-sm flex-1"
@@ -758,10 +760,10 @@ function BillingPageInner() {
                     </div>
                     {billType === "cash" && (
                       <div className="flex gap-1.5 items-center text-xs" style={{ color: "var(--text-secondary)" }}>
-                        Paid by
+                        {t("Paid by")}
                         {[
-                          ["card", "Card", CreditCard],
-                          ["bank", "Bank transfer", Landmark],
+                          ["card", t("Card"), CreditCard],
+                          ["bank", t("Bank transfer"), Landmark],
                         ].map(([id, label, Icon]) => (
                           <button
                             key={id}
@@ -782,7 +784,7 @@ function BillingPageInner() {
                 )}
 
                 {billType === "credit" && !cleanPhone && (
-                  <p className="text-xs font-medium mb-2" style={{ color: "var(--danger)" }}>Add the customer&apos;s phone number for udhaar.</p>
+                  <p className="text-xs font-medium mb-2" style={{ color: "var(--danger)" }}>{t("Add the customer's phone number for udhaar.")}</p>
                 )}
 
                 <button
@@ -792,12 +794,12 @@ function BillingPageInner() {
                   className="ks-btn-primary w-full flex items-center justify-center gap-2 py-3.5 text-base mt-1 disabled:opacity-40"
                 >
                   {generating ? <Loader2 size={17} className="animate-spin" /> : <CheckCircle2 size={17} />}
-                  {billType === "credit" ? "Save udhaar bill" : "Save bill"}
+                  {billType === "credit" ? t("Save udhaar bill") : t("Save bill")}
                   {total > 0 ? ` · ${rupee(total)}` : ""}
                 </button>
                 {cart.length > 0 && (
                   <button onClick={clearCart} className="w-full text-sm text-center pt-2.5" style={{ color: "var(--text-secondary)" }}>
-                    Clear bill
+                    {t("Clear bill")}
                   </button>
                 )}
               </>
@@ -817,7 +819,7 @@ function BillingPageInner() {
           >
             <div>
               <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>
-                {cartQty} item{cartQty === 1 ? "" : "s"}
+                {cartQty === 1 ? t("{n} item", { n: 1 }) : t("{n} items", { n: cartQty })}
               </p>
               <p className="ks-mono text-lg font-extrabold leading-tight">{rupee(total)}</p>
             </div>
@@ -825,7 +827,7 @@ function BillingPageInner() {
               onClick={() => document.getElementById("bill-panel")?.scrollIntoView({ behavior: "smooth", block: "start" })}
               className="ks-btn-primary px-5 py-2.5"
             >
-              Checkout
+              {t("Checkout")}
             </button>
           </div>
         </>

@@ -1,0 +1,8 @@
+[
+  { "code": "en", "name": "English", "english": "English", "htmlLang": "en-IN" },
+  { "code": "hi", "name": "हिन्दी", "english": "Hindi", "htmlLang": "hi-IN", "font": "Noto Sans Devanagari" },
+  { "code": "te", "name": "తెలుగు", "english": "Telugu", "htmlLang": "te-IN", "font": "Noto Sans Telugu" },
+  { "code": "kn", "name": "ಕನ್ನಡ", "english": "Kannada", "htmlLang": "kn-IN", "font": "Noto Sans Kannada" },
+  { "code": "ta", "name": "தமிழ்", "english": "Tamil", "htmlLang": "ta-IN", "font": "Noto Sans Tamil" },
+  { "code": "ml", "name": "മലയാളം", "english": "Malayalam", "htmlLang": "ml-IN", "font": "Noto Sans Malayalam" }
+]

@@ -289,6 +289,20 @@ body {
 .ks-topbar { background: var(--bar-bg); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); color: var(--text-primary); border-bottom: 1px solid var(--border); }
 
 .ks-print-only { display: none; }
+/* Wide tables turn into one card per row on phones. components/StackTables.js
+   copies each column heading onto its cells (data-label) so every value keeps
+   its name. Add class "ks-stack" to a <table> to opt in. */
+@media (max-width: 767px) {
+  .ks-stack, .ks-stack tbody, .ks-stack tr, .ks-stack td { display: block; width: 100%; }
+  .ks-stack thead { display: none; }
+  .ks-stack tr { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .ks-stack tr:last-child { border-bottom: 0; }
+  .ks-stack td { padding: 3px 0 !important; display: flex; align-items: center; justify-content: space-between; gap: 14px; text-align: right; max-width: none !important; }
+  .ks-stack td::before { content: attr(data-label); flex-shrink: 0; text-align: left; color: var(--text-secondary); font-size: 11px; font-weight: 600; }
+  .ks-stack td[data-label=""]::before, .ks-stack td:not([data-label])::before { content: none; }
+  .ks-stack td:first-child { font-size: 15px; justify-content: space-between; }
+  .ks-stack td[colspan] { display: block; text-align: center; }
+}
 /* Brand pieces */
 .ks-wordmark { font-family: var(--font-display); font-weight: 800; letter-spacing: -0.04em; line-height: 1; }
 .ks-grad-text { background: var(--grad-text); -webkit-background-clip: text; background-clip: text; color: transparent; }
@@ -388,3 +402,26 @@ body {
   .ks-print-only { display: block !important; position: absolute; top: 0; left: 0; width: 100%; }
   .ks-no-print { display: none !important; }
 }
+
+/* ---------- Languages ----------
+   lib/i18n.js loads the matching Noto Sans font and sets data-lang on <html>.
+   Indian scripts need more line height and no negative letter-spacing. */
+:root { --font-indic: system-ui; }
+html[data-lang="hi"] { --font-indic: "Noto Sans Devanagari"; }
+html[data-lang="te"] { --font-indic: "Noto Sans Telugu"; }
+html[data-lang="kn"] { --font-indic: "Noto Sans Kannada"; }
+html[data-lang="ta"] { --font-indic: "Noto Sans Tamil"; }
+html[data-lang="ml"] { --font-indic: "Noto Sans Malayalam"; }
+html[data-lang]:not([data-lang="en"]) {
+  --font-display: "Manrope", var(--font-indic), system-ui, sans-serif;
+  --font-body: "DM Sans", var(--font-indic), system-ui, sans-serif;
+  --font-sidebar: "Manrope", var(--font-indic), system-ui, sans-serif;
+}
+html[data-lang]:not([data-lang="en"]) body { line-height: 1.6; }
+html[data-lang]:not([data-lang="en"]) .ks-display,
+html[data-lang]:not([data-lang="en"]) h1,
+html[data-lang]:not([data-lang="en"]) h2,
+html[data-lang]:not([data-lang="en"]) h3 { letter-spacing: 0; line-height: 1.35; }
+html[data-lang]:not([data-lang="en"]) .ks-btn-primary,
+html[data-lang]:not([data-lang="en"]) .ks-btn-outline { line-height: 1.35; }
+html[data-lang]:not([data-lang="en"]) .ks-eyebrow { text-transform: none; letter-spacing: 0.02em; }

@@ -6,12 +6,15 @@ import { ChevronDown, LogOut, Moon, Settings, Sun } from "lucide-react";
 import { useShop } from "@/components/ShopContext";
 import { useTheme } from "@/lib/theme";
 import { displayName, initials } from "@/lib/format";
+import { useT } from "@/lib/i18n";
+import LanguagePicker from "@/components/LanguagePicker";
 
 // Top-right account button on every app screen: who is signed in, the
 // Night/Light switch for this device, store settings and sign out.
 export default function AccountMenu({ onOpenSettings }) {
   const { supabase, user, activeShop, isOwner, currentMember } = useShop();
   const { theme, setTheme } = useTheme();
+  const t = useT();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -37,7 +40,7 @@ export default function AccountMenu({ onOpenSettings }) {
 
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
   const fullName = user?.user_metadata?.full_name || displayName(user);
-  const role = isOwner ? "Owner" : currentMember?.role === "staff" ? "Staff" : "";
+  const role = isOwner ? t("Owner") : currentMember?.role === "staff" ? t("Staff") : "";
 
   return (
     <div className="relative" ref={ref}>
@@ -46,7 +49,7 @@ export default function AccountMenu({ onOpenSettings }) {
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label="Account"
+        aria-label={t("Account")}
         className="flex items-center gap-2 rounded-full pl-1 pr-1 lg:pr-2.5 py-1 transition-colors hover:bg-[var(--bg-surface-alt)]"
       >
         <Avatar url={avatarUrl} text={initials(user)} />
@@ -63,7 +66,7 @@ export default function AccountMenu({ onOpenSettings }) {
           <div className="flex items-center gap-3 px-2.5 py-2.5">
             <Avatar url={avatarUrl} text={initials(user)} size={40} />
             <div className="min-w-0">
-              <p className="text-sm font-bold truncate">{fullName || "Signed in"}</p>
+              <p className="text-sm font-bold truncate">{fullName || t("Signed in")}</p>
               {user?.email && !user.email.endsWith(".internal") && (
                 <p className="text-xs truncate" style={{ color: "var(--text-secondary)" }}>
                   {user.email}
@@ -79,12 +82,12 @@ export default function AccountMenu({ onOpenSettings }) {
 
           <div className="px-2.5 py-2">
             <p className="text-[11px] font-semibold mb-1.5" style={{ color: "var(--text-secondary)" }}>
-              Look on this device
+              {t("Look on this device")}
             </p>
             <div className="grid grid-cols-2 gap-1 p-1 rounded-xl" style={{ background: "var(--bg-surface-alt)" }}>
               {[
-                { id: "dark", label: "Night", Icon: Moon },
-                { id: "light", label: "Light", Icon: Sun },
+                { id: "dark", label: t("Night"), Icon: Moon },
+                { id: "light", label: t("Light"), Icon: Sun },
               ].map(({ id, label, Icon }) => (
                 <button
                   key={id}
@@ -105,19 +108,26 @@ export default function AccountMenu({ onOpenSettings }) {
             </div>
           </div>
 
+          <div className="px-2.5 py-2">
+            <p className="text-[11px] font-semibold mb-1.5" style={{ color: "var(--text-secondary)" }}>
+              {t("Language")}
+            </p>
+            <LanguagePicker variant="grid" />
+          </div>
+
           <div className="my-1 h-px" style={{ background: "var(--border)" }} />
 
           {isOwner && (
             <MenuItem
               icon={Settings}
-              label="Store settings"
+              label={t("Store settings")}
               onClick={() => {
                 setOpen(false);
                 onOpenSettings?.();
               }}
             />
           )}
-          <MenuItem icon={LogOut} label="Sign out" onClick={handleSignOut} danger />
+          <MenuItem icon={LogOut} label={t("Sign out")} onClick={handleSignOut} danger />
         </div>
       )}
     </div>

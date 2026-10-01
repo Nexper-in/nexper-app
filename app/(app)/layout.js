@@ -11,9 +11,12 @@ import { AddShopOnboarding } from "@/components/ShopOnboarding";
 import StoreSettingsModal from "@/components/StoreSettingsModal";
 import Toast from "@/components/ui/Toast";
 import AccountMenu from "@/components/AccountMenu";
+import StackTables from "@/components/StackTables";
+import { T, useT } from "@/lib/i18n";
 
 function OfflineBanner() {
   const { pendingCount } = useShop();
+  const t = useT();
   const [isOnline, setIsOnline] = useState(true);
   const [syncing, setSyncing] = useState(false);
 
@@ -45,7 +48,7 @@ function OfflineBanner() {
         style={{ background: "rgba(34,197,94,0.9)", color: "#fff" }}
       >
         <RefreshCw size={13} className="animate-spin" />
-        Syncing {pendingCount} offline bill{pendingCount === 1 ? "" : "s"}…
+        {pendingCount === 1 ? t("Syncing {n} offline bill…", { n: pendingCount }) : t("Syncing {n} offline bills…", { n: pendingCount })}
       </div>
     );
   }
@@ -56,32 +59,35 @@ function OfflineBanner() {
       style={{ background: "rgba(220,38,38,0.9)", color: "#fff" }}
     >
       <WifiOff size={13} />
-      Offline
-      {pendingCount > 0 && <span>· {pendingCount} bill{pendingCount === 1 ? "" : "s"} will sync when reconnected</span>}
+      {t("Offline")}
+      {pendingCount > 0 && (
+        <span>· {pendingCount === 1 ? t("{n} bill will sync when reconnected", { n: pendingCount }) : t("{n} bills will sync when reconnected", { n: pendingCount })}</span>
+      )}
     </div>
   );
 }
 
 // Screen names in the phone top bar; the same words as the menu and tabs.
 const SCREEN_TITLES = {
-  "/billing": "New bill",
-  "/inventory": "Stock",
-  "/credit": "Udhaar",
-  "/history": "Bills",
-  "/dayclose": "Day close",
-  "/expenses": "Expenses",
-  "/cashbook": "Cashbook",
-  "/reports": "Reports & GST",
-  "/suppliers": "Suppliers",
-  "/purchase-orders": "Purchase orders",
-  "/clearance": "Clearance offers",
-  "/inventory/config": "Batches & barcodes",
-  "/staff": "Staff",
-  "/upgrade": "Nexper Pro",
+  "/billing": T("New bill"),
+  "/inventory": T("Stock"),
+  "/credit": T("Udhaar"),
+  "/history": T("Bills"),
+  "/dayclose": T("Day close"),
+  "/expenses": T("Expenses"),
+  "/cashbook": T("Cashbook"),
+  "/reports": T("Reports & GST"),
+  "/suppliers": T("Suppliers"),
+  "/purchase-orders": T("Purchase orders"),
+  "/clearance": T("Clearance offers"),
+  "/inventory/config": T("Batches & barcodes"),
+  "/staff": T("Staff"),
+  "/upgrade": T("Nexper Pro"),
 };
 
 function AppShell({ children }) {
   const pathname = usePathname();
+  const t = useT();
   const { shops, activeShop, addShop, loading, toast } = useShop();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showStoreSettings, setShowStoreSettings] = useState(false);
@@ -101,16 +107,17 @@ function AppShell({ children }) {
   return (
     <div className="min-h-screen flex">
       <OfflineBanner />
+      <StackTables />
       <div className="ks-no-print ks-mobile-bar ks-topbar fixed top-0 left-0 right-0 z-30 items-center justify-between gap-2 px-3 py-2">
         <button
           onClick={() => setSidebarOpen(true)}
-          aria-label="Open menu"
+          aria-label={t("Open menu")}
           className="w-9 h-9 flex items-center justify-center rounded-full shrink-0"
           style={{ color: "var(--text-secondary)" }}
         >
           <Menu size={20} />
         </button>
-        <span className="ks-display text-[15px] font-bold truncate px-1 flex-1 text-center">{SCREEN_TITLES[pathname] || activeShop?.name}</span>
+        <span className="ks-display text-[15px] font-bold truncate px-1 flex-1 text-center">{SCREEN_TITLES[pathname] ? t(SCREEN_TITLES[pathname]) : activeShop?.name}</span>
         <AccountMenu onOpenSettings={() => setShowStoreSettings(true)} />
       </div>
 

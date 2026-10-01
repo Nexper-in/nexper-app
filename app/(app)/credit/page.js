@@ -10,6 +10,7 @@ import NewCreditModal from "@/components/NewCreditModal";
 import RecordPaymentModal from "@/components/RecordPaymentModal";
 import CustomerLedgerModal from "@/components/CustomerLedgerModal";
 import ModuleGuard from "@/components/ModuleGuard";
+import { useT } from "@/lib/i18n";
 
 export default function CreditPage() {
   return (
@@ -20,6 +21,7 @@ export default function CreditPage() {
 }
 
 function CreditPageInner() {
+  const t = useT();
   const { supabase, activeShopId, activeShop, showToast } = useShop();
   const [credits, setCredits] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -60,13 +62,13 @@ function CreditPageInner() {
     setCredits((prev) => [...prev, data]);
     setShowNew(false);
     setPayFor(null);
-    showToast(entry.type === "charge" ? "Credit sale recorded" : "Payment recorded");
+    showToast(entry.type === "charge" ? t("Credit sale recorded") : t("Payment recorded"));
   }
 
   if (loading) {
     return (
       <div className="pt-6 flex items-center gap-2 text-sm text-muted">
-        <Loader2 size={16} className="animate-spin" /> Loading udhaar…
+        <Loader2 size={16} className="animate-spin" /> {t("Loading udhaar…")}
       </div>
     );
   }
@@ -75,13 +77,13 @@ function CreditPageInner() {
     <div className="pt-6">
       <div className="ks-card p-5 mb-4 flex items-center justify-between flex-wrap gap-3">
         <div>
-          <div className="text-[11px] uppercase tracking-wide text-[var(--text-secondary)] font-semibold">Total outstanding udhaar</div>
+          <div className="text-[11px] uppercase tracking-wide text-[var(--text-secondary)] font-semibold">{t("Total outstanding udhaar")}</div>
           <div className="ks-display text-3xl font-bold" style={{ color: "var(--udhaar)" }}>
             {rupee(totalOutstanding)}
           </div>
         </div>
         <button onClick={() => setShowNew(true)} className="ks-btn-primary flex items-center gap-1.5">
-          <Plus size={16} /> New credit entry
+          <Plus size={16} /> {t("New credit entry")}
         </button>
       </div>
 
@@ -108,21 +110,21 @@ function CreditPageInner() {
                   className="flex-1 text-xs py-2 rounded-full font-semibold"
                   style={{ background: "var(--success-soft)", color: "var(--success)" }}
                 >
-                  Record payment
+                  {t("Record payment")}
                 </button>
                 <button
                   onClick={() => window.open(whatsappLink(c.phone, creditReminderText(activeShop?.name, c.name, c.balance)), "_blank")}
                   className="flex-1 text-xs py-2 rounded-full font-semibold flex items-center justify-center gap-1 text-white"
                   style={{ background: "#25D366" }}
                 >
-                  <MessageCircle size={13} /> Remind on WhatsApp
+                  <MessageCircle size={13} /> {t("Remind on WhatsApp")}
                 </button>
               </div>
             )}
           </div>
         ))}
         {customers.length === 0 && (
-          <p className="px-5 py-10 text-center text-[var(--text-secondary)] text-sm">No udhaar entries yet — bill on credit or add one manually.</p>
+          <p className="px-5 py-10 text-center text-[var(--text-secondary)] text-sm">{t("No udhaar entries yet — bill on credit or add one manually.")}</p>
         )}
       </div>
 
@@ -130,9 +132,9 @@ function CreditPageInner() {
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left ks-mono text-[11px] uppercase tracking-wide text-[var(--text-secondary)] border-b border-[var(--border)]">
-              <th className="px-5 py-3 font-medium">Customer</th>
-              <th className="px-5 py-3 font-medium">Phone</th>
-              <th className="px-5 py-3 font-medium">Balance</th>
+              <th className="px-5 py-3 font-medium">{t("Customer")}</th>
+              <th className="px-5 py-3 font-medium">{t("Phone")}</th>
+              <th className="px-5 py-3 font-medium">{t("Balance")}</th>
               <th className="px-5 py-3 font-medium"></th>
             </tr>
           </thead>
@@ -162,14 +164,14 @@ function CreditPageInner() {
                           className="text-xs px-2.5 py-1.5 rounded-full font-semibold"
                           style={{ background: "var(--success-soft)", color: "var(--success)" }}
                         >
-                          Record payment
+                          {t("Record payment")}
                         </button>
                         <button
                           onClick={() => window.open(whatsappLink(c.phone, creditReminderText(activeShop?.name, c.name, c.balance)), "_blank")}
                           className="text-xs px-2.5 py-1.5 rounded-full font-semibold flex items-center gap-1 text-white"
                           style={{ background: "#25D366" }}
                         >
-                          <MessageCircle size={13} /> Remind
+                          <MessageCircle size={13} /> {t("Remind")}
                         </button>
                       </>
                     )}
@@ -180,7 +182,7 @@ function CreditPageInner() {
             {customers.length === 0 && (
               <tr>
                 <td colSpan={4} className="px-5 py-10 text-center text-[var(--text-secondary)] text-sm">
-                  No udhaar entries yet — bill on credit or add one manually.
+                  {t("No udhaar entries yet — bill on credit or add one manually.")}
                 </td>
               </tr>
             )}

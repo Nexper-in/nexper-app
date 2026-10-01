@@ -1,6 +1,7 @@
 import "./globals.css";
 import { SITE } from "@/lib/site";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme";
+import { LanguageProvider } from "@/lib/i18n";
 
 export const metadata = {
   metadataBase: new URL(SITE.url),
@@ -46,7 +47,9 @@ export default function RootLayout({ children }) {
         <meta name="apple-mobile-web-app-title" content="Nexper" />
         <meta name="format-detection" content="telephone=no" />
       </head>
-      <body>{children}</body>
+      <body>
+        <LanguageProvider>{children}</LanguageProvider>
+      </body>
     </html>
   );
 }

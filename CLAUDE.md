@@ -71,13 +71,38 @@ tap away (folded sections, a "⋯" menu, or the side menu).
   `https://<project>.supabase.co/auth/v1/callback` as a redirect URI in
   Google Cloud.
 
-## Languages
+## Languages (English, Hindi, Telugu, Kannada, Tamil, Malayalam)
 
-The website is in six languages (see `nexper-site/CLAUDE.md`). The app is
-English only for now. When the app is translated, follow the same rule:
-every visible string goes into every language in the same change.
+The app speaks the same six languages as nexper.in (see
+`nexper-site/CLAUDE.md`). The language is chosen from the account menu (top
+right) or the sign-in page, remembered on the device, and defaults to the
+phone's language.
+
+- **Every visible text goes through `t()`** (`useT()` from `lib/i18n.js`).
+  The English text is the key: `t("Save bill")`, with values
+  `t("Only {n} left", { n })`. Text inside constant arrays is marked with
+  `T("…")` and translated when rendered: `t(item.label)`.
+- **New or changed text must be added to all five files** in `i18n/`
+  (`hi`, `te`, `kn`, `ta`, `ml`) in the same change. A missing translation
+  shows English, but the check below fails, so it can't ship by accident.
+- Run `npm run check:i18n` (or `node tools/check-i18n.mjs`). It fails on a
+  missing, empty or unused translation, and when `{placeholders}` don't
+  match English. `--list` prints every text, as a starting point for a file.
+  GitHub runs it on every push (`.github/workflows/i18n-check.yml`).
+- Same style as the website: warm counter talk, not bookish. Keep Nexper,
+  WhatsApp, UPI, GST, PIN, MRP, CSV, Pro and Google in Latin letters.
+  Udhaar: उधार / అప్పు / ಸಾಲ / கடன் / കടം.
+- **Screens translated so far:** menus and tabs, account menu, Home, New bill
+  (and the quantity picker), the Stock and Udhaar lists, sign-in, offline
+  banner. The other screens (reports, expenses, suppliers, staff, the pop-up
+  forms…) are still English: when you touch one, wrap its text in `t()` and
+  add the translations.
+- Dates, amounts and names from the database are shown as they are. Don't
+  translate user data.
+- Look at a changed screen in one Indian language on a 360px phone: scripts
+  run longer than English, so check nothing overflows.
 
 ## Before you push
 
-- `npx next build` must pass.
+- `npx next build` and `npm run check:i18n` must pass.
 - Look at the changed screens in Night and Light, on a phone width.
