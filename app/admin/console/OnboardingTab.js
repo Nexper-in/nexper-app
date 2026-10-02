@@ -116,6 +116,7 @@ export default function OnboardingTab({ supabase }) {
                 <option value="supermarket">Supermarket</option>
                 <option value="automobile">Auto parts</option>
                 <option value="clothing">Clothing</option>
+                <option value="canteen">Tea shop / Canteen / Hotel</option>
                 <option value="other">Other</option>
               </select>
             </Field>

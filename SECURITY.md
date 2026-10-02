@@ -28,9 +28,13 @@ Nothing here contains secrets.
 - MCP masks customer phone numbers and has no write tools.
 - `shops.plan` can no longer be changed by owners once "Let owners switch plan themselves" is turned off (trigger `protect_shop_plan`). Sign-up can be closed or invite-only in the database (`can_create_shop`), not only in the screen.
 
+## Supplies (030)
+
+- Three new tables, all `shop_id` + row-level security needing the `Supplies` permission; `npm run test:db` proves in a real Postgres that another shop (or billing-only staff) cannot read or write them, that prices cannot be set from the browser, and that anonymous callers cannot call the new functions. Runs on every push.
+
 ## Still open (not code)
 
-- Run migrations 024-029 in Supabase. After 028, check:
+- Run migrations 024-030 in Supabase. After 028, check:
   `select has_function_privilege('anon','admin_transfer_shop_ownership(uuid,uuid)','execute');` returns false.
 - The rate limiter is in memory (resets on cold starts). Add a shared one (Upstash/Vercel KV) before heavy public use.
 - Supabase Auth settings to check by hand: email confirmation on, minimum password length 8+, leaked-password protection, redirect URLs limited to the real domains.

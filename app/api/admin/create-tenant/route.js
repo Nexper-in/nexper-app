@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import { randomInt } from "crypto";
 import { requireAdmin, logAdminAction } from "@/lib/supabaseAdmin";
 import { readJson, serverError } from "@/lib/apiSafe";
-import { defaultPermissions } from "@/lib/modules";
+import { defaultPermissions, defaultModulesForType } from "@/lib/modules";
 import { isRateLimited } from "@/lib/rateLimit";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-const TYPES = ["kirana", "supermarket", "automobile", "clothing", "other"];
+const TYPES = ["kirana", "supermarket", "automobile", "clothing", "canteen", "other"];
 
 function tempPassword() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
@@ -48,7 +48,7 @@ export async function POST(request) {
     await admin.auth.admin.deleteUser(userId).catch(() => {});
   };
 
-  const { data: shop, error: shopError } = await admin.from("shops").insert({ owner_id: userId, name: shopName, type }).select().single();
+  const { data: shop, error: shopError } = await admin.from("shops").insert({ owner_id: userId, name: shopName, type, ...(defaultModulesForType(type) ? { enabled_modules: defaultModulesForType(type) } : {}) }).select().single();
   if (shopError) {
     await rollback();
     return serverError(shopError, "admin/create-tenant");

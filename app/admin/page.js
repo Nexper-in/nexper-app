@@ -77,6 +77,7 @@ const TYPE_COLORS = {
   supermarket: "#7FE0B8",
   automobile: "#F2A93B",
   clothing: "#E26B73",
+  canteen: "#F59E0B",
   pharmacy: "#A78BFA",
   electronics: "#38BDF8",
   other: "#94A3B8",

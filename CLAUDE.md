@@ -177,3 +177,13 @@ the app can be deployed before the SQL is run. Current pending list is in
   shop. MCP masks customer phone numbers. Never add a write tool without a
   deliberate decision.
 
+## Supplies (tea shops, canteens, hotels)
+
+- `app/(app)/supplies` + `lib/supplies.js` (pure maths, unit tested). Quantities are
+  written only through the `save_supply_round` database function (checks the caller,
+  takes the price from the shop's own item). Do not add direct insert policies on
+  `supply_entries`.
+- Departments are never deleted (history stays correct); they are hidden instead.
+- Any new table that holds shop data needs `shop_id`, row-level security and a case in
+  `tests/db/supplies.rls.mjs` style: two shops, one must never see the other.
+

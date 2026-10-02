@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabaseClient";
 import { seedItemsForShop } from "@/lib/shopTypes";
-import { defaultPermissions } from "@/lib/modules";
+import { defaultPermissions, defaultModulesForType } from "@/lib/modules";
 import { useOfflineQueue } from "@/lib/offlineQueue";
 import { callApi } from "@/lib/apiClient";
 import { setPlatformConfig } from "@/lib/platformConfig";
@@ -126,7 +126,7 @@ export function ShopProvider({ children }) {
 
     const { data: shop, error } = await supabase
       .from("shops")
-      .insert({ owner_id: user.id, name, type })
+      .insert({ owner_id: user.id, name, type, ...(defaultModulesForType(type) ? { enabled_modules: defaultModulesForType(type) } : {}) })
       .select()
       .single();
     if (error) throw error;

@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Package, Receipt, Wallet, Menu } from "lucide-react";
+import { LayoutDashboard, Package, Receipt, Wallet, Coffee, Menu } from "lucide-react";
 import { useShop } from "@/components/ShopContext";
 import { T, useT } from "@/lib/i18n";
 
 const TABS = [
   { href: "/dashboard", key: "dashboard", label: T("Home"), icon: LayoutDashboard },
+  { href: "/supplies", key: "supplies", label: T("Supplies"), icon: Coffee },
   { href: "/inventory", key: "inventory", label: T("Stock"), icon: Package },
   { href: "/billing", key: "billing", label: T("New bill"), icon: Receipt, primary: true },
   { href: "/credit", key: "credit", label: T("Udhaar"), icon: Wallet },
@@ -37,7 +38,7 @@ export default function BottomNav({ onMore }) {
   if (!activeShop || typing) return null;
 
   const enabled = activeShop.enabled_modules;
-  const tabs = TABS.filter((t) => (!enabled || enabled.includes(t.key)) && hasPermission(t.key));
+  const tabs = TABS.filter((t) => (!enabled || enabled.includes(t.key)) && hasPermission(t.key)).slice(0, 4); // four tabs plus More
 
   return (
     <nav className="ks-no-print ks-bottom-nav" aria-label={t("Main menu")}>

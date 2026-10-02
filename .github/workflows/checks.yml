@@ -9,6 +9,7 @@ jobs:
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - run: npm test
+      - run: npm run test:db
       - run: node tools/check-i18n.mjs
       - run: npm audit --omit=dev --audit-level=high
       - run: npx next build

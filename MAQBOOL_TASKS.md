@@ -21,6 +21,7 @@ Open the Supabase project, then **SQL Editor**. Run each file from
 | 4 | `027_default_modules_include_reports.sql` | Reports on for new shops |
 | 5 | `028_lock_down_function_access.sql` | **Security fix. Do this one first if you do nothing else.** |
 | 6 | `029_platform_console.sql` | Everything the new admin console needs |
+| 7 | `030_supplies.sql` | Supplies for tea shops, canteens and hotels (departments, daily round, payments) |
 
 If a file says something "already exists", that step was done before; carry on.
 
@@ -28,6 +29,13 @@ If a file says something "already exists", that step was done before; carry on.
 
 ```sql
 select has_function_privilege('anon','admin_transfer_shop_ownership(uuid,uuid)','execute');
+```
+
+**Check 030 worked** (must list 3 tables):
+
+```sql
+select table_name from information_schema.tables
+where table_name in ('supply_points','supply_entries','supply_payments');
 ```
 
 **Check 029 worked** (must list 5 tables):
@@ -146,7 +154,7 @@ Pricing & tax, so only you can change a plan.
 
 ## Quick checklist
 
-- [ ] A. Run SQL 024 to 029 and both checks
+- [ ] A. Run SQL 024 to 030 and the checks
 - [ ] B. Add admin(s) to `platform_admins`
 - [ ] C. Supabase Auth URLs, password rules, SMTP
 - [ ] D. Vercel environment variables, redeploy

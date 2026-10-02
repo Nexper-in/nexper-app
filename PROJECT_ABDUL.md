@@ -77,7 +77,7 @@ screens, same app and same login.** Do not go back to one stretched layout.
 - Next.js 15 App Router (JavaScript), Tailwind plus `ks-*` classes and theme
   tokens in `app/globals.css`. Never hard-code colours.
 - Supabase: Postgres with row-level security, Auth (email + password for
-  owners; staff code + PIN), `supabase/schema.sql` plus migrations `001`-`029`.
+  owners; staff code + PIN), `supabase/schema.sql` plus migrations `001`-`030`.
 - Server routes under `app/api/` use the service-role key and an Anthropic call
   (`/api/scan-supplier-bill`).
 - Env vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
@@ -118,9 +118,27 @@ screens, same app and same login.** Do not go back to one stretched layout.
 **Database updates to run (maqbool), in order, after 023:**
 `024_write_off_batch.sql`, `025_offers_whatsapp_group.sql`,
 `026_receive_po_with_quantities.sql`, `027_default_modules_include_reports.sql`,
-`028_lock_down_function_access.sql` (security, run soon), `029_platform_console.sql`.
+`028_lock_down_function_access.sql` (security, run soon), `029_platform_console.sql`,
+`030_supplies.sql`.
 The app works without 024-027 and 029 but removing expired stock, saving the group
 link, receiving with expiry, Reports for new shops and the whole console need them.
+
+### Supplies for tea shops, canteens, hotels (branch work, 2026-10-02)
+
+Asked for by a tea-shop owner who supplies tea and biscuits to the departments of a
+hospital. A new shop type "Tea shop / Canteen / Hotel" starts with the **Supplies**
+screen (`/supplies`) on and credit/supplier screens off. **Daily round:** the helper
+comes back, then someone enters how many of each item went to each department for the
+day (any date, "copy the day before"); saving again corrects instead of doubling.
+**Accounts:** what each department owes; departments pay daily or monthly, so a
+statement can be made for today, this week, this month, last month or any dates, sent
+on WhatsApp, and payments are recorded against it. Price is the item's price (same for
+every department so far); the price on the day is kept. A helper login can be given only
+the Supplies permission and then lands straight on it. Not built yet: departments or
+customers placing orders themselves, signed slips, per-department rates, stock
+deduction, working offline. Tables `supply_points`, `supply_entries`, `supply_payments`
+(shared by all shops, `shop_id` + row-level security); entries are written only by
+`save_supply_round()`. `npm run test:db` runs the access rules against a real Postgres.
 
 ### Platform console (branch work, 2026-10-01)
 
