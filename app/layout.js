@@ -11,7 +11,13 @@ export const metadata = {
     template: `%s · ${SITE.name}`,
   },
   description: SITE.description,
+  // Declared in full: setting `icons` here replaces the file-based icon, so the
+  // tab icon (the one browsers show on a PC) has to be listed too.
   icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
     apple: "/icons/apple-touch-icon.png",
   },
   openGraph: {
