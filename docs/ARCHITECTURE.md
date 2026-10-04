@@ -53,7 +53,7 @@ movements, as the shop's owner under the access rules:
 | Newest 200 bills | 1,300 ms | 6 ms |
 | Today's bills | 64 ms | 12 ms |
 | Newest 6 stock movements | 425 ms | 1 ms |
-| Every bill ever (what the old screens did) | 5,000 ms and 25 MB | no screen does this now |
+| Every bill ever (what the old screens did) | 5,000 ms and about 20 MB | no screen does this now |
 
 What changed (migration 031 and the screens):
 
