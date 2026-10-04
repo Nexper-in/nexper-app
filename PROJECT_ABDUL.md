@@ -77,7 +77,7 @@ screens, same app and same login.** Do not go back to one stretched layout.
 - Next.js 15 App Router (JavaScript), Tailwind plus `ks-*` classes and theme
   tokens in `app/globals.css`. Never hard-code colours.
 - Supabase: Postgres with row-level security, Auth (email + password for
-  owners; staff code + PIN), `supabase/schema.sql` plus migrations `001`-`030`.
+  owners; staff code + PIN), `supabase/schema.sql` plus migrations `001`-`032`.
 - Server routes under `app/api/` use the service-role key and an Anthropic call
   (`/api/scan-supplier-bill`).
 - Env vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
@@ -119,7 +119,7 @@ screens, same app and same login.** Do not go back to one stretched layout.
 `024_write_off_batch.sql`, `025_offers_whatsapp_group.sql`,
 `026_receive_po_with_quantities.sql`, `027_default_modules_include_reports.sql`,
 `028_lock_down_function_access.sql` (security, run soon), `029_platform_console.sql`,
-`030_supplies.sql`.
+`030_supplies.sql`, `031_scale_and_tracking.sql`, `032_passkeys.sql`.
 The app works without 024-027 and 029 but removing expired stock, saving the group
 link, receiving with expiry, Reports for new shops and the whole console need them.
 
@@ -139,6 +139,17 @@ customers placing orders themselves, signed slips, per-department rates, stock
 deduction, working offline. Tables `supply_points`, `supply_entries`, `supply_payments`
 (shared by all shops, `shop_id` + row-level security); entries are written only by
 `save_supply_round()`. `npm run test:db` runs the access rules against a real Postgres.
+
+### Multi-tenant hardening, data export, fingerprint sign-in (branch work, 2026-10-04)
+
+- **Big shops:** load-tested a 150,000-bill shop. Found that many screens loaded every
+  row and the API silently stops at 1000, so totals, bill numbers and balances went
+  wrong past that. Fixed (windows, paging, database totals, indexes, purchase orders now
+  in a migration). `docs/ARCHITECTURE.md` explains the model, guarantees and limits.
+- **Isolation test over every table** runs on every push (`npm run test:db`).
+- **Download my data** (account menu, owner): a zip of spreadsheets.
+- **Fingerprint / Face ID / passkey sign-in** and an optional **app lock** (account menu,
+  "Fingerprint / Face ID"; sign-in page button). Owners and staff. Needs migration 032.
 
 ### Platform console (branch work, 2026-10-01)
 

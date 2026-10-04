@@ -11,6 +11,7 @@ import { AddShopOnboarding } from "@/components/ShopOnboarding";
 import StoreSettingsModal from "@/components/StoreSettingsModal";
 import Toast from "@/components/ui/Toast";
 import AccountMenu from "@/components/AccountMenu";
+import AppLock from "@/components/AppLock";
 import StackTables from "@/components/StackTables";
 import { T, useT } from "@/lib/i18n";
 
@@ -134,6 +135,7 @@ function AppShell({ children }) {
   }
 
   return (
+    <AppLock>
     <div className="min-h-screen flex">
       <OfflineBanner />
       <StackTables />
@@ -184,6 +186,7 @@ function AppShell({ children }) {
 
       {toast && <Toast msg={toast.msg} tone={toast.tone} />}
     </div>
+    </AppLock>
   );
 }
 

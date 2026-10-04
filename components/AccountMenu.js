@@ -4,7 +4,7 @@ import { clearLocalData } from "@/lib/clearLocalData";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
-import { ChevronDown, Download, LogOut, Moon, Settings, Sun } from "lucide-react";
+import { ChevronDown, Download, Fingerprint, LogOut, Moon, Settings, Sun } from "lucide-react";
 import { useShop } from "@/components/ShopContext";
 import { useTheme } from "@/lib/theme";
 import { displayName, initials } from "@/lib/format";
@@ -12,6 +12,7 @@ import { useT } from "@/lib/i18n";
 import { SITE } from "@/lib/site";
 import LanguagePicker from "@/components/LanguagePicker";
 import ExportDataModal from "@/components/ExportDataModal";
+import PasskeyModal from "@/components/PasskeyModal";
 
 // Top-right account button on every app screen: who is signed in, the
 // Night/Light switch for this device, store settings and sign out.
@@ -22,6 +23,7 @@ export default function AccountMenu({ onOpenSettings }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [showExport, setShowExport] = useState(false);
+  const [showPasskeys, setShowPasskeys] = useState(false);
   const ref = useRef(null);
 
   useEffect(() => {
@@ -135,6 +137,14 @@ export default function AccountMenu({ onOpenSettings }) {
               }}
             />
           )}
+          <MenuItem
+            icon={Fingerprint}
+            label={t("Fingerprint / Face ID")}
+            onClick={() => {
+              setOpen(false);
+              setShowPasskeys(true);
+            }}
+          />
           {isOwner && (
             <MenuItem
               icon={Download}
@@ -150,6 +160,7 @@ export default function AccountMenu({ onOpenSettings }) {
       )}
       {/* In the page body, not in this bar: the bar has a blur effect that would trap a full-screen dialog. */}
       {showExport && createPortal(<ExportDataModal onClose={() => setShowExport(false)} />, document.body)}
+      {showPasskeys && createPortal(<PasskeyModal onClose={() => setShowPasskeys(false)} />, document.body)}
     </div>
   );
 }

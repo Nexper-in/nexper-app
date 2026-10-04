@@ -8,12 +8,15 @@
     "start": "next start",
     "lint": "next lint",
     "check:i18n": "node tools/check-i18n.mjs",
-    "test": "node --import ./tests/register.mjs --test tests/unit.test.mjs tests/console.test.mjs tests/supplies.test.mjs tests/export.test.mjs",
-    "test:db": "node tests/db/supplies.rls.mjs && node tests/db/isolation.rls.mjs && node tests/db/scale.mjs"
+    "test": "node --import ./tests/register.mjs --test tests/unit.test.mjs tests/console.test.mjs tests/supplies.test.mjs tests/export.test.mjs tests/passkeys.test.mjs",
+    "test:db": "node tests/db/supplies.rls.mjs && node tests/db/isolation.rls.mjs && node tests/db/scale.mjs",
+    "check:audit": "node tools/check-audit.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.123.0",
     "@ducanh2912/next-pwa": "^10.2.9",
+    "@simplewebauthn/browser": "^14.0.0",
+    "@simplewebauthn/server": "^14.0.3",
     "@supabase/ssr": "^0.5.0",
     "@supabase/supabase-js": "^2.45.0",
     "fflate": "^0.8.3",

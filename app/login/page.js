@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Mail } from "lucide-react";
+import { Fingerprint, Loader2, Mail } from "lucide-react";
 import { createClient } from "@/lib/supabaseClient";
 import { useT } from "@/lib/i18n";
 import LanguagePicker from "@/components/LanguagePicker";
+import { passkeyErrorText, passkeysSupported, signInWithPasskey } from "@/lib/passkeyClient";
+import { markActive } from "@/lib/appLock";
 
 // Google sign-in is built but off until it's set up in Supabase and
 // Google Cloud: the button shows with a "Soon" label and does nothing, and
@@ -34,6 +36,10 @@ export default function LoginPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
   // Sign-up mode from the platform admin page: open, invite_only or closed.
   const [signup, setSignup] = useState({ mode: "open", message: "" });
+  // Fingerprint / Face ID sign-in: shown when this browser can do it and the
+  // platform admin has not switched it off.
+  const [passkeyShown, setPasskeyShown] = useState(false);
+  const [passkeyBusy, setPasskeyBusy] = useState(false);
 
   useEffect(() => {
     supabase
@@ -43,6 +49,29 @@ export default function LoginPage() {
       .maybeSingle()
       .then(({ data }) => data?.value?.mode && setSignup({ mode: data.value.mode, message: data.value.message || "" }));
   }, [supabase]);
+
+  useEffect(() => {
+    if (!passkeysSupported()) return;
+    supabase
+      .from("platform_settings")
+      .select("value")
+      .eq("key", "flags")
+      .maybeSingle()
+      .then(({ data }) => setPasskeyShown(data?.value?.passkey_login !== false));
+  }, [supabase]);
+
+  async function handlePasskey() {
+    setError("");
+    setPasskeyBusy(true);
+    try {
+      await signInWithPasskey(supabase);
+      router.replace("/dashboard");
+    } catch (err) {
+      const msg = passkeyErrorText(err, t);
+      if (msg) setError(msg);
+      setPasskeyBusy(false);
+    }
+  }
 
   useEffect(() => {
     const requested = new URLSearchParams(window.location.search).get("mode");
@@ -114,7 +143,10 @@ export default function LoginPage() {
     if (mode === "signin") {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) setError(error.message);
-      else router.replace("/dashboard");
+      else {
+        markActive();
+        router.replace("/dashboard");
+      }
     } else if (mode === "signup") {
       if (signup.mode === "closed") {
         setError(signup.message || t("New sign-ups are closed right now."));
@@ -140,7 +172,10 @@ export default function LoginPage() {
         if (!res.ok) throw new Error(json.error || t("Couldn't find that staff code"));
         const { error } = await supabase.auth.signInWithPassword({ email: json.email, password: pin });
         if (error) setError(t("Incorrect PIN"));
-        else router.replace("/dashboard");
+        else {
+          markActive();
+          router.replace("/dashboard");
+        }
       } catch (err) {
         setError(err.message);
       }
@@ -198,6 +233,10 @@ export default function LoginPage() {
                   </span>
                 )}
               </button>
+              {passkeyShown && mode === "signin" && <div className="mt-3"><button type="button" onClick={handlePasskey} disabled={passkeyBusy} className="ks-btn-outline w-full flex items-center justify-center gap-2 py-3 font-semibold">
+                {passkeyBusy ? <Loader2 size={18} className="animate-spin" /> : <Fingerprint size={18} />}
+                {t("Sign in with fingerprint / Face ID")}
+              </button></div>}
               {!showEmail && (
                 <button
                   type="button"
@@ -226,6 +265,11 @@ export default function LoginPage() {
               <p className="text-xs text-muted text-center mt-1">{t("Enter the staff code and PIN your shop owner gave you.")}</p>
             </div>
           )}
+
+          {passkeyShown && mode === "staff" && <div className="mb-4"><button type="button" onClick={handlePasskey} disabled={passkeyBusy} className="ks-btn-outline w-full flex items-center justify-center gap-2 py-3 font-semibold">
+                {passkeyBusy ? <Loader2 size={18} className="animate-spin" /> : <Fingerprint size={18} />}
+                {t("Sign in with fingerprint / Face ID")}
+              </button></div>}
 
           {mode === "signup" && signup.mode !== "open" && (
             <p className="text-xs rounded-lg px-3 py-2 mb-3" style={{ background: "var(--warn-soft)", color: "var(--warn)" }}>

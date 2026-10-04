@@ -45,11 +45,13 @@ select * from (values
   ('027 reports on by default',coalesce((select column_default from information_schema.columns where table_name='shops' and column_name='enabled_modules'),'') like '%reports%'),
   ('028 functions locked down',not has_function_privilege('anon','admin_transfer_shop_ownership(uuid,uuid)','execute')),
   ('029 admin console',        to_regclass('public.platform_settings') is not null and to_regclass('public.tenant_controls') is not null and to_regclass('public.api_keys') is not null),
-  ('030 supplies',             to_regclass('public.supply_points') is not null and exists(select 1 from pg_proc where proname='save_supply_round'))
+  ('030 supplies',             to_regclass('public.supply_points') is not null and exists(select 1 from pg_proc where proname='save_supply_round')),
+  ('031 big shops and totals', to_regclass('public.purchase_orders') is not null and exists(select 1 from pg_proc where proname='admin_shop_stats')),
+  ('032 fingerprint sign-in',  to_regclass('public.passkeys') is not null and to_regclass('public.passkey_challenges') is not null)
 ) as t(step, done);
 ```
 
-**Step 3. Run every update that shows `false`, in number order (024 first, 030 last).**
+**Step 3. Run every update that shows `false`, in number order (024 first, 032 last).**
 For each one:
 1. Open `https://github.com/Nexper-in/nexper-app/blob/main/supabase/migrations/<FILE>` in a
    new tab (files below).
@@ -68,6 +70,8 @@ For each one:
 | 028 | `028_lock_down_function_access.sql`  (a security fix: never skip) |
 | 029 | `029_platform_console.sql` |
 | 030 | `030_supplies.sql` |
+| 031 | `031_scale_and_tracking.sql` |
+| 032 | `032_passkeys.sql` |
 
 **Step 4. Check again.** Run the Step 2 query again. Every row must say `true`. If any is
 still `false`, tell me which one and stop.

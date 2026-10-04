@@ -1,0 +1,6 @@
+{
+  "GHSA-vfj7-8cjw-p6xm": {
+    "reviewBy": "2026-12-01",
+    "reason": "braces (via the service-worker build plugin's file globbing) can be made to overflow the stack by an attacker-chosen, deeply nested pattern. Here it only runs at build time with fixed patterns from our own config, never on user input, and no patched version exists yet (latest braces 3.0.3 is affected). Upgrade as soon as one is published."
+  }
+}

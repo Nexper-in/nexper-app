@@ -60,6 +60,8 @@ async function seed(X, owner, tag) {
     insert into api_keys (shop_id, name, key_prefix, key_hash) values ('${X}', 'k', 'nxp_${tag}', 'hash${tag}');
     insert into ai_usage (shop_id, kind) values ('${X}', 'scan');
     insert into supply_points (shop_id, name) values ('${X}', 'Dept ${tag}');
+    insert into passkeys (user_id, credential_id, public_key) values ('${owner}', 'cred${tag}', 'pk');
+    insert into passkey_challenges (challenge, kind, user_id) values ('ch${tag}', 'login', '${owner}');
   `);
   const offer = await one(`insert into clearance_offers (shop_id, discount_pct, start_date, end_date) values ('${X}', 10, current_date, current_date)`);
   await db.exec(`insert into clearance_offer_items (offer_id, shop_product_id) values ('${offer}', '${sp}')`);
@@ -113,6 +115,8 @@ const T = {
   ai_usage: { a: `shop_id = '${A}'`, insert: `insert into ai_usage (shop_id, kind) values ('${A}', 'scan')`, touch: "kind", ownerRead: false },
   tenant_invites: { a: `true`, insert: `insert into tenant_invites (email) values ('x@y')`, touch: "note", ownerRead: false },
   admin_audit_log: { a: `true`, insert: `insert into admin_audit_log (admin_id, action, target_type) values ('${ownerA}', 'x', 'x')`, touch: "action", ownerRead: false },
+  passkeys: { a: `user_id = '${ownerA}'`, insert: `insert into passkeys (user_id, credential_id, public_key) values ('${ownerA}', 'sneak', 'k')`, touch: "name", ownerRead: false },
+  passkey_challenges: { a: `true`, insert: `insert into passkey_challenges (challenge, kind) values ('c', 'login')`, touch: "challenge", ownerRead: false },
   platform_admins: { a: `true`, insert: `insert into platform_admins (user_id) values ('${ownerA}')`, touch: "user_id", ownerRead: false },
 };
 // Readable by everyone on purpose (prices and switches the app needs); nobody may write.

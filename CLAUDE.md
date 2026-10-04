@@ -82,6 +82,15 @@ tap away (folded sections, a "⋯" menu, or the side menu).
 
 - Owners register and sign in with **email and password** (with "Forgot
   password"). Staff use staff code + PIN.
+- **Fingerprint / Face ID** (`lib/passkeys.js`, `app/api/passkeys/*`, migration 032):
+  a signed-in person adds a device (account menu, "Fingerprint / Face ID") and can
+  then sign in with it. The server verifies the WebAuthn proof and only then asks
+  Supabase for a one-time token (`generateLink`), which the browser trades for a
+  normal session. Owners and staff both can. A platform admin can switch it off
+  (`passkey_login`). Never create a session from anything but a verified proof.
+- **App lock** (`lib/appLock.js`, `components/AppLock.js`): optional, per device,
+  works offline; covers the app until the fingerprint / face / screen lock check
+  passes. It is a screen lock, not an account lock.
 - **Google sign-in is built but switched off:** the button shows with a
   "Soon" label and does nothing when tapped. It turns on when
   `NEXT_PUBLIC_GOOGLE_SIGNIN=true` is set in Vercel (then redeploy); then "Continue with
@@ -152,7 +161,8 @@ the app can be deployed before the SQL is run. Current pending list is in
   QR codes are made in the browser.
 - Headers and CSP are in `next.config.js`. A new outside host (script, font,
   API) must be added there on purpose.
-- `npm test`, `npm audit --omit=dev` must pass.
+- `npm test`, `npm run test:db` and `npm run check:audit` must pass. An accepted
+  advisory goes in `tools/audit-allow.json` with a reason and a review date.
 
 ## Before you push
 
@@ -184,6 +194,9 @@ the app can be deployed before the SQL is run. Current pending list is in
   takes the price from the shop's own item). Do not add direct insert policies on
   `supply_entries`.
 - Departments are never deleted (history stays correct); they are hidden instead.
-- Any new table that holds shop data needs `shop_id`, row-level security and a case in
-  `tests/db/supplies.rls.mjs` style: two shops, one must never see the other.
+- Any new table that holds shop data needs `shop_id`, row-level security, indexes for
+  how it is read, and an entry in `tests/db/isolation.rls.mjs` (the build fails until
+  it is there). See `docs/ARCHITECTURE.md`.
+- **Never read a growing table without a window or `fetchAll`** (`lib/fetchAll.js`): the
+  API silently stops at 1000 rows.
 

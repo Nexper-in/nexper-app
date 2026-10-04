@@ -32,9 +32,24 @@ Nothing here contains secrets.
 
 - Three new tables, all `shop_id` + row-level security needing the `Supplies` permission; `npm run test:db` proves in a real Postgres that another shop (or billing-only staff) cannot read or write them, that prices cannot be set from the browser, and that anonymous callers cannot call the new functions. Runs on every push.
 
+## Fingerprint / Face ID sign-in and app lock (032)
+
+- The device proves it holds a private key by signing a one-time challenge; the server checks the signature, the site address (so a look-alike site gets nothing), that the fingerprint/face check happened, and the replay counter, and only then asks Supabase for a one-time sign-in token. Challenges are single-use and expire in five minutes. Tested with real WebAuthn answers, including a wrong key, a phishing address, a replayed answer, a cloned device, a suspended account, and a challenge reused from registration (`tests/passkeys.test.mjs`), and in a real browser engine with a virtual fingerprint reader.
+- Only the public key is stored. The tables have no browser access at all (service role only).
+- Suspended accounts cannot get back in through a passkey. Platform admins can switch the feature off.
+- The app lock is a screen lock on the device (works offline); it does not protect the account on another device.
+- Rate limited per address (in memory, like the other limits).
+
+## Multi-tenant isolation and scale (031)
+
+- `tests/db/isolation.rls.mjs` checks every table (31): another shop, an anonymous visitor and a helper without the permission can read, change, delete or insert nothing of shop A's. A new table fails the build until it is added.
+- The API silently stops at 1000 rows. Screens that loaded everything were quietly wrong past that (Day close totals, bill numbers, balances, item lists, admin totals). Fixed with date windows, paging and database totals; `docs/ARCHITECTURE.md` has the rule and the measurements.
+- The owner export is built in the browser from the owner's own session; spreadsheet formula injection is neutralised.
+- `npm run check:audit` replaces the plain audit gate: a new high advisory in `braces` (build tooling, no fix published) is listed in `tools/audit-allow.json` with a reason and a review date (2026-12-01).
+
 ## Still open (not code)
 
-- Run migrations 024-030 in Supabase. After 028, check:
+- Run migrations 024-032 in Supabase. After 028, check:
   `select has_function_privilege('anon','admin_transfer_shop_ownership(uuid,uuid)','execute');` returns false.
 - The rate limiter is in memory (resets on cold starts). Add a shared one (Upstash/Vercel KV) before heavy public use.
 - Supabase Auth settings to check by hand: email confirmation on, minimum password length 8+, leaked-password protection, redirect URLs limited to the real domains.
