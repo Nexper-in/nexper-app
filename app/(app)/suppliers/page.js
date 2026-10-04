@@ -1,5 +1,6 @@
 "use client";
 
+import { fetchAll } from "@/lib/fetchAll";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Plus, Link2, MessageCircle, Loader2, PackagePlus, HandCoins, Undo2 } from "lucide-react";
 import { useShop } from "@/components/ShopContext";
@@ -39,7 +40,7 @@ function SuppliersPageInner() {
     const [{ data: suppliersData }, { data: linksData }, { data: movesData }] = await Promise.all([
       supabase.from("suppliers").select("*").eq("owner_id", user.id).order("created_at"),
       supabase.from("shop_suppliers").select("supplier_id, owed").eq("shop_id", activeShopId),
-      supabase.from("movements").select("type, supplier").eq("shop_id", activeShopId),
+      fetchAll(() => supabase.from("movements").select("id, type, supplier").eq("shop_id", activeShopId).order("id")),
     ]);
     setAllSuppliers(suppliersData || []);
     setLinks(linksData || []);

@@ -1,5 +1,7 @@
 "use client";
 
+import { fetchAll, daysAgo } from "@/lib/fetchAll";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Wallet, CalendarClock, MessageCircle, PackagePlus, Calculator } from "lucide-react";
@@ -33,9 +35,13 @@ export function useHome() {
     horizon.setDate(horizon.getDate() + 14);
     const [itemsData, { data: billsData }, { data: movesData }, { data: creditsData }, { data: batchesData }] = await Promise.all([
       fetchShopItems(supabase, activeShopId, { orderByCode: false }),
-      supabase.from("bills").select("*").eq("shop_id", activeShopId).order("date", { ascending: false }),
+      // Only the last 35 days: today, the week chart, 30-day categories and top
+      // customers all fit inside it. (Loading every bill ever made would be slow
+      // and the database stops at 1000 rows.)
+      fetchAll(() => supabase.from("bills").select("*").eq("shop_id", activeShopId).gte("date", daysAgo(35)).order("date", { ascending: false }).order("id"), { max: 20000 }),
       supabase.from("movements").select("*").eq("shop_id", activeShopId).order("date", { ascending: false }).limit(6),
-      supabase.from("credits").select("*").eq("shop_id", activeShopId),
+      // Balances need every entry, so read them all, page by page.
+      fetchAll(() => supabase.from("credits").select("*").eq("shop_id", activeShopId).order("date").order("id")),
       supabase
         .from("stock_batches")
         .select("*")
@@ -84,7 +90,10 @@ export function useHome() {
     return phones.reduce((s, ph) => s + Math.max(0, customerBalance(credits, ph)), 0);
   }, [credits]);
 
-  const bestCustomers = useMemo(() => topCustomers(bills, 5), [bills]);
+  const bestCustomers = useMemo(() => {
+    const cutoff = new Date(daysAgo(30));
+    return topCustomers(bills.filter((b) => new Date(b.date) >= cutoff), 5);
+  }, [bills]);
 
   const last7Days = useMemo(() => {
     const days = [];

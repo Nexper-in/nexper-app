@@ -1,5 +1,6 @@
 "use client";
 
+import { daysAgo } from "@/lib/fetchAll";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useShop } from "@/components/ShopContext";
 import { rupee } from "@/lib/format";
@@ -7,7 +8,7 @@ import { whatsappLink, billMessageText, taxBreakup } from "@/lib/messaging";
 import { parseSpokenQuantity, matchItemFromSpeech } from "@/lib/voiceHelpers";
 import { fetchShopItems } from "@/lib/products";
 import { fetchActiveOffers, activeDiscountMap, clearancePrice } from "@/lib/clearance";
-import { cacheProducts, getCachedProducts, cacheBills, getCachedBills } from "@/lib/productCache";
+import { cacheProducts, getCachedProducts, cacheBills, getCachedBills, cacheBillCount, getCachedBillCount } from "@/lib/productCache";
 import { useT } from "@/lib/i18n";
 
 // Everything New bill needs: items, the cart, totals, payment, voice, scan
@@ -18,6 +19,7 @@ export function useBilling() {
   const { supabase, activeShopId, activeShop, showToast, runQueued } = useShop();
   const [items, setItems] = useState([]);
   const [bills, setBills] = useState([]);
+  const [totalBills, setTotalBills] = useState(0); // every bill ever, for the next number
   const [discountMap, setDiscountMap] = useState(new Map());
   const [loading, setLoading] = useState(true);
 
@@ -65,22 +67,35 @@ export function useBilling() {
       const cachedBillsList = getCachedBills(activeShopId);
       if (cachedItems) setItems(cachedItems);
       if (cachedBillsList) setBills(cachedBillsList);
+      setTotalBills(getCachedBillCount(activeShopId) ?? (cachedBillsList || []).length);
       setLoading(false);
       return;
     }
 
-    const [itemsData, { data: billsData }, offersData] = await Promise.all([
+    // The last 90 days (newest 2000) is enough to spot loyal customers and to
+    // rank the quick tiles; the bill number comes from an exact count, because a
+    // shop with more than 1000 bills would otherwise reuse numbers.
+    const [itemsData, { data: billsData }, { count: billCount }, offersData] = await Promise.all([
       fetchShopItems(supabase, activeShopId),
-      supabase.from("bills").select("*").eq("shop_id", activeShopId).order("date", { ascending: false }),
+      supabase
+        .from("bills")
+        .select("*")
+        .eq("shop_id", activeShopId)
+        .gte("date", daysAgo(90))
+        .order("date", { ascending: false })
+        .limit(2000),
+      supabase.from("bills").select("id", { count: "exact", head: true }).eq("shop_id", activeShopId),
       fetchActiveOffers(supabase, activeShopId),
     ]);
     setItems(itemsData);
     setBills(billsData || []);
+    setTotalBills(billCount ?? (billsData || []).length);
     setDiscountMap(activeDiscountMap(offersData));
 
     // Write to cache so the next offline session has fresh data
     cacheProducts(activeShopId, itemsData);
     cacheBills(activeShopId, billsData || []);
+    cacheBillCount(activeShopId, billCount ?? (billsData || []).length);
 
     setLoading(false);
   }, [supabase, activeShopId]);
@@ -243,7 +258,7 @@ export function useBilling() {
 
     setGenerating(true);
     try {
-      const billNo = `KS-${1000 + bills.length + 1}`;
+      const billNo = `KS-${1000 + totalBills + 1}`;
       const billItems = cart.map(({ shop_product_id, code, name, price, mrp, unit, gst, qty }) => {
         const inv = items.find((i) => i.id === shop_product_id);
         return { shop_product_id, code, name, price, mrp: mrp || null, unit, gst, qty, cost_price: inv?.cost_price ?? null };
@@ -278,7 +293,7 @@ export function useBilling() {
         args: { p_shop_id: activeShopId, p_lines: billItems },
       });
 
-      // bill_no is a client-guessed number (bills.length + 1), so another
+      // bill_no is a client-guessed number (total bills + 1), so another
       // device/tab can guess the same one before either syncs — a
       // "bills_shop_id_bill_no_key" unique-violation (23505) means exactly
       // that happened. Regenerate and retry once rather than failing a
@@ -318,6 +333,7 @@ export function useBilling() {
         })
       );
       setBills((prev) => [bill, ...prev]);
+      setTotalBills((n) => n + 1);
       setLastBill(bill);
       setCart([]);
       setCustomer({ name: "", phone: "" });
@@ -410,7 +426,7 @@ export function useBilling() {
     return s + Math.round(c.qty * c.price * c.gst / (100 + c.gst));
   }, 0);
 
-  const nextBillNo = `KS-${1000 + bills.length + 1}`;
+  const nextBillNo = `KS-${1000 + totalBills + 1}`;
 
   function clearCart() {
     setCart([]);

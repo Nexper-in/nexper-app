@@ -172,7 +172,6 @@
   "Today": "आज",
   "Today's profit": "आज का मुनाफ़ा",
   "Top categories": "टॉप श्रेणियाँ",
-  "Top customers": "टॉप ग्राहक",
   "Total": "कुल",
   "Total outstanding udhaar": "कुल बाक़ी उधार",
   "UPI": "UPI",
@@ -738,5 +737,12 @@
   "You already have a department with that name.": "इस नाम का विभाग पहले से है।",
   "Tea shop / Canteen / Hotel": "चाय की दुकान / कैंटीन / होटल",
   "This week": "इस हफ़्ते",
-  "Last month": "पिछला महीना"
+  "Last month": "पिछला महीना",
+  "Top customers, last 30 days": "टॉप ग्राहक, पिछले 30 दिन",
+  "Show older bills": "पुराने बिल दिखाएँ",
+  "Download my data": "मेरा डेटा डाउनलोड करें",
+  "Get every list from your shop (bills, udhaar, items, expenses and more) as spreadsheet files you can open in Excel. Sign-in details are never included.": "अपनी दुकान की हर सूची (बिल, उधार, आइटम, खर्च और बहुत कुछ) स्प्रेडशीट फ़ाइलों में पाएँ, जिन्हें आप Excel में खोल सकते हैं। साइन-इन की जानकारी कभी शामिल नहीं होती।",
+  "Collecting your data… this can take a minute for a busy shop.": "आपका डेटा इकट्ठा हो रहा है… व्यस्त दुकान के लिए एक मिनट लग सकता है।",
+  "Your file is ready.": "आपकी फ़ाइल तैयार है।",
+  "Download again": "फिर से डाउनलोड करें"
 }

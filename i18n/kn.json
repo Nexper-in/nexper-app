@@ -172,7 +172,6 @@
   "Today": "ಇಂದು",
   "Today's profit": "ಇಂದಿನ ಲಾಭ",
   "Top categories": "ಟಾಪ್ ವರ್ಗಗಳು",
-  "Top customers": "ಟಾಪ್ ಗ್ರಾಹಕರು",
   "Total": "ಒಟ್ಟು",
   "Total outstanding udhaar": "ಒಟ್ಟು ಬಾಕಿ ಸಾಲ",
   "UPI": "UPI",
@@ -738,5 +737,12 @@
   "You already have a department with that name.": "ಆ ಹೆಸರಿನ ವಿಭಾಗ ಈಗಾಗಲೇ ಇದೆ.",
   "Tea shop / Canteen / Hotel": "ಟೀ ಅಂಗಡಿ / ಕ್ಯಾಂಟೀನ್ / ಹೋಟೆಲ್",
   "This week": "ಈ ವಾರ",
-  "Last month": "ಕಳೆದ ತಿಂಗಳು"
+  "Last month": "ಕಳೆದ ತಿಂಗಳು",
+  "Top customers, last 30 days": "ಟಾಪ್ ಗ್ರಾಹಕರು, ಕಳೆದ 30 ದಿನ",
+  "Show older bills": "ಹಳೆಯ ಬಿಲ್‌ಗಳನ್ನು ತೋರಿಸಿ",
+  "Download my data": "ನನ್ನ ಡೇಟಾ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ",
+  "Get every list from your shop (bills, udhaar, items, expenses and more) as spreadsheet files you can open in Excel. Sign-in details are never included.": "ನಿಮ್ಮ ಅಂಗಡಿಯ ಪ್ರತಿ ಪಟ್ಟಿಯನ್ನು (ಬಿಲ್‌ಗಳು, ಉದ್ರಿ, ಐಟಂಗಳು, ಖರ್ಚುಗಳು ಮತ್ತು ಇನ್ನಷ್ಟು) Excel ನಲ್ಲಿ ತೆರೆಯಬಹುದಾದ ಸ್ಪ್ರೆಡ್‌ಶೀಟ್ ಫೈಲ್‌ಗಳಾಗಿ ಪಡೆಯಿರಿ. ಸೈನ್-ಇನ್ ವಿವರಗಳನ್ನು ಎಂದಿಗೂ ಸೇರಿಸುವುದಿಲ್ಲ.",
+  "Collecting your data… this can take a minute for a busy shop.": "ನಿಮ್ಮ ಡೇಟಾ ಸಂಗ್ರಹಿಸಲಾಗುತ್ತಿದೆ… ಬ್ಯುಸಿ ಅಂಗಡಿಗೆ ಒಂದು ನಿಮಿಷ ಬೇಕಾಗಬಹುದು.",
+  "Your file is ready.": "ನಿಮ್ಮ ಫೈಲ್ ಸಿದ್ಧವಾಗಿದೆ.",
+  "Download again": "ಮತ್ತೆ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ"
 }

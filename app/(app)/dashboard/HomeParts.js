@@ -239,7 +239,7 @@ export function TopCustomers({ vm }) {
     <>
       {bestCustomers.length > 0 && (
         <div className="ks-card p-5">
-          <h2 className="ks-display font-bold mb-3">{t("Top customers")}</h2>
+          <h2 className="ks-display font-bold mb-3">{t("Top customers, last 30 days")}</h2>
           <div className="space-y-1">
             {bestCustomers.map((c, i) => (
               <button

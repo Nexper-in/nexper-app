@@ -1,5 +1,7 @@
 "use client";
 
+import { fetchAll, startOfToday } from "@/lib/fetchAll";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Plus, Loader2 } from "lucide-react";
 import { useShop } from "@/components/ShopContext";
@@ -32,9 +34,11 @@ function DayClosePageInner() {
     if (!activeShopId) return;
     setLoading(true);
     const [{ data: billsData }, { data: drawsData }, { data: reconData }] = await Promise.all([
-      supabase.from("bills").select("*").eq("shop_id", activeShopId),
-      supabase.from("draws").select("*").eq("shop_id", activeShopId).order("date", { ascending: false }),
-      supabase.from("reconciliations").select("*").eq("shop_id", activeShopId).order("date", { ascending: false }),
+      // Only today's money matters here, plus the last few closes for the
+      // opening float.
+      fetchAll(() => supabase.from("bills").select("*").eq("shop_id", activeShopId).gte("date", startOfToday()).order("date").order("id")),
+      fetchAll(() => supabase.from("draws").select("*").eq("shop_id", activeShopId).gte("date", startOfToday()).order("date", { ascending: false }).order("id")),
+      supabase.from("reconciliations").select("*").eq("shop_id", activeShopId).order("date", { ascending: false }).limit(30),
     ]);
     setBills(billsData || []);
     setDraws(drawsData || []);

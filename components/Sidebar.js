@@ -1,5 +1,6 @@
 "use client";
 
+import { fetchAll } from "@/lib/fetchAll";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -83,10 +84,7 @@ export default function Sidebar({ onOpenSettings, onNavigate }) {
   useEffect(() => {
     if (!activeShopId) return;
     let active = true;
-    supabase
-      .from("shop_products")
-      .select("stock, low_at")
-      .eq("shop_id", activeShopId)
+    fetchAll(() => supabase.from("shop_products").select("id, stock, low_at").eq("shop_id", activeShopId).order("id"))
       .then(({ data }) => {
         if (!active || !data) return;
         setLowStockCount(data.filter((i) => i.stock <= i.low_at).length);

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useShop } from "@/components/ShopContext";
 import { customerBalance } from "@/lib/dashboardHelpers";
 import { useT } from "@/lib/i18n";
+import { fetchAll } from "@/lib/fetchAll";
 
 // Everything the Udhaar screen knows and does. The phone and laptop views
 // (CreditMobile, CreditDesktop) only draw it; change behaviour here, and
@@ -20,7 +21,7 @@ export default function useCredit() {
   const load = useCallback(async () => {
     if (!activeShopId) return;
     setLoading(true);
-    const { data } = await supabase.from("credits").select("*").eq("shop_id", activeShopId).order("date");
+    const { data } = await fetchAll(() => supabase.from("credits").select("*").eq("shop_id", activeShopId).order("date").order("id"));
     setCredits(data || []);
     setLoading(false);
   }, [supabase, activeShopId]);

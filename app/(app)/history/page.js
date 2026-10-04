@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Fragment } from "react";
+import { useCallback, useEffect, useState, Fragment } from "react";
 import { Printer, MessageCircle, Loader2 } from "lucide-react";
 import { useShop } from "@/components/ShopContext";
 import { rupee } from "@/lib/format";
@@ -22,22 +22,45 @@ function HistoryPageInner() {
   const { supabase, activeShopId, activeShop } = useShop();
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
   const [open, setOpen] = useState(null);
   const [printing, setPrinting] = useState(null);
+
+  // Newest bills first, 100 at a time: a shop with years of bills should not
+  // download all of them just to look at today's.
+  const PAGE = 100;
+  const loadPage = useCallback(
+    async (from) => {
+      const { data } = await supabase
+        .from("bills")
+        .select("*")
+        .eq("shop_id", activeShopId)
+        .order("date", { ascending: false })
+        .order("id")
+        .range(from, from + PAGE - 1);
+      return data || [];
+    },
+    [supabase, activeShopId]
+  );
 
   useEffect(() => {
     if (!activeShopId) return;
     setLoading(true);
-    supabase
-      .from("bills")
-      .select("*")
-      .eq("shop_id", activeShopId)
-      .order("date", { ascending: false })
-      .then(({ data }) => {
-        setBills(data || []);
-        setLoading(false);
-      });
-  }, [supabase, activeShopId]);
+    loadPage(0).then((rows) => {
+      setBills(rows);
+      setHasMore(rows.length === PAGE);
+      setLoading(false);
+    });
+  }, [activeShopId, loadPage]);
+
+  async function showOlder() {
+    setLoadingMore(true);
+    const rows = await loadPage(bills.length);
+    setBills((prev) => [...prev, ...rows]);
+    setHasMore(rows.length === PAGE);
+    setLoadingMore(false);
+  }
 
   function doPrint(bill) {
     setPrinting(bill);
@@ -143,6 +166,14 @@ function HistoryPageInner() {
           </tbody>
         </table>
       </div>
+      {hasMore && (
+        <div className="mt-4 text-center">
+          <button type="button" onClick={showOlder} disabled={loadingMore} className="ks-btn-outline inline-flex items-center gap-2">
+            {loadingMore && <Loader2 size={14} className="animate-spin" />}
+            {t("Show older bills")}
+          </button>
+        </div>
+      )}
       {printing && (
         <div className="ks-print-only">
           <PrintBillContent bill={printing} storeName={activeShop?.name} gstin={activeShop?.gstin} groupUrl={activeShop?.whatsapp_group_url} />

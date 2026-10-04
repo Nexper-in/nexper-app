@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { fetchAll } from "@/lib/fetchAll";
 import { requireAdmin, logAdminAction } from "@/lib/supabaseAdmin";
 import { readJson, serverError } from "@/lib/apiSafe";
 import { normalizeControls } from "@/lib/platformDefaults";
@@ -13,10 +14,10 @@ export async function GET(request) {
   monthStart.setUTCHours(0, 0, 0, 0);
 
   const [shops, controls, usage, keys] = await Promise.all([
-    admin.from("shops").select("id, name, type, plan, owner_id, created_at").order("created_at", { ascending: false }),
-    admin.from("tenant_controls").select("*"),
-    admin.from("ai_usage").select("shop_id").gte("created_at", monthStart.toISOString()),
-    admin.from("api_keys").select("shop_id").is("revoked_at", null),
+    fetchAll(() => admin.from("shops").select("id, name, type, plan, owner_id, created_at").order("created_at", { ascending: false }).order("id")),
+    fetchAll(() => admin.from("tenant_controls").select("*").order("shop_id")),
+    fetchAll(() => admin.from("ai_usage").select("id, shop_id").gte("created_at", monthStart.toISOString()).order("id")),
+    fetchAll(() => admin.from("api_keys").select("id, shop_id").is("revoked_at", null).order("id")),
   ]);
   if (shops.error) return serverError(shops.error, "admin/tenant-controls");
   // Missing tables (migration 029 not run) just mean no controls yet.

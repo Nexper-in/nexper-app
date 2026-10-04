@@ -106,6 +106,7 @@ function fakeDb(tables) {
       is: (c, v) => ((rows = rows.filter((r) => r[c] === v)), b),
       order: () => b,
       limit: (n) => ((rows = rows.slice(0, n)), b),
+      range: (lo, hi) => ((rows = rows.slice(lo, hi + 1)), b),
       maybeSingle: async () => ({ data: rows[0] || null, error: null }),
       single: async () => ({ data: rows[0] || null, error: null }),
       then: (res) => Promise.resolve({ data: rows, error: null }).then(res),

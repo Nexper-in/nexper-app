@@ -172,7 +172,6 @@
   "Today": "ഇന്ന്",
   "Today's profit": "ഇന്നത്തെ ലാഭം",
   "Top categories": "ടോപ്പ് വിഭാഗങ്ങൾ",
-  "Top customers": "ടോപ്പ് ഉപഭോക്താക്കൾ",
   "Total": "ആകെ",
   "Total outstanding udhaar": "ആകെ ബാക്കി കടം",
   "UPI": "UPI",
@@ -738,5 +737,12 @@
   "You already have a department with that name.": "ആ പേരിൽ വിഭാഗം ഇതിനകം ഉണ്ട്.",
   "Tea shop / Canteen / Hotel": "ചായക്കട / കാന്റീൻ / ഹോട്ടൽ",
   "This week": "ഈ ആഴ്ച",
-  "Last month": "കഴിഞ്ഞ മാസം"
+  "Last month": "കഴിഞ്ഞ മാസം",
+  "Top customers, last 30 days": "മികച്ച ഉപഭോക്താക്കൾ, കഴിഞ്ഞ 30 ദിവസം",
+  "Show older bills": "പഴയ ബില്ലുകൾ കാണിക്കുക",
+  "Download my data": "എന്റെ ഡാറ്റ ഡൗൺലോഡ് ചെയ്യുക",
+  "Get every list from your shop (bills, udhaar, items, expenses and more) as spreadsheet files you can open in Excel. Sign-in details are never included.": "നിങ്ങളുടെ കടയിലെ എല്ലാ പട്ടികകളും (ബില്ലുകൾ, ഉദാർ, ഇനങ്ങൾ, ചെലവുകൾ തുടങ്ങിയവ) Excel-ൽ തുറക്കാവുന്ന സ്പ്രെഡ്ഷീറ്റ് ഫയലുകളായി നേടുക. സൈൻ-ഇൻ വിവരങ്ങൾ ഒരിക്കലും ഉൾപ്പെടുത്തില്ല.",
+  "Collecting your data… this can take a minute for a busy shop.": "നിങ്ങളുടെ ഡാറ്റ ശേഖരിക്കുന്നു… തിരക്കുള്ള കടയ്ക്ക് ഒരു മിനിറ്റ് എടുത്തേക്കാം.",
+  "Your file is ready.": "നിങ്ങളുടെ ഫയൽ തയ്യാറാണ്.",
+  "Download again": "വീണ്ടും ഡൗൺലോഡ് ചെയ്യുക"
 }

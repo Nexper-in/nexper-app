@@ -1,5 +1,6 @@
 "use client";
 
+import { fetchAll } from "@/lib/fetchAll";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useShop } from "@/components/ShopContext";
@@ -33,11 +34,14 @@ function CashbookPageInner() {
     setLoading(true);
     const [{ data: billsData }, { data: drawsData }, { data: expensesData }, { data: creditsData }, { data: movesData }, itemsData] =
       await Promise.all([
-        supabase.from("bills").select("*").eq("shop_id", activeShopId),
-        supabase.from("draws").select("*").eq("shop_id", activeShopId),
-        supabase.from("expenses").select("*").eq("shop_id", activeShopId),
-        supabase.from("credits").select("*").eq("shop_id", activeShopId),
-        supabase.from("movements").select("*").eq("shop_id", activeShopId),
+        // The running balance is a total over all history, so every row is read,
+        // page by page, and only the columns the cashbook uses (a bill's items
+        // are the bulk of its size).
+        fetchAll(() => supabase.from("bills").select("id, bill_no, date, total, payment_type").eq("shop_id", activeShopId).order("date").order("id")),
+        fetchAll(() => supabase.from("draws").select("id, date, amount, note").eq("shop_id", activeShopId).order("date").order("id")),
+        fetchAll(() => supabase.from("expenses").select("id, date, amount, category, note").eq("shop_id", activeShopId).order("date").order("id")),
+        fetchAll(() => supabase.from("credits").select("id, date, amount, type, name").eq("shop_id", activeShopId).order("date").order("id")),
+        fetchAll(() => supabase.from("movements").select("id, date, type, reason, item_name, qty, supplier").eq("shop_id", activeShopId).order("date").order("id")),
         fetchShopItems(supabase, activeShopId, { orderByCode: false }),
       ]);
     setBills(billsData || []);
