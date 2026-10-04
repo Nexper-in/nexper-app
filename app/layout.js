@@ -1,5 +1,7 @@
 import "./globals.css";
 import { SITE } from "@/lib/site";
+import { THEME_BOOT_SCRIPT } from "@/lib/theme";
+import { LanguageProvider } from "@/lib/i18n";
 
 export const metadata = {
   metadataBase: new URL(SITE.url),
@@ -9,7 +11,13 @@ export const metadata = {
     template: `%s · ${SITE.name}`,
   },
   description: SITE.description,
+  // Declared in full: setting `icons` here replaces the file-based icon, so the
+  // tab icon (the one browsers show on a PC) has to be listed too.
   icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
     apple: "/icons/apple-touch-icon.png",
   },
   openGraph: {
@@ -27,15 +35,27 @@ export const metadata = {
   },
 };
 
+// One viewport tag only. (A hand-written tag in <head> next to the one Next.js
+// adds made iPhone Safari ignore maximum-scale, so it zoomed the page in when a
+// field was tapped and left it cut off at the edges.) viewport-fit=cover lets
+// content reach behind the iPhone notch / Dynamic Island.
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+};
+
 export default function RootLayout({ children }) {
   return (
-    <html lang="en-IN">
+    <html lang="en-IN" suppressHydrationWarning>
       <head>
-        {/* Viewport — viewport-fit=cover lets content reach behind iPhone notch/Dynamic Island */}
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
         <link rel="manifest" href="/manifest.json" />
-        {/* Theme colour matches sidebar/hero purple */}
-        <meta name="theme-color" content="#5B2CDB" />
+        {/* Browser bar colour; lib/theme.js updates it when the theme changes */}
+        <meta name="theme-color" content="#08070f" />
+        {/* Apply the saved theme before first paint so Light users never see a dark flash */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         {/* black-translucent = iOS status bar overlays content, letting our topbar fill edge-to-edge */}
@@ -43,7 +63,9 @@ export default function RootLayout({ children }) {
         <meta name="apple-mobile-web-app-title" content="Nexper" />
         <meta name="format-detection" content="telephone=no" />
       </head>
-      <body>{children}</body>
+      <body>
+        <LanguageProvider>{children}</LanguageProvider>
+      </body>
     </html>
   );
 }

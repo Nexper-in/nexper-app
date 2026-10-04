@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { Download, Upload, CheckCircle2, AlertCircle, Loader2, FileSpreadsheet, X } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 
+import { T, useT } from "@/lib/i18n";
 const TEMPLATE_COLS = ["name", "hindi_name", "category", "unit", "price", "cost_price", "gst", "stock", "low_at", "barcode"];
 const UNITS = ["pcs", "kg", "g", "l", "ml", "packet"];
 const GST_VALS = [0, 5, 12, 18, 28];
@@ -39,18 +40,19 @@ function parseCSV(text) {
 
 function validateRow(row, existingCodes) {
   const errors = [];
-  if (!row.name?.trim()) errors.push("Name is required");
+  if (!row.name?.trim()) errors.push(T("Name is required"));
   const price = Number(row.price);
-  if (!row.price || isNaN(price) || price <= 0) errors.push("Valid price required");
+  if (!row.price || isNaN(price) || price <= 0) errors.push(T("Valid price required"));
   const stock = Number(row.stock);
-  if (row.stock === "" || isNaN(stock) || stock < 0) errors.push("Valid stock required");
-  if (row.unit && !UNITS.includes(row.unit)) errors.push(`Unit must be one of: ${UNITS.join(", ")}`);
-  if (row.gst !== "" && row.gst !== undefined && !GST_VALS.includes(Number(row.gst))) errors.push("GST must be 0, 5, 12, 18 or 28");
-  if (row.cost_price && isNaN(Number(row.cost_price))) errors.push("Cost price must be a number");
+  if (row.stock === "" || isNaN(stock) || stock < 0) errors.push(T("Valid stock required"));
+  if (row.unit && !UNITS.includes(row.unit)) errors.push(T("Unit must be one of: pcs, kg, g, l, ml, packet"));
+  if (row.gst !== "" && row.gst !== undefined && !GST_VALS.includes(Number(row.gst))) errors.push(T("GST must be 0, 5, 12, 18 or 28"));
+  if (row.cost_price && isNaN(Number(row.cost_price))) errors.push(T("Cost price must be a number"));
   return errors;
 }
 
 export default function BulkImportModal({ onClose, onImport, nextCode }) {
+  const t = useT();
   const [step, setStep] = useState("upload"); // upload | preview | importing | done
   const [rows, setRows] = useState([]);
   const [validationMap, setValidationMap] = useState({});
@@ -126,28 +128,28 @@ export default function BulkImportModal({ onClose, onImport, nextCode }) {
   }
 
   return (
-    <Modal title="Import items from CSV" onClose={onClose}>
+    <Modal title={t("Import items from CSV")} onClose={onClose}>
       {/* ── Step: upload ── */}
       {step === "upload" && (
         <div className="space-y-5">
-          <div className="rounded-xl p-4 space-y-1" style={{ background: "#F8F9FD" }}>
-            <p className="text-sm font-semibold">How it works</p>
-            <ol className="text-sm text-[#6B7280] space-y-1 list-decimal list-inside">
-              <li>Download the template below</li>
-              <li>Open it in Excel or Google Sheets</li>
-              <li>Fill in your items (one per row)</li>
-              <li>Save as CSV and upload here</li>
+          <div className="rounded-xl p-4 space-y-1" style={{ background: "var(--bg-surface-alt)" }}>
+            <p className="text-sm font-semibold">{t("How it works")}</p>
+            <ol className="text-sm text-[var(--text-secondary)] space-y-1 list-decimal list-inside">
+              <li>{t("Download the template below")}</li>
+              <li>{t("Open it in Excel or Google Sheets")}</li>
+              <li>{t("Fill in your items (one per row)")}</li>
+              <li>{t("Save as CSV and upload here")}</li>
             </ol>
           </div>
 
-          <button onClick={downloadTemplate} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm border-2 border-dashed transition-colors" style={{ borderColor: "#4F46E5", color: "#4F46E5", background: "#F5F5FF" }}>
-            <Download size={16} /> Download template (CSV)
+          <button onClick={downloadTemplate} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm border-2 border-dashed transition-colors" style={{ borderColor: "var(--accent)", color: "var(--accent-soft-text)", background: "var(--accent-soft-bg)" }}>
+            <Download size={16} /> {t("Download template (CSV)")}
           </button>
 
-          <div className="text-xs text-[#6B7280] space-y-1">
-            <p className="font-semibold text-[#374151]">Required columns:</p>
-            <p><span className="font-medium text-[#C13F45]">name</span>, <span className="font-medium text-[#C13F45]">price</span>, <span className="font-medium text-[#C13F45]">stock</span></p>
-            <p className="font-semibold text-[#374151] mt-2">Optional columns:</p>
+          <div className="text-xs text-[var(--text-secondary)] space-y-1">
+            <p className="font-semibold text-[var(--text-primary)]">{t("Required columns:")}</p>
+            <p><span className="font-medium text-[var(--danger)]">name</span>, <span className="font-medium text-[var(--danger)]">price</span>, <span className="font-medium text-[var(--danger)]">stock</span></p>
+            <p className="font-semibold text-[var(--text-primary)] mt-2">{t("Optional columns:")}</p>
             <p>hindi_name, category, unit, cost_price, gst, low_at, barcode</p>
           </div>
 
@@ -155,7 +157,7 @@ export default function BulkImportModal({ onClose, onImport, nextCode }) {
             onClick={() => fileRef.current?.click()}
             className="ks-btn-primary w-full flex items-center justify-center gap-2"
           >
-            <Upload size={16} /> Upload your CSV
+            <Upload size={16} /> {t("Upload your CSV")}
           </button>
           <input ref={fileRef} type="file" accept=".csv,text/csv" className="hidden" onChange={handleFile} />
         </div>
@@ -165,34 +167,34 @@ export default function BulkImportModal({ onClose, onImport, nextCode }) {
       {step === "preview" && (
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            <FileSpreadsheet size={18} style={{ color: "#4F46E5" }} />
+            <FileSpreadsheet size={18} style={{ color: "var(--accent-soft-text)" }} />
             <div>
               <p className="text-sm font-semibold truncate">{fileName}</p>
-              <p className="text-xs text-[#6B7280]">{rows.length} rows found</p>
+              <p className="text-xs text-[var(--text-secondary)]">{t("{n} rows found", { n: rows.length })}</p>
             </div>
           </div>
 
           <div className="flex gap-3">
-            <div className="flex-1 rounded-xl p-3 text-center" style={{ background: "#E8F5E9" }}>
-              <p className="text-2xl font-extrabold" style={{ color: "#2E7D32" }}>{validRows.length}</p>
-              <p className="text-xs font-semibold" style={{ color: "#2E7D32" }}>Ready to import</p>
+            <div className="flex-1 rounded-xl p-3 text-center" style={{ background: "var(--success-soft)" }}>
+              <p className="text-2xl font-extrabold" style={{ color: "var(--success)" }}>{validRows.length}</p>
+              <p className="text-xs font-semibold" style={{ color: "var(--success)" }}>{t("Ready to import")}</p>
             </div>
-            <div className="flex-1 rounded-xl p-3 text-center" style={{ background: invalidRows.length ? "#FDEAEA" : "#F8F9FD" }}>
-              <p className="text-2xl font-extrabold" style={{ color: invalidRows.length ? "#C13F45" : "#6B7280" }}>{invalidRows.length}</p>
-              <p className="text-xs font-semibold" style={{ color: invalidRows.length ? "#C13F45" : "#6B7280" }}>Errors</p>
+            <div className="flex-1 rounded-xl p-3 text-center" style={{ background: invalidRows.length ? "var(--danger-soft)" : "var(--bg-surface-alt)" }}>
+              <p className="text-2xl font-extrabold" style={{ color: invalidRows.length ? "var(--danger)" : "var(--text-secondary)" }}>{invalidRows.length}</p>
+              <p className="text-xs font-semibold" style={{ color: invalidRows.length ? "var(--danger)" : "var(--text-secondary)" }}>{t("Errors")}</p>
             </div>
           </div>
 
           {invalidRows.length > 0 && (
-            <div className="rounded-xl border border-[#FDEAEA] overflow-hidden">
-              <div className="px-3 py-2 text-xs font-bold" style={{ background: "#FDEAEA", color: "#C13F45" }}>
-                Rows with errors — fix in your file and re-upload
+            <div className="rounded-xl border border-[var(--danger-line)] overflow-hidden">
+              <div className="px-3 py-2 text-xs font-bold" style={{ background: "var(--danger-soft)", color: "var(--danger)" }}>
+                {t("Rows with errors — fix in your file and re-upload")}
               </div>
-              <div className="divide-y divide-[#F3F4F8] max-h-36 overflow-y-auto ks-scroll">
+              <div className="divide-y divide-[var(--border)] max-h-36 overflow-y-auto ks-scroll">
                 {invalidRows.map((r) => (
                   <div key={r._row} className="px-3 py-2">
-                    <p className="text-xs font-semibold">{r.name || `Row ${r._row}`}</p>
-                    <p className="text-[11px] text-[#C13F45]">{validationMap[r._row].join(" · ")}</p>
+                    <p className="text-xs font-semibold">{r.name || t("Row {n}", { n: r._row })}</p>
+                    <p className="text-[11px] text-[var(--danger)]">{validationMap[r._row].map((e) => t(e)).join(" · ")}</p>
                   </div>
                 ))}
               </div>
@@ -201,20 +203,20 @@ export default function BulkImportModal({ onClose, onImport, nextCode }) {
 
           {/* Preview table of valid rows */}
           {validRows.length > 0 && (
-            <div className="rounded-xl border border-[#E7E9F3] overflow-hidden">
-              <div className="px-3 py-2 text-xs font-bold text-[#6B7280]" style={{ background: "#F8F9FD" }}>
-                Preview — first {Math.min(5, validRows.length)} of {validRows.length} valid items
+            <div className="rounded-xl border border-[var(--border)] overflow-hidden">
+              <div className="px-3 py-2 text-xs font-bold text-[var(--text-secondary)]" style={{ background: "var(--bg-surface-alt)" }}>
+                {t("Preview — first {n} of {total} valid items", { n: Math.min(5, validRows.length), total: validRows.length })}
               </div>
-              <div className="divide-y divide-[#F3F4F8] max-h-40 overflow-y-auto ks-scroll">
+              <div className="divide-y divide-[var(--border)] max-h-40 overflow-y-auto ks-scroll">
                 {validRows.slice(0, 5).map((r) => (
                   <div key={r._row} className="flex items-center justify-between px-3 py-2 text-sm">
                     <div className="min-w-0">
                       <p className="font-medium truncate">{r.name}</p>
-                      <p className="text-[11px] text-[#6B7280]">{r.category || "General"} · {r.unit || "pcs"}</p>
+                      <p className="text-[11px] text-[var(--text-secondary)]">{r.category || "General"} · {r.unit || "pcs"}</p>
                     </div>
                     <div className="text-right shrink-0 ml-3">
                       <p className="ks-mono font-semibold text-xs">₹{r.price}</p>
-                      <p className="text-[11px] text-[#6B7280]">stock {r.stock}</p>
+                      <p className="text-[11px] text-[var(--text-secondary)]">stock {r.stock}</p>
                     </div>
                   </div>
                 ))}
@@ -224,14 +226,14 @@ export default function BulkImportModal({ onClose, onImport, nextCode }) {
 
           <div className="flex gap-2">
             <button onClick={() => { setStep("upload"); setRows([]); setFileName(""); }} className="ks-btn-outline flex-1">
-              Re-upload
+              {t("Re-upload")}
             </button>
             <button
               disabled={validRows.length === 0}
               onClick={handleImport}
               className="ks-btn-primary flex-1 disabled:opacity-40"
             >
-              Import {validRows.length} items
+              {t("Import {n} items", { n: validRows.length })}
             </button>
           </div>
         </div>
@@ -240,15 +242,15 @@ export default function BulkImportModal({ onClose, onImport, nextCode }) {
       {/* ── Step: importing ── */}
       {step === "importing" && (
         <div className="space-y-5 py-4 text-center">
-          <Loader2 size={36} className="animate-spin mx-auto" style={{ color: "#4F46E5" }} />
+          <Loader2 size={36} className="animate-spin mx-auto" style={{ color: "var(--accent-soft-text)" }} />
           <div>
-            <p className="font-semibold">Importing items…</p>
-            <p className="text-sm text-[#6B7280] mt-1">{progress} of {validRows.length} done</p>
+            <p className="font-semibold">{t("Importing items…")}</p>
+            <p className="text-sm text-[var(--text-secondary)] mt-1">{t("{n} of {total} done", { n: progress, total: validRows.length })}</p>
           </div>
-          <div className="h-2 rounded-full bg-[#E7E9F3] overflow-hidden">
+          <div className="h-2 rounded-full bg-[var(--bg-surface-alt)] overflow-hidden">
             <div
               className="h-full rounded-full transition-all"
-              style={{ width: `${(progress / validRows.length) * 100}%`, background: "#4F46E5" }}
+              style={{ width: `${(progress / validRows.length) * 100}%`, background: "var(--accent)" }}
             />
           </div>
         </div>
@@ -258,23 +260,23 @@ export default function BulkImportModal({ onClose, onImport, nextCode }) {
       {step === "done" && (
         <div className="space-y-4">
           <div className="text-center py-2">
-            <CheckCircle2 size={44} className="mx-auto mb-3" style={{ color: "#2E7D32" }} />
-            <p className="text-xl font-extrabold">{results.ok} items imported</p>
+            <CheckCircle2 size={44} className="mx-auto mb-3" style={{ color: "var(--success)" }} />
+            <p className="text-xl font-extrabold">{t("{n} items imported", { n: results.ok })}</p>
             {results.failed.length > 0 && (
-              <p className="text-sm text-[#C13F45] mt-1">{results.failed.length} failed</p>
+              <p className="text-sm text-[var(--danger)] mt-1">{t("{n} failed", { n: results.failed.length })}</p>
             )}
           </div>
           {results.failed.length > 0 && (
-            <div className="rounded-xl border border-[#FDEAEA] divide-y divide-[#FDEAEA] max-h-40 overflow-y-auto ks-scroll">
+            <div className="rounded-xl border border-[var(--danger-line)] divide-y divide-[var(--danger-line)] max-h-40 overflow-y-auto ks-scroll">
               {results.failed.map((f, i) => (
                 <div key={i} className="px-3 py-2">
                   <p className="text-xs font-semibold">{f.name}</p>
-                  <p className="text-[11px] text-[#C13F45]">{f.error}</p>
+                  <p className="text-[11px] text-[var(--danger)]">{f.error}</p>
                 </div>
               ))}
             </div>
           )}
-          <button onClick={onClose} className="ks-btn-primary w-full">Done</button>
+          <button onClick={onClose} className="ks-btn-primary w-full">{t("Done")}</button>
         </div>
       )}
     </Modal>

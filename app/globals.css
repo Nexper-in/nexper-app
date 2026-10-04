@@ -2,124 +2,133 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Manrope:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
 
 /* =========================================================
-   Design tokens — content surfaces modeled on real Indian
-   business software (Vyapar, Zoho Books): white/light, one
-   confident accent, dense compact cards, restrained corners.
-   Sidebar is a separate warm espresso + marigold register (an
-   explicit pick — see the "Market Day" concept, not the same
-   accent as the content area). Three palettes, applied via
-   [data-theme] on <html> (see app/(app)/layout.js). :root is
-   the default ("light") so pages rendered before a shop's
-   theme is known (e.g. /login) still look intentional.
+   Design tokens. Same brand as nexper.in: near-black page with
+   soft purple and pink light, and a purple-to-pink gradient on
+   the main actions.
+
+   Two themes, applied via [data-theme] on <html> and saved per
+   device (lib/theme.js):
+     :root                 Night, the default (also used on /login)
+     [data-theme="light"]  Light, for bright shop counters
+   Never hard-code a colour in a component: use these variables
+   (in Tailwind: text-[var(--text-secondary)] etc.), so both
+   themes work everywhere.
    ========================================================= */
 :root {
-  --font-display: "Inter", sans-serif;
-  --font-body: "Inter", sans-serif;
+  --font-display: "Manrope", system-ui, sans-serif;
+  --font-body: "DM Sans", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", monospace;
-  --font-sidebar: "Plus Jakarta Sans", sans-serif;
-  --font-serif: "Fraunces", serif;
+  --font-sidebar: "Manrope", system-ui, sans-serif;
+  --font-serif: "Manrope", system-ui, sans-serif;
 
-  --bg-page: #F5F6F8;
-  --bg-page-glow: none;
-  --bg-surface: #FFFFFF;
-  --bg-surface-alt: #F1F2F5;
-  --text-primary: #1A1D29;
-  --text-secondary: #6B7280;
-  --border: #E5E7EB;
-  --border-strong: #D1D5DB;
+  --grad: linear-gradient(90deg, #8b5cf6, #ec4899);
+  --grad-text: linear-gradient(90deg, #a78bfa 0%, #c084fc 45%, #f472b6 100%);
 
-  --accent: #5B2CDB;
-  --accent-hover: #6B3FE8;
-  --accent-contrast: #FFFFFF;
-  --accent-soft-bg: rgba(91, 44, 219, 0.08);
-  --accent-soft-text: #5B2CDB;
+  --bg-page: #08070f;
+  --bg-page-glow:
+    radial-gradient(700px 420px at 10% -80px, rgba(124, 92, 255, 0.32), transparent 70%),
+    radial-gradient(600px 400px at 95% 0, rgba(236, 72, 153, 0.18), transparent 70%);
+  --bg-surface: #13111f;
+  --bg-surface-alt: #1b1830;
+  --bg-overlay: rgba(4, 3, 10, 0.7);
+  --bar-bg: rgba(12, 10, 24, 0.86);
+  --text-primary: #f4f2ff;
+  --text-secondary: #a7a3c2;
+  --border: #26223a;
+  --border-strong: #353050;
 
-  /* Premium brand register — constant across all three themes (like the
-     sidebar always has), not swapped per light/dark/warm. Gold is spent
-     sparingly: the hero hairline, profit figures, and rank #1. */
-  --gold: #B8902E;
-  --gold-soft: rgba(184, 144, 46, 0.12);
-  --gold-line: rgba(184, 144, 46, 0.45);
-  --hero-1: #1B1030;
-  --hero-2: #3B1F87;
-  --hero-glow: rgba(184, 144, 46, 0.14);
+  /* Solid "inverted" pills and buttons (selected tab, active toggle). */
+  --strong: #f4f2ff;
+  --on-strong: #120e24;
 
-  --radius-card: 12px;
-  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+  --accent: #8b5cf6;
+  --accent-hover: #9d74f8;
+  --accent-contrast: #ffffff;
+  --accent-soft-bg: rgba(167, 139, 250, 0.14);
+  --accent-soft-text: #c4b5fd;
 
-  --sidebar-bg: #1E2A3A;
-  --sidebar-text: rgba(255, 255, 255, 0.75);
-  --sidebar-text-strong: #FFFFFF;
+  --danger: #ff8a80;
+  --danger-solid: #e5484d;
+  --danger-soft: rgba(240, 98, 88, 0.14);
+  --danger-line: rgba(240, 98, 88, 0.3);
+  --warn: #fbbf6a;
+  --warn-solid: #e0911f;
+  --warn-soft: rgba(245, 158, 66, 0.14);
+  --success: #6ee7b7;
+  --success-solid: #1f8a5f;
+  --success-soft: rgba(52, 199, 132, 0.14);
+  /* Udhaar (customer credit) has its own colour across the app. */
+  --udhaar: #f0abfc;
+  --udhaar-solid: #c026d3;
+  --udhaar-soft: rgba(217, 70, 239, 0.14);
+
+  /* Premium register: the pink end of the brand gradient, used sparingly
+     (hero hairline, profit figures, rank #1, Pro badge). */
+  --gold: #f472b6;
+  --gold-soft: rgba(244, 114, 182, 0.14);
+  --gold-line: rgba(244, 114, 182, 0.45);
+  --hero-1: #100c22;
+  --hero-2: #4a2fc0;
+  --hero-glow: rgba(236, 72, 153, 0.18);
+
+  --radius-card: 16px;
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 8px 24px rgba(0, 0, 0, 0.35);
+
+  --sidebar-bg: #0d0a1c;
+  --sidebar-text: rgba(255, 255, 255, 0.72);
+  --sidebar-text-strong: #ffffff;
   --sidebar-muted: rgba(255, 255, 255, 0.45);
   --sidebar-item-bg: transparent;
-  --sidebar-active-bg: #F2A93B;
-  --sidebar-active-text: #1E2A3A;
-  --sidebar-hover-bg: rgba(255, 255, 255, 0.08);
-  --sidebar-chip-bg: rgba(255, 255, 255, 0.10);
-  --sidebar-border: rgba(255, 255, 255, 0.10);
+  --sidebar-hover-bg: rgba(255, 255, 255, 0.07);
+  --sidebar-chip-bg: rgba(255, 255, 255, 0.07);
+  --sidebar-border: rgba(255, 255, 255, 0.09);
+
+  color-scheme: dark;
 }
 
-:root[data-theme="dark"] {
-  --bg-page: #0B0D12;
-  --bg-page-glow: none;
-  --bg-surface: #12141B;
-  --bg-surface-alt: #191C25;
-  --text-primary: #E5E7EB;
-  --text-secondary: #9198A8;
-  --border: #232733;
-  --border-strong: #2E3341;
+:root[data-theme="light"] {
+  --bg-page: #fcfbff;
+  --bg-page-glow:
+    radial-gradient(700px 420px at 10% -80px, rgba(167, 139, 250, 0.28), transparent 70%),
+    radial-gradient(600px 400px at 95% 0, rgba(244, 114, 182, 0.18), transparent 70%);
+  --bg-surface: #ffffff;
+  --bg-surface-alt: #f5f3fd;
+  --bg-overlay: rgba(21, 18, 41, 0.45);
+  --bar-bg: rgba(255, 255, 255, 0.88);
+  --text-primary: #151229;
+  --text-secondary: #6e6a8a;
+  --border: #ece8f6;
+  --border-strong: #ddd6f0;
 
-  --accent: #9B7CF0;
-  --accent-hover: #AC8FFA;
-  --accent-contrast: #FFFFFF;
-  --accent-soft-bg: rgba(155, 124, 240, 0.16);
-  --accent-soft-text: #C6B4FA;
+  --strong: #151229;
+  --on-strong: #ffffff;
 
-  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.02) inset, 0 1px 3px rgba(0, 0, 0, 0.4);
+  --accent: #7c5cff;
+  --accent-hover: #6d4aef;
+  --accent-soft-bg: #f1ecff;
+  --accent-soft-text: #6d4aef;
 
-  --sidebar-bg: #1E2A3A;
-  --sidebar-text: rgba(255, 255, 255, 0.75);
-  --sidebar-text-strong: #FFFFFF;
-  --sidebar-muted: rgba(255, 255, 255, 0.45);
-  --sidebar-item-bg: transparent;
-  --sidebar-active-bg: #F2A93B;
-  --sidebar-active-text: #1E2A3A;
-  --sidebar-hover-bg: rgba(255, 255, 255, 0.08);
-  --sidebar-chip-bg: rgba(255, 255, 255, 0.10);
-  --sidebar-border: rgba(255, 255, 255, 0.10);
-}
+  --danger: #c13f45;
+  --danger-soft: #fdeaea;
+  --danger-line: #f7c9c9;
+  --warn: #b5720b;
+  --warn-soft: #fceeda;
+  --success: #1f8a5f;
+  --success-soft: #e4f5f0;
+  --udhaar: #b5399c;
+  --udhaar-solid: #b5399c;
+  --udhaar-soft: #fdeaf6;
 
-:root[data-theme="warm"] {
-  --bg-page: #F6F1E6;
-  --bg-page-glow: none;
-  --bg-surface: #FFFDF8;
-  --bg-surface-alt: #F1E9D8;
-  --text-primary: #2A2420;
-  --text-secondary: #8A7F6E;
-  --border: #E7DCC5;
-  --border-strong: #D9C9A8;
+  --gold: #db2777;
+  --gold-soft: rgba(219, 39, 119, 0.1);
+  --gold-line: rgba(219, 39, 119, 0.35);
 
-  --accent: #0F6E56;
-  --accent-hover: #12805F;
-  --accent-contrast: #FFFFFF;
-  --accent-soft-bg: rgba(15, 110, 86, 0.10);
-  --accent-soft-text: #0F6E56;
+  --shadow-card: 0 1px 2px rgba(21, 18, 41, 0.04), 0 8px 24px rgba(21, 18, 41, 0.06);
 
-  --shadow-card: 0 1px 2px rgba(42, 36, 32, 0.05), 0 1px 3px rgba(42, 36, 32, 0.08);
-
-  --sidebar-bg: #1E2A3A;
-  --sidebar-text: rgba(255, 255, 255, 0.75);
-  --sidebar-text-strong: #FFFFFF;
-  --sidebar-muted: rgba(255, 255, 255, 0.45);
-  --sidebar-item-bg: transparent;
-  --sidebar-active-bg: #F2A93B;
-  --sidebar-active-text: #1E2A3A;
-  --sidebar-hover-bg: rgba(255, 255, 255, 0.08);
-  --sidebar-chip-bg: rgba(255, 255, 255, 0.10);
-  --sidebar-border: rgba(255, 255, 255, 0.10);
+  color-scheme: light;
 }
 
 html { scroll-behavior: smooth; }
@@ -127,12 +136,13 @@ html { scroll-behavior: smooth; }
 body {
   font-family: var(--font-body);
   color: var(--text-primary);
-  min-height: 100vh;
-  background: var(--bg-page);
+  min-height: 100vh; min-height: 100dvh;
+  background: var(--bg-page-glow), var(--bg-page);
+  background-attachment: fixed;
   transition: background-color .25s ease, color .25s ease;
 }
 
-.ks-display { font-family: var(--font-display); letter-spacing: -0.01em; }
+.ks-display { font-family: var(--font-display); letter-spacing: -0.02em; }
 .ks-mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
 .ks-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -148,7 +158,7 @@ body {
 .ks-input {
   width: 100%;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 9px 12px;
   font-size: 14px;
   background: var(--bg-surface);
@@ -156,23 +166,31 @@ body {
   outline: none;
   transition: border-color .15s, box-shadow .15s;
 }
+/* iPhone Safari zooms the whole page in when a field under 16px gets focus,
+   and doesn't zoom back out, so the app looks too big and cut off. Keep every
+   field at 16px on phones. Don't lower this. */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; touch-action: manipulation; } /* manipulation: no double-tap zoom */
+@media (max-width: 1023px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  select, textarea { font-size: 16px !important; }
+}
 .ks-input::placeholder { color: var(--text-secondary); }
 .ks-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft-bg); }
 .ks-btn-primary {
-  border-radius: 8px;
-  background: var(--accent);
-  color: var(--accent-contrast);
+  border-radius: 12px;
+  background: var(--grad);
+  color: #ffffff;
   font-weight: 600;
   padding: 9px 18px;
   font-size: 14px;
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+  box-shadow: 0 10px 24px -14px rgba(236, 72, 153, 0.75);
   transition: filter .15s, transform .1s;
 }
 .ks-btn-primary:hover { filter: brightness(1.08); }
 .ks-btn-primary:active { transform: scale(.97); }
 .ks-btn-primary:disabled { opacity: .4; box-shadow: none; }
 .ks-btn-outline {
-  border-radius: 8px;
+  border-radius: 12px;
   border: 1px solid var(--border-strong);
   color: var(--text-primary);
   font-weight: 600;
@@ -202,7 +220,7 @@ body {
   border: none;
   border-radius: 18px;
   color: #fff;
-  box-shadow: 0 12px 32px rgba(27, 16, 48, 0.35);
+  box-shadow: 0 16px 40px -12px rgba(74, 47, 192, 0.55);
   position: relative;
   overflow: hidden;
 }
@@ -226,7 +244,7 @@ body {
 }
 .ks-hero-btn:hover { background: rgba(255,255,255,0.14); }
 .ks-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase; }
-.ks-hero-figure { font-family: var(--font-serif); font-weight: 500; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; line-height: 1; }
+.ks-hero-figure { font-family: var(--font-serif); font-weight: 800; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1; }
 .ks-hero-figure sup { font-weight: 400; opacity: 0.65; margin-right: 1px; }
 
 /* Left-accent stat tiles + panel headers with a tinted icon chip and a
@@ -241,6 +259,8 @@ body {
   flex-shrink: 0;
 }
 .ks-panel-wash { position: relative; }
+/* Keep panel content above the wash (some wash colours are opaque in Light). */
+.ks-panel-wash > * { position: relative; }
 .ks-panel-wash::before {
   content: ""; position: absolute; left: 0; right: 0; top: 0; height: 72px;
   background: linear-gradient(180deg, var(--wash, transparent), transparent);
@@ -263,7 +283,7 @@ body {
 .ks-fade-up { animation: ks-fade-up .35s ease-out; }
 .ks-pulse { animation: ks-pulse-dot 1.6s ease-in-out infinite; }
 
-.ks-sidebar { background: linear-gradient(165deg, var(--hero-2), var(--hero-1)); border-right: 1px solid var(--sidebar-border); font-family: var(--font-sidebar); }
+.ks-sidebar { background: radial-gradient(120% 50% at 0% 0%, rgba(124, 92, 255, 0.32), transparent 70%), var(--sidebar-bg); border-right: 1px solid var(--sidebar-border); font-family: var(--font-sidebar); }
 .ks-sidebar-gold-rule { height: 1px; background: linear-gradient(90deg, transparent, var(--gold-line), transparent); }
 .ks-sidebar-chip { background: var(--sidebar-chip-bg); border: 1px solid var(--sidebar-border); }
 .ks-sidebar-text { color: var(--sidebar-text); }
@@ -272,15 +292,43 @@ body {
 .ks-sidebar-border { border-color: var(--sidebar-border); }
 .ks-sidebar-item { background: var(--sidebar-item-bg); color: var(--sidebar-text); border-radius: 8px; transition: background-color .15s, color .15s; }
 .ks-sidebar-item:hover { background: var(--sidebar-hover-bg); color: var(--sidebar-text-strong); }
-.ks-sidebar-item.active { background: var(--sidebar-active-bg); color: var(--sidebar-active-text); font-weight: 700; }
+.ks-sidebar-item.active { background: var(--grad); color: #ffffff; font-weight: 700; }
 
-.ks-topbar { background: var(--bg-surface); color: var(--text-primary); border-bottom: 1px solid var(--border); }
+.ks-topbar { background: var(--bar-bg); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); color: var(--text-primary); border-bottom: 1px solid var(--border); }
 
 .ks-print-only { display: none; }
+/* Wide tables turn into one card per row on phones. components/StackTables.js
+   copies each column heading onto its cells (data-label) so every value keeps
+   its name. Add class "ks-stack" to a <table> to opt in. */
+@media (max-width: 767px) {
+  .ks-stack, .ks-stack tbody, .ks-stack tr, .ks-stack td { display: block; width: 100%; }
+  .ks-stack thead { display: none; }
+  .ks-stack tr { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .ks-stack tr:last-child { border-bottom: 0; }
+  .ks-stack td { padding: 3px 0 !important; display: flex; align-items: center; justify-content: space-between; gap: 14px; text-align: right; max-width: none !important; }
+  .ks-stack td::before { content: attr(data-label); flex-shrink: 0; text-align: left; color: var(--text-secondary); font-size: 11px; font-weight: 600; }
+  .ks-stack td[data-label=""]::before, .ks-stack td:not([data-label])::before { content: none; }
+  .ks-stack td:first-child { font-size: 15px; justify-content: space-between; }
+  .ks-stack td[colspan] { display: block; text-align: center; }
+}
+/* Brand pieces */
+.ks-wordmark { font-family: var(--font-display); font-weight: 800; letter-spacing: -0.04em; line-height: 1; }
+.ks-grad-text { background: var(--grad-text); -webkit-background-clip: text; background-clip: text; color: transparent; }
+/* Coloured chip that reads well on both themes: set --chip to any colour. */
+.ks-chip {
+  background: var(--bg-surface-alt);
+  background: color-mix(in srgb, var(--chip, var(--accent)) 16%, transparent);
+  color: var(--chip, var(--accent));
+  color: color-mix(in srgb, var(--chip, var(--accent)) 72%, var(--text-primary));
+}
+/* Error / success notes used under forms */
+.ks-note-err { color: var(--danger); background: var(--danger-soft); border: 1px solid var(--danger-line); }
+.ks-note-ok { color: var(--success); background: var(--success-soft); border: 1px solid var(--success-soft); }
 
 /* Layout — plain CSS + real media queries, not Tailwind responsive classes,
    so this reliably works even without a JIT compiler in the sandbox. */
 .ks-mobile-bar { display: flex; }
+.ks-desk-bar { display: none; }
 .ks-mobile-overlay { display: block; }
 
 /* On mobile the topbar is fixed; safe-area-inset-top pushes it below the
@@ -300,9 +348,11 @@ body {
 .ks-bottom-nav {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 25;
   display: flex; align-items: flex-end; justify-content: space-around;
-  background: var(--bg-surface);
+  background: var(--bar-bg);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   border-top: 1px solid var(--border);
-  box-shadow: 0 -4px 16px rgba(16, 24, 40, 0.06);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.12);
   padding: 4px 4px calc(4px + env(safe-area-inset-bottom, 0px));
 }
 .ks-bottom-tab {
@@ -315,9 +365,9 @@ body {
 .ks-bottom-fab {
   width: 52px; height: 52px; border-radius: 999px; margin-top: -24px;
   display: flex; align-items: center; justify-content: center;
-  background: var(--accent); color: var(--accent-contrast);
+  background: var(--grad); color: #ffffff;
   border: 3px solid var(--bg-surface);
-  box-shadow: 0 6px 16px rgba(91, 44, 219, 0.4);
+  box-shadow: 0 8px 20px -6px rgba(236, 72, 153, 0.6);
 }
 
 /* Sidebar drawer: extend into the notch area on iPhone */
@@ -331,11 +381,11 @@ body {
 .ks-sidebar-wrap.open { left: 0; }
 
 .ks-page-pad { padding-left: 16px; padding-right: 16px; }
-.ks-billing-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
 @media (min-width: 1024px) {
   .ks-bottom-nav { display: none; }
   .ks-page-bottom-safe { padding-bottom: 64px; }
   .ks-mobile-bar { display: none; }
+  .ks-desk-bar { display: flex; position: sticky; top: 0; z-index: 30; padding-top: 14px; padding-bottom: 6px; }
   .ks-mobile-overlay { display: none; }
   .ks-sidebar-wrap {
     position: sticky; left: 0;
@@ -344,7 +394,6 @@ body {
   }
   .ks-main { padding-top: 0; }
   .ks-page-pad { padding-left: 32px; padding-right: 32px; }
-  .ks-billing-grid { grid-template-columns: 3fr 2fr; }
 }
 @media print {
   body * { visibility: hidden; }
@@ -352,3 +401,26 @@ body {
   .ks-print-only { display: block !important; position: absolute; top: 0; left: 0; width: 100%; }
   .ks-no-print { display: none !important; }
 }
+
+/* ---------- Languages ----------
+   lib/i18n.js loads the matching Noto Sans font and sets data-lang on <html>.
+   Indian scripts need more line height and no negative letter-spacing. */
+:root { --font-indic: system-ui; }
+html[data-lang="hi"] { --font-indic: "Noto Sans Devanagari"; }
+html[data-lang="te"] { --font-indic: "Noto Sans Telugu"; }
+html[data-lang="kn"] { --font-indic: "Noto Sans Kannada"; }
+html[data-lang="ta"] { --font-indic: "Noto Sans Tamil"; }
+html[data-lang="ml"] { --font-indic: "Noto Sans Malayalam"; }
+html[data-lang]:not([data-lang="en"]) {
+  --font-display: "Manrope", var(--font-indic), system-ui, sans-serif;
+  --font-body: "DM Sans", var(--font-indic), system-ui, sans-serif;
+  --font-sidebar: "Manrope", var(--font-indic), system-ui, sans-serif;
+}
+html[data-lang]:not([data-lang="en"]) body { line-height: 1.6; }
+html[data-lang]:not([data-lang="en"]) .ks-display,
+html[data-lang]:not([data-lang="en"]) h1,
+html[data-lang]:not([data-lang="en"]) h2,
+html[data-lang]:not([data-lang="en"]) h3 { letter-spacing: 0; line-height: 1.35; }
+html[data-lang]:not([data-lang="en"]) .ks-btn-primary,
+html[data-lang]:not([data-lang="en"]) .ks-btn-outline { line-height: 1.35; }
+html[data-lang]:not([data-lang="en"]) .ks-eyebrow { text-transform: none; letter-spacing: 0.02em; }

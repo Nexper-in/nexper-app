@@ -1,11 +1,12 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabaseClient";
 import { seedItemsForShop } from "@/lib/shopTypes";
-import { defaultPermissions } from "@/lib/modules";
+import { defaultPermissions, defaultModulesForType } from "@/lib/modules";
 import { useOfflineQueue } from "@/lib/offlineQueue";
 import { callApi } from "@/lib/apiClient";
+import { setPlatformConfig } from "@/lib/platformConfig";
 
 const ShopContext = createContext(null);
 
@@ -19,6 +20,10 @@ export function ShopProvider({ children }) {
   const [toast, setToast] = useState(null);
   const [user, setUser] = useState(null);
   const [currentMember, setCurrentMember] = useState(null);
+  // Platform admin settings (prices, plans, switches, announcement) and this
+  // shop's own admin controls (plan override, limits, feature overrides).
+  const [platform, setPlatform] = useState(() => setPlatformConfig([]));
+  const [controls, setControls] = useState({});
   const { run: runQueued, pendingCount } = useOfflineQueue(supabase);
 
   const showToast = useCallback((msg, tone = "ok") => {
@@ -46,6 +51,29 @@ export function ShopProvider({ children }) {
     loadShops();
     supabase.auth.getUser().then(({ data }) => setUser(data.user ?? null));
   }, [loadShops, supabase]);
+
+  const loadPlatform = useCallback(async () => {
+    const { data } = await supabase.from("platform_settings").select("key, value");
+    setPlatform(setPlatformConfig(data || []));
+  }, [supabase]);
+
+  useEffect(() => {
+    loadPlatform();
+  }, [loadPlatform]);
+
+  useEffect(() => {
+    if (!activeShopId) return;
+    let live = true;
+    supabase
+      .from("tenant_controls")
+      .select("*")
+      .eq("shop_id", activeShopId)
+      .maybeSingle()
+      .then(({ data }) => live && setControls((c) => ({ ...c, [activeShopId]: data || null })));
+    return () => {
+      live = false;
+    };
+  }, [supabase, activeShopId]);
 
   // Which shop_members row (role + permissions) the signed-in user holds
   // for the active shop — drives nav filtering and action gating.
@@ -98,7 +126,7 @@ export function ShopProvider({ children }) {
 
     const { data: shop, error } = await supabase
       .from("shops")
-      .insert({ owner_id: user.id, name, type })
+      .insert({ owner_id: user.id, name, type, ...(defaultModulesForType(type) ? { enabled_modules: defaultModulesForType(type) } : {}) })
       .select()
       .single();
     if (error) throw error;
@@ -168,7 +196,8 @@ export function ShopProvider({ children }) {
     setActiveShopId(null);
   }
 
-  const activeShop = shops.find((s) => s.id === activeShopId) || null;
+  const baseShop = shops.find((s) => s.id === activeShopId) || null;
+  const activeShop = useMemo(() => (baseShop ? { ...baseShop, controls: controls[baseShop.id] || null } : null), [baseShop, controls]);
   const isOwner = currentMember?.role === "owner";
   function hasPermission(moduleKey) {
     if (!currentMember) return false;
@@ -182,6 +211,7 @@ export function ShopProvider({ children }) {
         supabase,
         shops,
         activeShop,
+        platform,
         activeShopId,
         setActiveShopId,
         addShop,

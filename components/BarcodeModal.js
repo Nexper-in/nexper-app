@@ -3,7 +3,9 @@
 import { useEffect, useRef } from "react";
 import { X, Printer } from "lucide-react";
 
+import { useT } from "@/lib/i18n";
 export default function BarcodeModal({ item, onClose }) {
+  const t = useT();
   const svgRef = useRef(null);
 
   useEffect(() => {
@@ -13,7 +15,7 @@ export default function BarcodeModal({ item, onClose }) {
         JsBarcode(svgRef.current, item.barcode || item.code, {
           format: "CODE128",
           lineColor: "#000000",
-          background: "#ffffff",
+          background: "var(--bg-surface)",
           width: 2.5,
           height: 80,
           displayValue: true,
@@ -27,7 +29,7 @@ export default function BarcodeModal({ item, onClose }) {
         JsBarcode(svgRef.current, item.code, {
           format: "CODE128",
           lineColor: "#000000",
-          background: "#ffffff",
+          background: "var(--bg-surface)",
           width: 2.5,
           height: 80,
           displayValue: true,
@@ -42,8 +44,12 @@ export default function BarcodeModal({ item, onClose }) {
   function printBarcode() {
     const svg = svgRef.current?.outerHTML;
     if (!svg) return;
+    // The item name is user data: escape it before it goes into the print
+    // window's HTML (an item named "</title><script>…" must not run).
+    const safeName = String(item.name).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
     const win = window.open("", "_blank", "width=400,height=300");
-    win.document.write(`<!DOCTYPE html><html><head><title>Barcode – ${item.name}</title><style>body{margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#fff}svg{max-width:100%}</style></head><body>${svg}</body></html>`);
+    if (!win) return;
+    win.document.write(`<!DOCTYPE html><html><head><title>Barcode – ${safeName}</title><style>body{margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#fff}svg{max-width:100%}</style></head><body>${svg}</body></html>`);
     win.document.close();
     win.focus();
     win.print();
@@ -58,22 +64,22 @@ export default function BarcodeModal({ item, onClose }) {
         <button
           onClick={onClose}
           className="absolute top-4 right-4 w-7 h-7 flex items-center justify-center rounded-full"
-          style={{ background: "#E7E9F3", color: "#6B7280" }}
+          style={{ background: "var(--bg-surface-alt)", color: "var(--text-secondary)" }}
         >
           <X size={15} />
         </button>
         <h2 className="ks-display font-bold mb-1">{item.name}</h2>
-        <p className="text-xs text-[#6B7280] mb-4 ks-mono">
+        <p className="text-xs text-[var(--text-secondary)] mb-4 ks-mono">
           Code: {item.code}{item.barcode && item.barcode !== item.code ? ` · Barcode: ${item.barcode}` : ""}
         </p>
-        <div className="flex justify-center bg-white rounded-xl p-3 border border-[#E7E9F3] mb-4">
+        <div className="flex justify-center bg-white rounded-xl p-3 border border-[var(--border)] mb-4">
           <svg ref={svgRef} />
         </div>
         <button
           onClick={printBarcode}
           className="ks-btn-outline w-full flex items-center justify-center gap-1.5"
         >
-          <Printer size={15} /> Print barcode
+          <Printer size={15} /> {t("Print barcode")}
         </button>
       </div>
     </div>

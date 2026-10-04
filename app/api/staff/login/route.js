@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { readJson, serverError } from "@/lib/apiSafe";
 import { createAdminClient } from "@/lib/supabaseAdmin";
 import { isRateLimited, requestIp } from "@/lib/rateLimit";
 
@@ -14,8 +15,8 @@ export async function POST(request) {
     return NextResponse.json({ error: "Too many attempts — wait a minute and try again" }, { status: 429 });
   }
 
-  const { staffCode } = await request.json();
-  if (!staffCode) return NextResponse.json({ error: "Staff code is required" }, { status: 400 });
+  const { staffCode } = await readJson(request);
+  if (!staffCode || typeof staffCode !== "string" || staffCode.length > 20) return NextResponse.json({ error: "Staff code is required" }, { status: 400 });
 
   const admin = createAdminClient();
   const { data: member, error } = await admin
@@ -23,7 +24,7 @@ export async function POST(request) {
     .select("user_id")
     .eq("staff_code", String(staffCode).trim().toUpperCase())
     .maybeSingle();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return serverError(error, "api");
   if (!member) return NextResponse.json({ error: "Staff code not found" }, { status: 404 });
 
   const { data: userData, error: userError } = await admin.auth.admin.getUserById(member.user_id);

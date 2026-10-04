@@ -31,7 +31,7 @@ function numberToWords(num) {
   return result.trim();
 }
 
-export default function PrintBillContent({ bill, storeName, gstin }) {
+export default function PrintBillContent({ bill, storeName, gstin, groupUrl }) {
   const { taxable, taxAmt } = taxBreakup(bill.items);
   const halfTax = Math.round((taxAmt / 2) * 100) / 100;
   const discount = bill.discount_amount || 0;
@@ -41,7 +41,7 @@ export default function PrintBillContent({ bill, storeName, gstin }) {
   const mrpSavings = (bill.items || []).reduce((s, it) => (it.mrp > it.price ? s + (it.mrp - it.price) * it.qty : s), 0);
 
   return (
-    <div style={{ width: "100%", maxWidth: "740px", margin: "0 auto", padding: "36px 40px", fontFamily: "'Inter', sans-serif", color: "#1A1D29", fontSize: "13px" }}>
+    <div style={{ width: "100%", maxWidth: "740px", margin: "0 auto", padding: "36px 40px", fontFamily: "'DM Sans', 'Inter', sans-serif", color: "#1A1D29", fontSize: "13px" }}>
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", paddingBottom: 18, borderBottom: "2px solid #1A1D29" }}>
         <div>
@@ -161,6 +161,7 @@ export default function PrintBillContent({ bill, storeName, gstin }) {
       {/* Footer */}
       <div style={{ marginTop: 28, paddingTop: 16, borderTop: "1px dashed #D1D5DB", textAlign: "center" }}>
         <div style={{ fontWeight: 600 }}>Thank you for shopping with us!</div>
+        {groupUrl && <div style={{ fontSize: 10, marginTop: 4 }}>Join our WhatsApp group for offers: {groupUrl}</div>}
         <div style={{ fontSize: 11, color: "#9CA3AF", marginTop: 4 }}>This is a computer-generated invoice and does not require a signature.</div>
       </div>
     </div>

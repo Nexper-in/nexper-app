@@ -8,6 +8,7 @@ import ClearanceOfferModal from "@/components/ClearanceOfferModal";
 import { fetchShopItems } from "@/lib/products";
 import { rupee } from "@/lib/format";
 
+import { T, useT } from "@/lib/i18n";
 const todayStr = () => new Date().toISOString().slice(0, 10);
 
 function offerStatus(offer) {
@@ -18,14 +19,15 @@ function offerStatus(offer) {
 }
 
 const STATUS_INFO = {
-  active: { label: "Active now", bg: "#E4F5F0", color: "#0F6E56" },
-  upcoming: { label: "Upcoming", bg: "#EEF0FE", color: "#4F46E5" },
-  expired: { label: "Ended", bg: "#E7E9F3", color: "#6B7280" },
+  active: { label: T("Active now"), bg: "var(--success-soft)", color: "var(--success)" },
+  upcoming: { label: T("Upcoming"), bg: "var(--accent-soft-bg)", color: "var(--accent-soft-text)" },
+  expired: { label: T("Ended"), bg: "var(--bg-surface-alt)", color: "var(--text-secondary)" },
 };
 
 const fmtDate = (d) => new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 
 export default function ClearancePage() {
+  const t = useT();
   const { supabase, activeShopId, currentMember, isOwner, showToast } = useShop();
   const router = useRouter();
   const [items, setItems] = useState([]);
@@ -95,7 +97,7 @@ export default function ClearancePage() {
     if (itemsError) throw itemsError;
     setShowNew(false);
     setPrefillIds([]);
-    showToast(`${fields.name} started — ${fields.discount_pct}% off ${itemIds.length} item${itemIds.length > 1 ? "s" : ""}`);
+    showToast(t("{name} started — {pct}% off {n} items", { name: fields.name, pct: fields.discount_pct, n: itemIds.length }));
     load();
   }
 
@@ -107,13 +109,13 @@ export default function ClearancePage() {
     }
     setOffers((prev) => prev.filter((o) => o.id !== removing.id));
     setRemoving(null);
-    showToast("Clearance offer removed");
+    showToast(t("Clearance offer removed"));
   }
 
   if (loading) {
     return (
       <div className="pt-6 flex items-center gap-2 text-sm text-muted">
-        <Loader2 size={16} className="animate-spin" /> Loading clearance offers…
+        <Loader2 size={16} className="animate-spin" /> {t("Loading clearance offers…")}
       </div>
     );
   }
@@ -123,23 +125,22 @@ export default function ClearancePage() {
       <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
         <div>
           <h1 className="ks-display font-bold text-lg flex items-center gap-2">
-            <Tag size={18} style={{ color: "#4F46E5" }} /> Quick clearance offers
+            <Tag size={18} style={{ color: "var(--accent-soft-text)" }} /> {t("Quick clearance offers")}
           </h1>
-          <p className="text-xs text-[#6B7280] mt-0.5">
-            A time-boxed discount on picked items. It applies automatically in Billing while the dates are open, and
-            reverts on its own once the offer ends.
+          <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+            {t("A time-boxed discount on picked items. It applies automatically in Billing while the dates are open, and reverts on its own once the offer ends.")}
           </p>
         </div>
         <button onClick={() => setShowNew(true)} className="ks-btn-primary flex items-center gap-1.5">
-          <Plus size={16} /> New offer
+          <Plus size={16} /> {t("New offer")}
         </button>
       </div>
 
       {offers.length === 0 ? (
         <div className="ks-card p-8 text-center">
-          <p className="text-sm text-[#6B7280] mb-3">No clearance offers yet.</p>
+          <p className="text-sm text-[var(--text-secondary)] mb-3">{t("No clearance offers yet.")}</p>
           <button onClick={() => setShowNew(true)} className="ks-btn-primary inline-flex items-center gap-1.5">
-            <Plus size={16} /> Start your first offer
+            <Plus size={16} /> {t("Start your first offer")}
           </button>
         </div>
       ) : (
@@ -153,13 +154,13 @@ export default function ClearancePage() {
                   <div className="flex items-center gap-2 flex-wrap mb-1">
                     <h3 className="font-bold text-sm">{offer.name}</h3>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: info.bg, color: info.color }}>
-                      {info.label}
+                      {t(info.label)}
                     </span>
-                    <span className="text-xs font-bold" style={{ color: "#C13F45" }}>
+                    <span className="text-xs font-bold" style={{ color: "var(--danger)" }}>
                       −{Number(offer.discount_pct)}%
                     </span>
                   </div>
-                  <p className="text-[11px] text-[#6B7280] flex items-center gap-1 mb-1.5">
+                  <p className="text-[11px] text-[var(--text-secondary)] flex items-center gap-1 mb-1.5">
                     <Calendar size={11} /> {fmtDate(offer.start_date)} – {fmtDate(offer.end_date)}
                   </p>
                   <div className="flex flex-wrap gap-1.5">
@@ -167,7 +168,7 @@ export default function ClearancePage() {
                       <span
                         key={it.shop_product_id}
                         className="text-[11px] px-2 py-0.5 rounded-full"
-                        style={{ background: "#E7E9F3", color: "#6B7280" }}
+                        style={{ background: "var(--bg-surface-alt)", color: "var(--text-secondary)" }}
                       >
                         {itemName(it.shop_product_id)}
                       </span>
@@ -176,9 +177,9 @@ export default function ClearancePage() {
                 </div>
                 <button
                   onClick={() => setRemoving(offer)}
-                  title="Remove offer"
+                  title={t("Remove offer")}
                   className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-                  style={{ background: "#FDEAEA", color: "#C13F45" }}
+                  style={{ background: "var(--danger-soft)", color: "var(--danger)" }}
                 >
                   <Trash2 size={14} />
                 </button>
@@ -203,21 +204,21 @@ export default function ClearancePage() {
 
       {removing && (
         <div className="ks-no-print fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[70] px-4">
-          <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-5">
-            <h3 className="ks-display font-bold mb-2">Remove &quot;{removing.name}&quot;?</h3>
-            <p className="text-sm text-[#6B7280] mb-4">
-              Items go back to their normal price immediately. This can&apos;t be undone.
+          <div className="bg-[var(--bg-surface)] rounded-3xl w-full max-w-sm shadow-2xl p-5">
+            <h3 className="ks-display font-bold mb-2">{t("Remove \"{name}\"?", { name: removing.name })}</h3>
+            <p className="text-sm text-[var(--text-secondary)] mb-4">
+              {t("Items go back to their normal price immediately. This can't be undone.")}
             </p>
             <div className="flex gap-2">
               <button onClick={() => setRemoving(null)} className="ks-btn-outline flex-1">
-                Cancel
+                {t("Cancel")}
               </button>
               <button
                 onClick={confirmRemove}
                 className="flex-1 rounded-full text-white text-sm font-semibold py-2.5"
-                style={{ background: "#C13F45" }}
+                style={{ background: "var(--danger-solid)" }}
               >
-                Remove
+                {t("Remove")}
               </button>
             </div>
           </div>

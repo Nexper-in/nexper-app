@@ -6,7 +6,7 @@ export default function Modal({ title, onClose, children }) {
   return (
     <div className="ks-no-print fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[70] px-4">
       <div
-        className="ks-card rounded-3xl w-full max-w-sm shadow-2xl max-h-[85vh] flex flex-col"
+        className="ks-card rounded-3xl w-full max-w-sm shadow-2xl max-h-[85dvh] flex flex-col"
         style={{ background: "var(--bg-surface)" }}
       >
         <div className="px-5 py-4 border-b flex items-center justify-between shrink-0" style={{ borderColor: "var(--border)" }}>

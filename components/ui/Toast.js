@@ -4,8 +4,8 @@ import { AlertTriangle, Receipt } from "lucide-react";
 
 export default function Toast({ msg, tone }) {
   const styles = {
-    err: { bg: "#E5484D", icon: <AlertTriangle size={16} /> },
-    warn: { bg: "#F2A93B", icon: <AlertTriangle size={16} /> },
+    err: { bg: "var(--danger-solid)", icon: <AlertTriangle size={16} /> },
+    warn: { bg: "var(--warn-solid)", icon: <AlertTriangle size={16} /> },
     ok: { bg: "var(--accent)", icon: <Receipt size={16} /> },
   }[tone || "ok"];
   return (

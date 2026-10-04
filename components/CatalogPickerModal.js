@@ -6,7 +6,9 @@ import Modal from "@/components/ui/Modal";
 import Field from "@/components/ui/Field";
 import { CATALOG_CATEGORIES, INDIAN_CATALOG } from "@/lib/indianCatalog";
 
+import { useT } from "@/lib/i18n";
 export default function CatalogPickerModal({ onClose, onImport, nextCode }) {
+  const t = useT();
   const [step, setStep] = useState("browse"); // browse | price | importing | done
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("All");
@@ -87,7 +89,7 @@ export default function CatalogPickerModal({ onClose, onImport, nextCode }) {
 
   if (step === "importing") {
     return (
-      <Modal title="Adding items…">
+      <Modal title={t("Adding items…")}>
         <div className="py-6 flex flex-col items-center gap-3">
           <Loader2 size={24} className="animate-spin" style={{ color: "var(--accent)" }} />
           <p className="text-sm font-semibold">
@@ -100,15 +102,15 @@ export default function CatalogPickerModal({ onClose, onImport, nextCode }) {
 
   if (step === "done") {
     return (
-      <Modal title="Import complete" onClose={onClose}>
+      <Modal title={t("Import complete")} onClose={onClose}>
         <div className="space-y-3">
-          <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: "#1F8A5F" }}>
-            <CheckCircle2 size={16} /> {results.ok} item{results.ok === 1 ? "" : "s"} added to inventory
+          <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: "var(--success)" }}>
+            <CheckCircle2 size={16} /> {t("{n} added to inventory", { n: results.ok })}
           </div>
           {results.failed.length > 0 && (
             <div className="space-y-1.5">
-              <p className="text-xs font-semibold flex items-center gap-1.5" style={{ color: "#C13F45" }}>
-                <AlertCircle size={13} /> {results.failed.length} failed
+              <p className="text-xs font-semibold flex items-center gap-1.5" style={{ color: "var(--danger)" }}>
+                <AlertCircle size={13} /> {t("{n} failed", { n: results.failed.length })}
               </p>
               {results.failed.map((f, i) => (
                 <p key={i} className="text-xs pl-4" style={{ color: "var(--text-secondary)" }}>
@@ -118,7 +120,7 @@ export default function CatalogPickerModal({ onClose, onImport, nextCode }) {
             </div>
           )}
           <button onClick={onClose} className="ks-btn-primary w-full mt-2">
-            Done
+            {t("Done")}
           </button>
         </div>
       </Modal>
@@ -127,10 +129,10 @@ export default function CatalogPickerModal({ onClose, onImport, nextCode }) {
 
   if (step === "price") {
     return (
-      <Modal title={`Set prices — ${selectedItems.length} items`} onClose={() => setStep("browse")}>
+      <Modal title={t("Set prices — {n} items", { n: selectedItems.length })} onClose={() => setStep("browse")}>
         <div className="space-y-3">
           <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
-            Set your selling price for each item. Opening stock defaults to 1 — adjust if you're stocking more.
+            {t("Set your selling price for each item. Opening stock defaults to 1 — adjust if you're stocking more.")}
           </p>
           <div className="space-y-2.5 max-h-96 overflow-y-auto ks-scroll pr-1">
             {selectedItems.map((i) => (
@@ -139,14 +141,14 @@ export default function CatalogPickerModal({ onClose, onImport, nextCode }) {
                 <input
                   type="number"
                   className="ks-input text-sm w-20 py-1.5"
-                  placeholder="Price ₹"
+                  placeholder={t("Price ₹")}
                   value={prices[i.name]?.price ?? ""}
                   onChange={(e) => setPrices((p) => ({ ...p, [i.name]: { ...p[i.name], price: e.target.value } }))}
                 />
                 <input
                   type="number"
                   className="ks-input text-sm w-16 py-1.5"
-                  placeholder="Stock"
+                  placeholder={t("Stock")}
                   value={prices[i.name]?.stock ?? ""}
                   onChange={(e) => setPrices((p) => ({ ...p, [i.name]: { ...p[i.name], stock: e.target.value } }))}
                 />
@@ -155,10 +157,10 @@ export default function CatalogPickerModal({ onClose, onImport, nextCode }) {
           </div>
           <div className="flex gap-2 pt-1">
             <button onClick={() => setStep("browse")} className="ks-btn-outline flex-1">
-              Back
+              {t("Back")}
             </button>
             <button onClick={handleImport} disabled={!readyToImport} className="ks-btn-primary flex-1 disabled:opacity-40">
-              Add {selectedItems.length} items
+              {t("Add {n} items", { n: selectedItems.length })}
             </button>
           </div>
         </div>
@@ -168,18 +170,17 @@ export default function CatalogPickerModal({ onClose, onImport, nextCode }) {
 
   // ── browse ──
   return (
-    <Modal title="Import from catalog" onClose={onClose}>
+    <Modal title={t("Import from catalog")} onClose={onClose}>
       <div className="space-y-3">
         <p className="text-xs flex items-start gap-1.5" style={{ color: "var(--text-secondary)" }}>
           <BookOpen size={13} className="shrink-0 mt-0.5" />
-          Pick common items to add instantly with category, unit and GST/HSN prefilled — rates shown are indicative,
-          double-check them for your actual products.
+          {t("Pick common items to add instantly with category, unit and GST/HSN prefilled — rates shown are indicative, double-check them for your actual products.")}
         </p>
 
         <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#B0A996]" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
           <input
-            placeholder="Search catalog..."
+            placeholder={t("Search catalog...")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="ks-input py-2"
@@ -219,13 +220,13 @@ export default function CatalogPickerModal({ onClose, onImport, nextCode }) {
                 </p>
               </div>
               <span className="ks-mono text-[10px] shrink-0" style={{ color: "var(--text-secondary)" }}>
-                {i.gst}% GST
+                {t("{n}% GST", { n: i.gst })}
               </span>
             </label>
           ))}
           {filtered.length === 0 && (
             <p className="text-xs text-center py-6" style={{ color: "var(--text-secondary)" }}>
-              No catalog items match &quot;{query}&quot;.
+              {t("No catalog items match \"{q}\".", { q: query })}
             </p>
           )}
         </div>
@@ -235,7 +236,7 @@ export default function CatalogPickerModal({ onClose, onImport, nextCode }) {
           disabled={selected.size === 0}
           className="ks-btn-primary w-full disabled:opacity-40"
         >
-          Continue with {selected.size} selected
+          {t("Continue with {n} selected", { n: selected.size })}
         </button>
       </div>
     </Modal>

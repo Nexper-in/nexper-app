@@ -8,6 +8,7 @@ import { billMessageText, whatsappLink } from "@/lib/messaging";
 import PrintBillContent from "@/components/PrintBillContent";
 import ModuleGuard from "@/components/ModuleGuard";
 
+import { useT } from "@/lib/i18n";
 export default function HistoryPage() {
   return (
     <ModuleGuard module="history">
@@ -17,6 +18,7 @@ export default function HistoryPage() {
 }
 
 function HistoryPageInner() {
+  const t = useT();
   const { supabase, activeShopId, activeShop } = useShop();
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -45,7 +47,7 @@ function HistoryPageInner() {
   if (loading) {
     return (
       <div className="pt-6 flex items-center gap-2 text-sm text-muted">
-        <Loader2 size={16} className="animate-spin" /> Loading history…
+        <Loader2 size={16} className="animate-spin" /> {t("Loading history…")}
       </div>
     );
   }
@@ -53,32 +55,32 @@ function HistoryPageInner() {
   return (
     <div className="pt-6">
       <div className="ks-card overflow-hidden overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="ks-stack w-full text-sm">
           <thead>
-            <tr className="text-left ks-mono text-[11px] uppercase tracking-wide text-[#6B7280] border-b border-[#E7E9F3]">
-              <th className="px-5 py-3 font-medium">Bill No.</th>
-              <th className="px-5 py-3 font-medium">Date</th>
-              <th className="px-5 py-3 font-medium">Customer</th>
-              <th className="px-5 py-3 font-medium">Items</th>
-              <th className="px-5 py-3 font-medium">Total</th>
+            <tr className="text-left ks-mono text-[11px] uppercase tracking-wide text-[var(--text-secondary)] border-b border-[var(--border)]">
+              <th className="px-5 py-3 font-medium">{t("Bill No.")}</th>
+              <th className="px-5 py-3 font-medium">{t("Date")}</th>
+              <th className="px-5 py-3 font-medium">{t("Customer")}</th>
+              <th className="px-5 py-3 font-medium">{t("Items")}</th>
+              <th className="px-5 py-3 font-medium">{t("Total")}</th>
               <th className="px-5 py-3 font-medium"></th>
             </tr>
           </thead>
           <tbody>
             {bills.map((b) => (
               <Fragment key={b.id}>
-                <tr className="border-b border-[#E7E9F3] cursor-pointer hover:bg-[#F8F9FD]" onClick={() => setOpen(open === b.id ? null : b.id)}>
+                <tr className="border-b border-[var(--border)] cursor-pointer hover:bg-[var(--bg-surface-alt)]" onClick={() => setOpen(open === b.id ? null : b.id)}>
                   <td className="px-5 py-3 ks-mono font-bold">{b.bill_no}</td>
-                  <td className="px-5 py-3 text-[#6B7280]">{new Date(b.date).toLocaleString("en-IN")}</td>
+                  <td className="px-5 py-3 text-[var(--text-secondary)]">{new Date(b.date).toLocaleString("en-IN")}</td>
                   <td className="px-5 py-3">
                     {b.customer_name || "—"}
                     {b.payment_type === "credit" && (
-                      <span className="ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "#FDEAF6", color: "#B5399C" }}>
-                        UDHAAR
+                      <span className="ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "var(--udhaar-soft)", color: "var(--udhaar)" }}>
+                        {t("UDHAAR")}
                       </span>
                     )}
                     {b.payment_type !== "credit" && b.payment_method && b.payment_method !== "cash" && (
-                      <span className="ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "#EEF0FE", color: "#4F46E5" }}>
+                      <span className="ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "var(--accent-soft-bg)", color: "var(--accent-soft-text)" }}>
                         {b.payment_method.toUpperCase()}
                       </span>
                     )}
@@ -93,27 +95,27 @@ function HistoryPageInner() {
                           doPrint(b);
                         }}
                         className="text-xs px-2.5 py-1.5 rounded-full font-semibold flex items-center gap-1"
-                        style={{ background: "#E7E9F3", color: "#000000" }}
+                        style={{ background: "var(--bg-surface-alt)", color: "var(--text-primary)" }}
                       >
-                        <Printer size={13} /> Print
+                        <Printer size={13} /> {t("Print")}
                       </button>
                       {b.customer_phone && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            window.open(whatsappLink(b.customer_phone, billMessageText(b, activeShop?.name, activeShop?.gstin)), "_blank");
+                            window.open(whatsappLink(b.customer_phone, billMessageText(b, activeShop?.name, activeShop?.gstin, activeShop?.whatsapp_group_url)), "_blank", "noopener,noreferrer");
                           }}
                           className="text-xs px-2.5 py-1.5 rounded-full font-semibold flex items-center gap-1 text-white"
                           style={{ background: "#25D366" }}
                         >
-                          <MessageCircle size={13} /> Send
+                          <MessageCircle size={13} /> {t("Send")}
                         </button>
                       )}
                     </div>
                   </td>
                 </tr>
                 {open === b.id && (
-                  <tr className="bg-[#F8F9FD] border-b border-[#E7E9F3]">
+                  <tr className="bg-[var(--bg-surface-alt)] border-b border-[var(--border)]">
                     <td colSpan={6} className="px-6 py-4">
                       <div className="space-y-1.5">
                         {(b.items || []).map((it, idx) => (
@@ -133,8 +135,8 @@ function HistoryPageInner() {
             ))}
             {bills.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-5 py-12 text-center text-[#6B7280] text-sm">
-                  🧾 No bills yet — generate one from the &quot;New Bill&quot; tab.
+                <td colSpan={6} className="px-5 py-12 text-center text-[var(--text-secondary)] text-sm">
+                  {t("🧾 No bills yet — generate one from the \"New Bill\" tab.")}
                 </td>
               </tr>
             )}
@@ -143,7 +145,7 @@ function HistoryPageInner() {
       </div>
       {printing && (
         <div className="ks-print-only">
-          <PrintBillContent bill={printing} storeName={activeShop?.name} gstin={activeShop?.gstin} />
+          <PrintBillContent bill={printing} storeName={activeShop?.name} gstin={activeShop?.gstin} groupUrl={activeShop?.whatsapp_group_url} />
         </div>
       )}
     </div>

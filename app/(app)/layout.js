@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { Menu, Loader2, WifiOff, RefreshCw } from "lucide-react";
 import AuthGuard from "@/components/AuthGuard";
 import { ShopProvider, useShop } from "@/components/ShopContext";
@@ -9,10 +10,13 @@ import BottomNav from "@/components/BottomNav";
 import { AddShopOnboarding } from "@/components/ShopOnboarding";
 import StoreSettingsModal from "@/components/StoreSettingsModal";
 import Toast from "@/components/ui/Toast";
-import { initials } from "@/lib/format";
+import AccountMenu from "@/components/AccountMenu";
+import StackTables from "@/components/StackTables";
+import { T, useT } from "@/lib/i18n";
 
 function OfflineBanner() {
   const { pendingCount } = useShop();
+  const t = useT();
   const [isOnline, setIsOnline] = useState(true);
   const [syncing, setSyncing] = useState(false);
 
@@ -44,7 +48,7 @@ function OfflineBanner() {
         style={{ background: "rgba(34,197,94,0.9)", color: "#fff" }}
       >
         <RefreshCw size={13} className="animate-spin" />
-        Syncing {pendingCount} offline bill{pendingCount === 1 ? "" : "s"}…
+        {pendingCount === 1 ? t("Syncing {n} offline bill…", { n: pendingCount }) : t("Syncing {n} offline bills…", { n: pendingCount })}
       </div>
     );
   }
@@ -55,26 +59,46 @@ function OfflineBanner() {
       style={{ background: "rgba(220,38,38,0.9)", color: "#fff" }}
     >
       <WifiOff size={13} />
-      Offline
-      {pendingCount > 0 && <span>· {pendingCount} bill{pendingCount === 1 ? "" : "s"} will sync when reconnected</span>}
+      {t("Offline")}
+      {pendingCount > 0 && (
+        <span>· {pendingCount === 1 ? t("{n} bill will sync when reconnected", { n: pendingCount }) : t("{n} bills will sync when reconnected", { n: pendingCount })}</span>
+      )}
     </div>
   );
 }
 
-function AppShell({ children }) {
-  const { shops, activeShop, addShop, loading, toast, user } = useShop();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showStoreSettings, setShowStoreSettings] = useState(false);
+// Screen names in the phone top bar; the same words as the menu and tabs.
+const SCREEN_TITLES = {
+  "/billing": T("New bill"),
+  "/inventory": T("Stock"),
+  "/credit": T("Udhaar"),
+  "/history": T("Bills"),
+  "/dayclose": T("Day close"),
+  "/expenses": T("Expenses"),
+  "/cashbook": T("Cashbook"),
+  "/reports": T("Reports & GST"),
+  "/suppliers": T("Suppliers"),
+  "/purchase-orders": T("Purchase orders"),
+  "/expiry": T("Expiry"),
+  "/offers": T("Offers & group"),
+  "/clearance": T("Clearance offers"),
+  "/inventory/config": T("Batches & barcodes"),
+  "/staff": T("Staff"),
+  "/upgrade": T("Nexper Pro"),
+};
 
-  // The shop's chosen theme drives every color token in globals.css via
-  // [data-theme] on <html> — see StoreSettingsModal for the picker. Reset
-  // to the default (no attribute = "light") once signed out.
+function AppShell({ children }) {
+  const pathname = usePathname();
+  const t = useT();
+  const { shops, activeShop, addShop, loading, toast, platform } = useShop();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const router = useRouter();
+  const [showStoreSettings, setShowStoreSettings] = useState(false);
   useEffect(() => {
-    document.documentElement.dataset.theme = activeShop?.theme || "light";
-    return () => {
-      delete document.documentElement.dataset.theme;
-    };
-  }, [activeShop?.theme]);
+    const open = () => setShowStoreSettings(true);
+    window.addEventListener("nexper:open-settings", open);
+    return () => window.removeEventListener("nexper:open-settings", open);
+  }, []);
 
   if (loading) {
     return (
@@ -85,30 +109,45 @@ function AppShell({ children }) {
   }
 
   if (shops.length === 0) {
-    return <AddShopOnboarding onAdd={addShop} />;
+    // A new owner lands straight on New bill (starter items are ready).
+    return (
+      <AddShopOnboarding
+        onAdd={async (name, type, opts) => {
+          await addShop(name, type, opts);
+          router.replace("/billing");
+        }}
+      />
+    );
+  }
+
+  if (platform.maintenance.enabled) {
+    return (
+      <main className="min-h-screen flex items-center justify-center px-6 text-center">
+        <div className="max-w-sm">
+          <p className="ks-wordmark text-[32px] mb-4">
+            Ne<span className="ks-grad-text">x</span>per
+          </p>
+          <p className="text-sm" style={{ color: "var(--text-secondary)" }}>{platform.maintenance.message}</p>
+        </div>
+      </main>
+    );
   }
 
   return (
     <div className="min-h-screen flex">
       <OfflineBanner />
-      <div className="ks-no-print ks-mobile-bar ks-topbar fixed top-0 left-0 right-0 z-30 items-center justify-between px-4 py-3 shadow-sm">
-        <div className="flex items-center gap-2">
-          <span
-            className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0"
-            style={{ background: "var(--accent)", color: "var(--accent-contrast)" }}
-          >
-            {initials(user)}
-          </span>
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="w-8 h-8 flex items-center justify-center"
-            style={{ color: "var(--text-secondary)" }}
-          >
-            <Menu size={20} />
-          </button>
-        </div>
-        <span className="text-sm font-bold truncate px-2">{activeShop?.name}</span>
-        <div style={{ width: 32 }} />
+      <StackTables />
+      <div className="ks-no-print ks-mobile-bar ks-topbar fixed top-0 left-0 right-0 z-30 items-center justify-between gap-2 px-3 py-2">
+        <button
+          onClick={() => setSidebarOpen(true)}
+          aria-label={t("Open menu")}
+          className="w-9 h-9 flex items-center justify-center rounded-full shrink-0"
+          style={{ color: "var(--text-secondary)" }}
+        >
+          <Menu size={20} />
+        </button>
+        <span className="ks-display text-[15px] font-bold truncate px-1 flex-1 text-center">{SCREEN_TITLES[pathname] ? t(SCREEN_TITLES[pathname]) : activeShop?.name}</span>
+        <AccountMenu onOpenSettings={() => setShowStoreSettings(true)} />
       </div>
 
       {sidebarOpen && (
@@ -127,7 +166,20 @@ function AppShell({ children }) {
       {showStoreSettings && <StoreSettingsModal onClose={() => setShowStoreSettings(false)} />}
 
       <div className="ks-main flex-1 min-w-0">
-        <main className="flex-1 min-w-0 ks-page-pad ks-page-bottom-safe max-w-5xl">{children}</main>
+        <div className="ks-no-print ks-desk-bar ks-page-pad max-w-5xl items-center justify-end">
+          <AccountMenu onOpenSettings={() => setShowStoreSettings(true)} />
+        </div>
+        <main className="flex-1 min-w-0 ks-page-pad ks-page-bottom-safe max-w-5xl">
+          {platform.announcement.enabled && platform.announcement.text && (
+            <p
+              className="text-xs font-semibold rounded-xl px-3 py-2 mt-3"
+              style={platform.announcement.tone === "warn" ? { background: "var(--warn-soft)", color: "var(--warn)" } : { background: "var(--accent-soft-bg)", color: "var(--accent-soft-text)" }}
+            >
+              {platform.announcement.text}
+            </p>
+          )}
+          {children}
+        </main>
       </div>
 
       {toast && <Toast msg={toast.msg} tone={toast.tone} />}

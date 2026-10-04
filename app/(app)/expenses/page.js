@@ -10,6 +10,7 @@ import MiniBarChart from "@/components/MiniBarChart";
 import { rupee } from "@/lib/format";
 import ModuleGuard from "@/components/ModuleGuard";
 
+import { T, useT } from "@/lib/i18n";
 export default function ExpensesPage() {
   return (
     <ModuleGuard module="expenses">
@@ -21,6 +22,7 @@ export default function ExpensesPage() {
 const ordinal = (n) => (n === 1 ? "st" : n === 2 ? "nd" : n === 3 ? "rd" : "th");
 
 function ExpensesPageInner() {
+  const t = useT();
   const { supabase, activeShopId, showToast } = useShop();
   const [tab, setTab] = useState("log"); // 'log' | 'fixed'
   const [expenses, setExpenses] = useState([]);
@@ -46,8 +48,8 @@ function ExpensesPageInner() {
   }, [load]);
 
   const todaysTotal = useMemo(() => {
-    const t = new Date().toDateString();
-    return expenses.filter((e) => new Date(e.date).toDateString() === t).reduce((s, e) => s + e.amount, 0);
+    const today = new Date().toDateString();
+    return expenses.filter((e) => new Date(e.date).toDateString() === today).reduce((s, e) => s + e.amount, 0);
   }, [expenses]);
 
   const monthTotal = useMemo(() => {
@@ -88,7 +90,7 @@ function ExpensesPageInner() {
     if (error) throw error;
     setExpenses((prev) => [data, ...prev]);
     setShowAdd(false);
-    showToast("Expense logged");
+    showToast(t("Expense logged"));
   }
 
   async function saveFixedExpense(fields) {
@@ -96,7 +98,7 @@ function ExpensesPageInner() {
       const { data, error } = await supabase.from("fixed_expenses").update(fields).eq("id", fixedModal.editing.id).select().single();
       if (error) throw error;
       setFixedExpenses((prev) => prev.map((f) => (f.id === data.id ? data : f)).sort((a, b) => a.due_day - b.due_day));
-      showToast("Fixed expense updated");
+      showToast(t("Fixed expense updated"));
     } else {
       const { data, error } = await supabase
         .from("fixed_expenses")
@@ -105,7 +107,7 @@ function ExpensesPageInner() {
         .single();
       if (error) throw error;
       setFixedExpenses((prev) => [...prev, data].sort((a, b) => a.due_day - b.due_day));
-      showToast("Fixed expense added");
+      showToast(t("Fixed expense added"));
     }
     setFixedModal(null);
   }
@@ -117,30 +119,30 @@ function ExpensesPageInner() {
       return;
     }
     setFixedExpenses((prev) => prev.filter((f) => f.id !== id));
-    showToast("Fixed expense removed");
+    showToast(t("Fixed expense removed"));
   }
 
   if (loading) {
     return (
       <div className="pt-6 flex items-center gap-2 text-sm text-muted">
-        <Loader2 size={16} className="animate-spin" /> Loading expenses…
+        <Loader2 size={16} className="animate-spin" /> {t("Loading expenses…")}
       </div>
     );
   }
 
   return (
     <div className="pt-6">
-      <div className="flex gap-1.5 mb-4 bg-[#F1EEE6] p-1 rounded-full w-fit">
+      <div className="flex gap-1.5 mb-4 bg-[var(--bg-surface-alt)] p-1 rounded-full w-fit">
         {[
-          { v: "log", l: "Expense log" },
-          { v: "fixed", l: "Fixed monthly costs" },
-        ].map((t) => (
+          { v: "log", l: T("Expense log") },
+          { v: "fixed", l: T("Fixed monthly costs") },
+        ].map((tb) => (
           <button
-            key={t.v}
-            onClick={() => setTab(t.v)}
-            className={`text-xs font-semibold px-3.5 py-1.5 rounded-full transition-colors ${tab === t.v ? "bg-[#000000] text-white" : "text-[#6B7280]"}`}
+            key={tb.v}
+            onClick={() => setTab(tb.v)}
+            className={`text-xs font-semibold px-3.5 py-1.5 rounded-full transition-colors ${tab === tb.v ? "bg-[var(--strong)] text-[var(--on-strong)]" : "text-[var(--text-secondary)]"}`}
           >
-            {t.l}
+            {t(tb.l)}
           </button>
         ))}
       </div>
@@ -149,13 +151,13 @@ function ExpensesPageInner() {
         <>
           <div className="grid grid-cols-2 gap-3.5 mb-4">
             <div className="ks-card p-4">
-              <div className="text-[11px] uppercase tracking-wide text-[#6B7280] font-semibold">Today&apos;s expenses</div>
-              <div className="ks-display text-2xl font-bold mt-0.5" style={{ color: "#C13F45" }}>
+              <div className="text-[11px] uppercase tracking-wide text-[var(--text-secondary)] font-semibold">{t("Today's expenses")}</div>
+              <div className="ks-display text-2xl font-bold mt-0.5" style={{ color: "var(--danger)" }}>
                 {rupee(todaysTotal)}
               </div>
             </div>
             <div className="ks-card p-4">
-              <div className="text-[11px] uppercase tracking-wide text-[#6B7280] font-semibold">This month</div>
+              <div className="text-[11px] uppercase tracking-wide text-[var(--text-secondary)] font-semibold">{t("This month")}</div>
               <div className="ks-display text-2xl font-bold mt-0.5">{rupee(monthTotal)}</div>
             </div>
           </div>
@@ -164,17 +166,17 @@ function ExpensesPageInner() {
             <div className="grid md:grid-cols-2 gap-3.5 mb-4">
               {last6Months.some((m) => m.value > 0) && (
                 <div className="ks-card p-4">
-                  <p className="text-[11px] uppercase tracking-wide text-[#6B7280] font-semibold mb-3">Monthly trend</p>
+                  <p className="text-[11px] uppercase tracking-wide text-[var(--text-secondary)] font-semibold mb-3">{t("Monthly trend")}</p>
                   <MiniBarChart
                     data={last6Months}
-                    color="#C13F45"
+                    color="var(--danger)"
                     formatValue={(v) => `₹${v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}`}
                   />
                 </div>
               )}
               {monthCategoryBreakdown.length > 0 && (
                 <div className="ks-card p-4">
-                  <p className="text-[11px] uppercase tracking-wide text-[#6B7280] font-semibold mb-3">This month by category</p>
+                  <p className="text-[11px] uppercase tracking-wide text-[var(--text-secondary)] font-semibold mb-3">{t("This month by category")}</p>
                   <div className="space-y-2.5">
                     {monthCategoryBreakdown.map(([cat, total]) => {
                       const c = categoryColor(cat);
@@ -183,9 +185,9 @@ function ExpensesPageInner() {
                         <div key={cat}>
                           <div className="flex items-center justify-between text-sm mb-1">
                             <span className="font-semibold" style={{ color: c.text }}>{cat}</span>
-                            <span className="ks-mono text-xs text-[#6B7280]">{rupee(total)}</span>
+                            <span className="ks-mono text-xs text-[var(--text-secondary)]">{rupee(total)}</span>
                           </div>
-                          <div className="h-2 rounded-full bg-[#E7E9F3] overflow-hidden">
+                          <div className="h-2 rounded-full bg-[var(--bg-surface-alt)] overflow-hidden">
                             <div className="h-full rounded-full" style={{ width: `${pct}%`, background: c.text }} />
                           </div>
                         </div>
@@ -199,37 +201,37 @@ function ExpensesPageInner() {
 
           <div className="flex justify-end mb-3">
             <button onClick={() => setShowAdd(true)} className="ks-btn-primary flex items-center gap-1.5">
-              <Plus size={16} /> Log expense
+              <Plus size={16} /> {t("Log expense")}
             </button>
           </div>
 
           <div className="ks-card overflow-hidden overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="ks-stack w-full text-sm">
               <thead>
-                <tr className="text-left ks-mono text-[11px] uppercase tracking-wide text-[#6B7280] border-b border-[#E7E9F3]">
-                  <th className="px-5 py-3 font-medium">Date</th>
-                  <th className="px-5 py-3 font-medium">Category</th>
-                  <th className="px-5 py-3 font-medium">Note</th>
-                  <th className="px-5 py-3 font-medium">Amount</th>
+                <tr className="text-left ks-mono text-[11px] uppercase tracking-wide text-[var(--text-secondary)] border-b border-[var(--border)]">
+                  <th className="px-5 py-3 font-medium">{t("Date")}</th>
+                  <th className="px-5 py-3 font-medium">{t("Category")}</th>
+                  <th className="px-5 py-3 font-medium">{t("Note")}</th>
+                  <th className="px-5 py-3 font-medium">{t("Amount")}</th>
                 </tr>
               </thead>
               <tbody>
                 {expenses.map((e) => (
-                  <tr key={e.id} className="border-b border-[#E7E9F3] last:border-0">
-                    <td className="px-5 py-3 text-[#6B7280]">{new Date(e.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}</td>
+                  <tr key={e.id} className="border-b border-[var(--border)] last:border-0">
+                    <td className="px-5 py-3 text-[var(--text-secondary)]">{new Date(e.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}</td>
                     <td className="px-5 py-3">
                       <CategoryChip category={e.category} />
                     </td>
                     <td className="px-5 py-3">{e.note || "—"}</td>
-                    <td className="px-5 py-3 ks-mono font-bold" style={{ color: "#C13F45" }}>
+                    <td className="px-5 py-3 ks-mono font-bold" style={{ color: "var(--danger)" }}>
                       −{rupee(e.amount)}
                     </td>
                   </tr>
                 ))}
                 {expenses.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="px-5 py-10 text-center text-[#6B7280] text-sm">
-                      No expenses logged yet — rent, electricity, salaries, etc.
+                    <td colSpan={4} className="px-5 py-10 text-center text-[var(--text-secondary)] text-sm">
+                      {t("No expenses logged yet — rent, electricity, salaries, etc.")}
                     </td>
                   </tr>
                 )}
@@ -240,17 +242,17 @@ function ExpensesPageInner() {
       ) : (
         <>
           <div className="ks-card p-4 mb-4 w-fit">
-            <div className="text-[11px] uppercase tracking-wide text-[#6B7280] font-semibold">Fixed costs, every month</div>
+            <div className="text-[11px] uppercase tracking-wide text-[var(--text-secondary)] font-semibold">{t("Fixed costs, every month")}</div>
             <div className="ks-display text-2xl font-bold mt-0.5">{rupee(fixedTotal)}</div>
           </div>
 
           <div className="flex justify-end mb-3">
             <button onClick={() => setFixedModal({ editing: null })} className="ks-btn-primary flex items-center gap-1.5">
-              <Plus size={16} /> Add fixed expense
+              <Plus size={16} /> {t("Add fixed expense")}
             </button>
           </div>
 
-          <div className="ks-card overflow-hidden divide-y divide-[#E7E9F3]">
+          <div className="ks-card overflow-hidden divide-y divide-[var(--border)]">
             {fixedExpenses.map((exp) => (
               <div key={exp.id} className="flex items-center justify-between gap-3 px-5 py-3.5">
                 <div className="min-w-0">
@@ -258,25 +260,24 @@ function ExpensesPageInner() {
                     <span className="font-semibold text-sm">{exp.name}</span>
                     <CategoryChip category={exp.category} />
                   </div>
-                  <p className="text-xs text-[#6B7280] mt-0.5">
-                    Due on the {exp.due_day}
-                    {ordinal(exp.due_day)} of each month
+                  <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+                    {t("Due on day {day} of each month", { day: exp.due_day })}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <span className="ks-mono font-bold">{rupee(exp.amount)}</span>
                   <button
                     onClick={() => setFixedModal({ editing: exp })}
-                    className="w-7 h-7 rounded-full flex items-center justify-center bg-[#E7E9F3] text-[#6B7280]"
-                    aria-label="Edit expense"
+                    className="w-7 h-7 rounded-full flex items-center justify-center bg-[var(--bg-surface-alt)] text-[var(--text-secondary)]"
+                    aria-label={t("Edit expense")}
                   >
                     <Pencil size={13} />
                   </button>
                   <button
                     onClick={() => deleteFixedExpense(exp.id)}
                     className="w-7 h-7 rounded-full flex items-center justify-center"
-                    style={{ background: "#FDEAEA", color: "#C13F45" }}
-                    aria-label="Remove expense"
+                    style={{ background: "var(--danger-soft)", color: "var(--danger)" }}
+                    aria-label={t("Remove expense")}
                   >
                     <Trash2 size={13} />
                   </button>
@@ -284,8 +285,8 @@ function ExpensesPageInner() {
               </div>
             ))}
             {fixedExpenses.length === 0 && (
-              <p className="px-5 py-10 text-center text-[#6B7280] text-sm">
-                No fixed costs set up yet — rent, salaries, subscriptions, loan EMIs.
+              <p className="px-5 py-10 text-center text-[var(--text-secondary)] text-sm">
+                {t("No fixed costs set up yet — rent, salaries, subscriptions, loan EMIs.")}
               </p>
             )}
           </div>

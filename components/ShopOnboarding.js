@@ -5,14 +5,18 @@ import { Loader2 } from "lucide-react";
 import Field from "@/components/ui/Field";
 import ShopTypeIcon from "@/components/ShopTypeIcon";
 import { SHOP_TYPES } from "@/lib/shopTypes";
+import { useT } from "@/lib/i18n";
+import { useShop } from "@/components/ShopContext";
 
 // One owner, one shop, chosen right here at signup — there's no "add
 // another shop" flow, so this only ever renders once, for a brand-new
 // account with zero shops (see app/(app)/layout.js).
 export function AddShopOnboarding({ onAdd }) {
+  const t = useT();
+  const { platform } = useShop();
   const [type, setType] = useState("kirana");
   const [name, setName] = useState("");
-  const [seedTemplate, setSeedTemplate] = useState(false);
+  const [seedTemplate, setSeedTemplate] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -22,7 +26,9 @@ export function AddShopOnboarding({ onAdd }) {
     try {
       await onAdd(name.trim(), type, { seedTemplate });
     } catch (err) {
-      setError(err.message);
+      // The database refuses new shops when sign-up is invite-only or closed
+      // (platform admin page): say so in plain words.
+      setError(/row-level security/i.test(err.message) ? platform.signup.message || t("Nexper is invite-only right now. Sign up with the email you were invited on.") : err.message);
       setSaving(false);
     }
   }
@@ -31,45 +37,48 @@ export function AddShopOnboarding({ onAdd }) {
     <main className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-6 text-center">
-          <h1 className="ks-display text-2xl font-bold">Set up your shop</h1>
-          <p className="text-sm text-muted mt-1">One last step before you start billing.</p>
+          <p className="ks-wordmark text-[32px] mb-4">
+            Ne<span className="ks-grad-text">x</span>per
+          </p>
+          <h1 className="ks-display text-2xl font-bold">{t("Set up your shop")}</h1>
+          <p className="text-sm text-muted mt-1">{t("One last step before you start billing.")}</p>
         </div>
         <div className="ks-card p-6 space-y-3.5">
-          <Field label="Business type">
+          <Field label={t("Business type")}>
             <div className="grid grid-cols-2 gap-2">
-              {SHOP_TYPES.map((t) => (
+              {SHOP_TYPES.map((st) => (
                 <button
-                  key={t.id}
+                  key={st.id}
                   type="button"
-                  onClick={() => setType(t.id)}
+                  onClick={() => setType(st.id)}
                   className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold border-2 transition-colors ${
-                    type === t.id ? "border-[#4F46E5] bg-[#EEF0FE] text-[#4F46E5]" : "border-[#E2E4F0] text-[#6B7280]"
+                    type === st.id ? "border-[var(--accent)] bg-[var(--accent-soft-bg)] text-[var(--accent-soft-text)]" : "border-[var(--border)] text-[var(--text-secondary)]"
                   }`}
                 >
-                  <ShopTypeIcon type={t.id} size={15} /> {t.label}
+                  <ShopTypeIcon type={st.id} size={15} /> {t(st.label)}
                 </button>
               ))}
             </div>
           </Field>
-          <Field label="Shop name">
+          <Field label={t("Shop name")}>
             <input
               className="ks-input"
-              placeholder="e.g. Sharma General Store"
+              placeholder={t("e.g. Sharma General Store")}
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
           </Field>
-          <label className="flex items-start gap-2 text-xs text-[#6B7280] cursor-pointer">
+          <label className="flex items-start gap-2 text-xs text-[var(--text-secondary)] cursor-pointer">
             <input
               type="checkbox"
               className="mt-0.5"
               checked={seedTemplate}
               onChange={(e) => setSeedTemplate(e.target.checked)}
             />
-            Add a few starter items for this business type, so it&apos;s ready to use right away.
+            {t("Add 10 starter items for this business type so you can bill right away. You can change prices and stock any time.")}
           </label>
           {error && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>
+            <p className="text-sm text-[var(--danger)] bg-[var(--danger-soft)] border border-[var(--danger-line)] rounded-lg px-3 py-2">{error}</p>
           )}
           <button
             disabled={!name.trim() || saving}
@@ -77,7 +86,7 @@ export function AddShopOnboarding({ onAdd }) {
             className="ks-btn-primary w-full flex items-center justify-center gap-2"
           >
             {saving && <Loader2 size={16} className="animate-spin" />}
-            Create shop
+            {t("Create shop")}
           </button>
         </div>
       </div>

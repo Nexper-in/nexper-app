@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { readJson, serverError } from "@/lib/apiSafe";
 import { requireAdmin, logAdminAction } from "@/lib/supabaseAdmin";
 import { MODULES } from "@/lib/modules";
 import { isRateLimited } from "@/lib/rateLimit";
@@ -17,7 +18,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Too many attempts — wait a minute and try again" }, { status: 429 });
   }
 
-  const { memberId, name, permissions, newPin } = await request.json();
+  const { memberId, name, permissions, newPin } = await readJson(request);
   if (!memberId) return NextResponse.json({ error: "memberId is required" }, { status: 400 });
   if (newPin && String(newPin).length < 6) {
     return NextResponse.json({ error: "PIN must be at least 6 digits" }, { status: 400 });
@@ -28,7 +29,7 @@ export async function POST(request) {
     .select("id, user_id")
     .eq("id", memberId)
     .maybeSingle();
-  if (targetError) return NextResponse.json({ error: targetError.message }, { status: 500 });
+  if (targetError) return serverError(targetError, "api");
   if (!target) return NextResponse.json({ error: "Member not found" }, { status: 404 });
 
   const updates = {};
@@ -37,12 +38,12 @@ export async function POST(request) {
 
   if (Object.keys(updates).length > 0) {
     const { error: updateError } = await admin.from("shop_members").update(updates).eq("id", memberId);
-    if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
+    if (updateError) return serverError(updateError, "api");
   }
 
   if (newPin) {
     const { error: pinError } = await admin.auth.admin.updateUserById(target.user_id, { password: String(newPin) });
-    if (pinError) return NextResponse.json({ error: pinError.message }, { status: 500 });
+    if (pinError) return serverError(pinError, "api");
   }
 
   await logAdminAction(admin, caller.id, caller.email, "update_member", "member", memberId, { name: updates.name, pinReset: !!newPin });
