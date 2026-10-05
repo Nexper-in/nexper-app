@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Download, AlertTriangle, FileBarChart2, FileJson } from "lucide-react";
+import { Loader2, Download, Mail, AlertTriangle, FileBarChart2, FileJson } from "lucide-react";
 import { useShop } from "@/components/ShopContext";
 import { fetchShopItems } from "@/lib/products";
 import { rupee } from "@/lib/format";
@@ -40,6 +40,7 @@ function ReportsPageInner() {
   const [loading, setLoading] = useState(true);
   const [hsnDrafts, setHsnDrafts] = useState({});
   const [savingHsn, setSavingHsn] = useState({});
+  const [emailing, setEmailing] = useState(false);
 
   const load = useCallback(async () => {
     if (!activeShopId) return;
@@ -94,6 +95,25 @@ function ReportsPageInner() {
 
   function downloadCsv() {
     downloadFile(`gst-summary-${month}.csv`, summaryToCsv(summary), "text/csv");
+  }
+
+  async function emailReport() {
+    setEmailing(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch("/api/reports/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ month, shopId: activeShopId }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || "Email could not be sent.");
+      showToast(t("Report emailed to {email}", { email: json.to }));
+    } catch (err) {
+      showToast(err.message, "err");
+    } finally {
+      setEmailing(false);
+    }
   }
 
   function downloadJson() {
@@ -199,6 +219,13 @@ function ReportsPageInner() {
             className="ks-btn-primary inline-flex items-center gap-2 disabled:opacity-40"
           >
             <Download size={15} /> {t("Download CSV")}
+          </button>
+          <button
+            onClick={emailReport}
+            disabled={summary.length === 0 || emailing}
+            className="ks-btn-primary inline-flex items-center gap-2 ml-2 disabled:opacity-40"
+          >
+            {emailing ? <Loader2 size={15} className="animate-spin" /> : <Mail size={15} />} {t("Email me this report")}
           </button>
         </div>
       ) : !hasFeature(activeShop, "gstr1_json") ? (

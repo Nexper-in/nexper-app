@@ -149,7 +149,9 @@ the app can be deployed before the SQL is run. Current pending list is in
 - Never put user text into HTML you build yourself (print windows,
   `document.write`, `dangerouslySetInnerHTML`): escape it.
 - Don't send shop data (UPI IDs, amounts, customers) to third-party services.
-  QR codes are made in the browser.
+  QR codes are made in the browser. One documented exception: "Email me this
+  report" (`app/api/reports/email`) sends the owner's own month summary to the
+  owner's own address through Resend, only on their click.
 - Headers and CSP are in `next.config.js`. A new outside host (script, font,
   API) must be added there on purpose.
 - `npm test`, `npm audit --omit=dev` must pass.

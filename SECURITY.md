@@ -45,3 +45,12 @@ Nothing here contains secrets.
 ## How to re-check
 
 `npm test`, `node tools/check-i18n.mjs`, `npm audit --omit=dev`, `npx next build`. GitHub runs all four on every push.
+
+## Email me this report (accepted exception)
+
+`app/api/reports/email` sends the signed-in owner's own monthly GST summary
+(CSV) to their own sign-in address through Resend. The recipient is never taken
+from the request, the caller must be a member of the shop, and it is rate
+limited (5 per 10 minutes). Resend therefore sees that shop's totals. This is a
+deliberate exception to "no shop data to third parties"; it only happens on the
+owner's click. Needs `RESEND_API_KEY` (Vercel Secret) and optional `EMAIL_FROM`.

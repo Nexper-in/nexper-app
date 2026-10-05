@@ -738,5 +738,7 @@
   "You already have a department with that name.": "ആ പേരിൽ വിഭാഗം ഇതിനകം ഉണ്ട്.",
   "Tea shop / Canteen / Hotel": "ചായക്കട / കാന്റീൻ / ഹോട്ടൽ",
   "This week": "ഈ ആഴ്ച",
-  "Last month": "കഴിഞ്ഞ മാസം"
+  "Last month": "കഴിഞ്ഞ മാസം",
+  "Report emailed to {email}": "റിപ്പോർട്ട് {email} ലേക്ക് ഇമെയിൽ ചെയ്തു",
+  "Email me this report": "ഈ റിപ്പോർട്ട് എനിക്ക് ഇമെയിൽ ചെയ്യൂ"
 }

@@ -738,5 +738,7 @@
   "You already have a department with that name.": "ఆ పేరుతో విభాగం ఇప్పటికే ఉంది.",
   "Tea shop / Canteen / Hotel": "టీ షాప్ / క్యాంటీన్ / హోటల్",
   "This week": "ఈ వారం",
-  "Last month": "గత నెల"
+  "Last month": "గత నెల",
+  "Report emailed to {email}": "రిపోర్ట్ {email} కు ఇమెయిల్ చేయబడింది",
+  "Email me this report": "ఈ రిపోర్ట్‌ను నాకు ఇమెయిల్ చేయండి"
 }
