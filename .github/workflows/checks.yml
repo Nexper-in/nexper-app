@@ -11,7 +11,7 @@ jobs:
       - run: npm test
       - run: npm run test:db
       - run: node tools/check-i18n.mjs
-      - run: npm audit --omit=dev --audit-level=high
+      - run: node tools/audit.mjs
       - run: npx next build
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co

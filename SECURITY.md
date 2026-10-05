@@ -54,3 +54,9 @@ from the request, the caller must be a member of the shop, and it is rate
 limited (5 per 10 minutes). Resend therefore sees that shop's totals. This is a
 deliberate exception to "no shop data to third parties"; it only happens on the
 owner's click. Needs `RESEND_API_KEY` (Vercel Secret) and optional `EMAIL_FROM`.
+## Accepted audit finding (2026-10-05)
+
+`braces` (GHSA-vfj7-8cjw-p6xm, high, DoS on deeply nested glob patterns) has no
+fixed release. It is only used by build tooling on our own config, never on user
+input. CI uses `tools/audit.mjs`, which fails on any other high/critical finding.
+Re-check when braces publishes a fix.

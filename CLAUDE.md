@@ -154,7 +154,7 @@ the app can be deployed before the SQL is run. Current pending list is in
   owner's own address through Resend, only on their click.
 - Headers and CSP are in `next.config.js`. A new outside host (script, font,
   API) must be added there on purpose.
-- `npm test`, `npm audit --omit=dev` must pass.
+- `npm test` and `node tools/audit.mjs` (npm audit with a short, dated allow-list) must pass.
 
 ## Before you push
 
