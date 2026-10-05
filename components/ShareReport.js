@@ -6,7 +6,7 @@ import { useShop } from "@/components/ShopContext";
 import { useT } from "@/lib/i18n";
 import { rupee } from "@/lib/format";
 import { whatsappLink } from "@/lib/messaging";
-import { istDateString, periodRange, summarizePeriod, periodText, PERIOD_TITLES } from "@/lib/periodReport";
+import { istDateString, periodRange, fetchPeriodSummary, periodText, PERIOD_TITLES } from "@/lib/periodReport";
 
 // Daily / weekly / monthly sales + expenses summary, sent in one tap by
 // email (to the owner's own address) or WhatsApp (owner picks the chat).
@@ -15,8 +15,7 @@ export default function ShareReport() {
   const { supabase, activeShopId, activeShop, showToast } = useShop();
   const [period, setPeriod] = useState("day");
   const [date, setDate] = useState(istDateString());
-  const [bills, setBills] = useState([]);
-  const [expenses, setExpenses] = useState([]);
+  const [data, setData] = useState({ s: null, prev: null });
   const [loading, setLoading] = useState(true);
   const [emailing, setEmailing] = useState(false);
 
@@ -26,22 +25,18 @@ export default function ShareReport() {
     if (!activeShopId) return;
     let live = true;
     setLoading(true);
-    Promise.all([
-      supabase.from("bills").select("total, payment_type, payment_method").eq("shop_id", activeShopId).gte("date", range.start).lt("date", range.end),
-      supabase.from("expenses").select("amount, category").eq("shop_id", activeShopId).gte("date", range.start).lt("date", range.end),
-    ]).then(([b, e]) => {
+    fetchPeriodSummary(supabase, activeShopId, period, date).then((res) => {
       if (!live) return;
-      setBills(b.data || []);
-      setExpenses(e.data || []);
+      setData({ s: res.s, prev: res.prev });
       setLoading(false);
     });
     return () => { live = false; };
-  }, [supabase, activeShopId, range]);
+  }, [supabase, activeShopId, period, date]);
 
-  const s = useMemo(() => summarizePeriod(bills, expenses), [bills, expenses]);
+  const s = data.s || { bills: 0, sales: 0, cash: 0, digital: 0, credit: 0, expenses: 0, byCategory: [], net: 0, topItems: [] };
   const title = PERIOD_TITLES[period];
   const titleLabel = period === "day" ? t("Daily report") : period === "week" ? t("Weekly report") : t("Monthly report");
-  const text = periodText({ shopName: activeShop?.name || "Shop", title, label: range.label, s });
+  const text = periodText({ shopName: activeShop?.name || "Shop", title, label: range.label, s, prev: data.prev, period });
 
   async function emailIt() {
     setEmailing(true);
@@ -97,6 +92,8 @@ export default function ShareReport() {
             <Row label={t("Cash")} value={rupee(s.cash)} sub />
             <Row label={t("UPI/card")} value={rupee(s.digital)} sub />
             <Row label={t("Udhaar")} value={rupee(s.credit)} sub />
+            {s.topItems.length > 0 && <p className="ks-mono text-[11px] uppercase tracking-wide pt-2" style={{ color: "var(--text-secondary)" }}>{t("Top sellers")}</p>}
+            {s.topItems.map((i) => <Row key={i.name} label={`${i.name} × ${i.qty}`} value={rupee(i.amount)} sub />)}
             <Row label={t("Expenses")} value={rupee(s.expenses)} />
             {s.byCategory.map((c) => <Row key={c.category} label={c.category} value={rupee(c.amount)} sub />)}
             <div className="border-t border-[var(--border)] pt-2 mt-2">
