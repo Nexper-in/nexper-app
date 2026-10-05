@@ -45,3 +45,10 @@ Nothing here contains secrets.
 ## How to re-check
 
 `npm test`, `node tools/check-i18n.mjs`, `npm audit --omit=dev`, `npx next build`. GitHub runs all four on every push.
+
+## Accepted audit finding (2026-10-05)
+
+`braces` (GHSA-vfj7-8cjw-p6xm, high, DoS on deeply nested glob patterns) has no
+fixed release. It is only used by build tooling on our own config, never on user
+input. CI uses `tools/audit.mjs`, which fails on any other high/critical finding.
+Re-check when braces publishes a fix.
