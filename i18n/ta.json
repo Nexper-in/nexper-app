@@ -750,5 +750,6 @@
   "Send a summary of your sales and expenses in one tap. Email goes only to your own address. WhatsApp opens so you choose who gets it.": "உங்கள் விற்பனை மற்றும் செலவுகளின் சுருக்கத்தை ஒரே தட்டலில் அனுப்புங்கள். மின்னஞ்சல் உங்கள் சொந்த முகவரிக்கு மட்டுமே செல்லும். WhatsApp திறக்கும், யாருக்கு அனுப்புவது என்பதை நீங்கள் தேர்ந்தெடுங்கள்.",
   "Sales": "விற்பனை",
   "UPI/card": "UPI/கார்டு",
-  "Sales minus expenses": "விற்பனை − செலவு"
+  "Sales minus expenses": "விற்பனை − செலவு",
+  "Top sellers": "அதிகம் விற்றவை"
 }

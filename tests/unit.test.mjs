@@ -103,6 +103,10 @@ test("period reports: IST day/week/month ranges and summary", async () => {
   assert.equal(periodRange("week", "2026-10-11").end, "2026-10-11T18:30:00.000Z"); // Sunday -> next Monday
   assert.equal(periodRange("month", "2026-10-20").start, "2026-09-30T18:30:00.000Z");
   assert.equal(periodRange("month", "2026-12-31").end, "2026-12-31T18:30:00.000Z");
+  const { previousAnchor } = await import("../lib/periodReport.js");
+  assert.equal(previousAnchor("day", "2026-03-01"), "2026-02-28");
+  assert.equal(previousAnchor("week", "2026-10-05"), "2026-09-28");
+  assert.equal(previousAnchor("month", "2026-01-15"), "2025-12-01");
   assert.equal(istDateString(new Date("2026-10-05T19:00:00Z")), "2026-10-06");
   const s = summarizePeriod(
     [{ total: 20, payment_type: "cash", payment_method: "cash" }, { total: 50, payment_type: "cash", payment_method: "upi" }, { total: 30, payment_type: "credit", payment_method: "cash" }],
@@ -110,5 +114,7 @@ test("period reports: IST day/week/month ranges and summary", async () => {
   );
   assert.deepEqual([s.bills, s.sales, s.cash, s.digital, s.credit, s.expenses, s.net], [3, 100, 20, 50, 30, 55, 45]);
   assert.deepEqual(s.byCategory[0], { category: "Rent", amount: 50 });
-  assert.match(periodText({ shopName: "S", title: "Daily report", label: "x", s }), /Sales minus expenses: ₹45/);
+  const txt = periodText({ shopName: "S", title: "Daily report", label: "x", s, prev: { sales: 80 }, period: "day" });
+  assert.match(txt, /Net  ₹45/);
+  assert.match(txt, /▲ 25% vs yesterday/);
 });

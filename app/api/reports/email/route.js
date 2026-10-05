@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient, getRequestUser } from "@/lib/supabaseAdmin";
 import { isRateLimited } from "@/lib/rateLimit";
 import { computeGstSummary, summaryToCsv } from "@/lib/gstReport";
-import { isYmd, periodRange, summarizePeriod, periodText, periodCsv, PERIOD_TITLES } from "@/lib/periodReport";
+import { isYmd, fetchPeriodSummary, periodText, periodCsv, PERIOD_TITLES } from "@/lib/periodReport";
 
 // Emails the signed-in owner their own GST summary for one month.
 // The recipient is ALWAYS the signed-in user's own address; it is never
@@ -52,16 +52,12 @@ export async function POST(request) {
     html = `<p>Your Nexper report for <b>${esc(label)}</b> is attached.</p><p>Bills: ${(bills || []).length}<br>Total sales: ₹${sales.toFixed(2)}</p><p style="color:#666">Sent only to you, on your request.</p>`;
     attachment = { filename: `gst-summary-${month}.csv`, content: Buffer.from(csv).toString("base64") };
   } else {
-    const { start, end, label } = periodRange(period, date);
-    const [{ data: bills, error: e1 }, { data: expenses, error: e2 }] = await Promise.all([
-      admin.from("bills").select("total, payment_type, payment_method").eq("shop_id", shopId).gte("date", start).lt("date", end),
-      admin.from("expenses").select("amount, category").eq("shop_id", shopId).gte("date", start).lt("date", end),
-    ]);
-    if (e1 || e2) return NextResponse.json({ error: "Could not load the report." }, { status: 500 });
-    const s = summarizePeriod(bills || [], expenses || []);
+    const { range, s, prev, error: perr } = await fetchPeriodSummary(admin, shopId, period, date);
+    if (perr) return NextResponse.json({ error: "Could not load the report." }, { status: 500 });
+    const label = range.label;
     const title = PERIOD_TITLES[period];
     subject = `${shopName} – ${title.toLowerCase()}, ${label}`;
-    html = `<pre style="font-family:inherit;white-space:pre-wrap">${esc(periodText({ shopName, title, label, s }).replace(/\*/g, ""))}</pre><p style="color:#666">Sent only to you, on your request. CSV attached.</p>`;
+    html = `<pre style="font-family:inherit;white-space:pre-wrap">${esc(periodText({ shopName, title, label, s, prev, period }).replace(/[*_]/g, ""))}</pre><p style="color:#666">Sent only to you, on your request. CSV attached.</p>`;
     attachment = { filename: `${period}-report-${date}.csv`, content: Buffer.from(periodCsv(label, s)).toString("base64") };
   }
 
