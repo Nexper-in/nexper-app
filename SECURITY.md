@@ -48,8 +48,8 @@ Nothing here contains secrets.
 
 ## Email me this report (accepted exception)
 
-`app/api/reports/email` sends the signed-in owner's own monthly GST summary
-(CSV) to their own sign-in address through Resend. The recipient is never taken
+`app/api/reports/email` sends the signed-in owner's own monthly GST summary or
+daily/weekly/monthly sales-and-expenses summary (CSV) to their own sign-in address through Resend. The recipient is never taken
 from the request, the caller must be a member of the shop, and it is rate
 limited (5 per 10 minutes). Resend therefore sees that shop's totals. This is a
 deliberate exception to "no shop data to third parties"; it only happens on the
@@ -60,3 +60,6 @@ owner's click. Needs `RESEND_API_KEY` (Vercel Secret) and optional `EMAIL_FROM`.
 fixed release. It is only used by build tooling on our own config, never on user
 input. CI uses `tools/audit.mjs`, which fails on any other high/critical finding.
 Re-check when braces publishes a fix.
+
+The Reports "Share report" tab also builds a WhatsApp text in the browser and
+opens `wa.me`; the owner picks the chat, nothing is sent by the server.

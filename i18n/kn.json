@@ -740,5 +740,15 @@
   "This week": "ಈ ವಾರ",
   "Last month": "ಕಳೆದ ತಿಂಗಳು",
   "Report emailed to {email}": "ವರದಿಯನ್ನು {email} ಗೆ ಇಮೇಲ್ ಮಾಡಲಾಗಿದೆ",
-  "Email me this report": "ಈ ವರದಿಯನ್ನು ನನಗೆ ಇಮೇಲ್ ಮಾಡಿ"
+  "Email me this report": "ಈ ವರದಿಯನ್ನು ನನಗೆ ಇಮೇಲ್ ಮಾಡಿ",
+  "Share report": "ವರದಿ ಹಂಚಿ",
+  "Daily": "ದೈನಂದಿನ",
+  "Weekly": "ಸಾಪ್ತಾಹಿಕ",
+  "Daily report": "ದೈನಂದಿನ ವರದಿ",
+  "Weekly report": "ಸಾಪ್ತಾಹಿಕ ವರದಿ",
+  "Monthly report": "ಮಾಸಿಕ ವರದಿ",
+  "Send a summary of your sales and expenses in one tap. Email goes only to your own address. WhatsApp opens so you choose who gets it.": "ನಿಮ್ಮ ಮಾರಾಟ ಮತ್ತು ಖರ್ಚಿನ ಸಾರಾಂಶವನ್ನು ಒಂದೇ ಟ್ಯಾಪ್‌ನಲ್ಲಿ ಕಳುಹಿಸಿ. ಇಮೇಲ್ ನಿಮ್ಮ ಸ್ವಂತ ವಿಳಾಸಕ್ಕೆ ಮಾತ್ರ ಹೋಗುತ್ತದೆ. WhatsApp ತೆರೆಯುತ್ತದೆ, ಯಾರಿಗೆ ಕಳುಹಿಸಬೇಕೆಂದು ನೀವೇ ಆಯ್ಕೆ ಮಾಡಿ.",
+  "Sales": "ಮಾರಾಟ",
+  "UPI/card": "UPI/ಕಾರ್ಡ್",
+  "Sales minus expenses": "ಮಾರಾಟ − ಖರ್ಚು"
 }
