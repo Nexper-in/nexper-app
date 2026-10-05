@@ -738,5 +738,7 @@
   "You already have a department with that name.": "इस नाम का विभाग पहले से है।",
   "Tea shop / Canteen / Hotel": "चाय की दुकान / कैंटीन / होटल",
   "This week": "इस हफ़्ते",
-  "Last month": "पिछला महीना"
+  "Last month": "पिछला महीना",
+  "Report emailed to {email}": "रिपोर्ट {email} पर ईमेल हो गई",
+  "Email me this report": "यह रिपोर्ट मुझे ईमेल करें"
 }
