@@ -740,5 +740,15 @@
   "This week": "இந்த வாரம்",
   "Last month": "கடந்த மாதம்",
   "Report emailed to {email}": "அறிக்கை {email} க்கு மின்னஞ்சல் செய்யப்பட்டது",
-  "Email me this report": "இந்த அறிக்கையை எனக்கு மின்னஞ்சல் செய்"
+  "Email me this report": "இந்த அறிக்கையை எனக்கு மின்னஞ்சல் செய்",
+  "Share report": "அறிக்கையைப் பகிர்",
+  "Daily": "தினசரி",
+  "Weekly": "வாராந்திர",
+  "Daily report": "தினசரி அறிக்கை",
+  "Weekly report": "வாராந்திர அறிக்கை",
+  "Monthly report": "மாதாந்திர அறிக்கை",
+  "Send a summary of your sales and expenses in one tap. Email goes only to your own address. WhatsApp opens so you choose who gets it.": "உங்கள் விற்பனை மற்றும் செலவுகளின் சுருக்கத்தை ஒரே தட்டலில் அனுப்புங்கள். மின்னஞ்சல் உங்கள் சொந்த முகவரிக்கு மட்டுமே செல்லும். WhatsApp திறக்கும், யாருக்கு அனுப்புவது என்பதை நீங்கள் தேர்ந்தெடுங்கள்.",
+  "Sales": "விற்பனை",
+  "UPI/card": "UPI/கார்டு",
+  "Sales minus expenses": "விற்பனை − செலவு"
 }

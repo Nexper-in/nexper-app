@@ -92,3 +92,23 @@ test("every translation file has every key and matching placeholders", async () 
     }
   }
 });
+
+test("period reports: IST day/week/month ranges and summary", async () => {
+  const { periodRange, summarizePeriod, periodText, istDateString } = await import("../lib/periodReport.js");
+  // 2026-10-05 is a Monday. IST midnight = 18:30 UTC the day before.
+  const day = periodRange("day", "2026-10-05");
+  assert.equal(day.start, "2026-10-04T18:30:00.000Z");
+  assert.equal(day.end, "2026-10-05T18:30:00.000Z");
+  assert.equal(periodRange("week", "2026-10-08").start, day.start); // Thursday -> Monday
+  assert.equal(periodRange("week", "2026-10-11").end, "2026-10-11T18:30:00.000Z"); // Sunday -> next Monday
+  assert.equal(periodRange("month", "2026-10-20").start, "2026-09-30T18:30:00.000Z");
+  assert.equal(periodRange("month", "2026-12-31").end, "2026-12-31T18:30:00.000Z");
+  assert.equal(istDateString(new Date("2026-10-05T19:00:00Z")), "2026-10-06");
+  const s = summarizePeriod(
+    [{ total: 20, payment_type: "cash", payment_method: "cash" }, { total: 50, payment_type: "cash", payment_method: "upi" }, { total: 30, payment_type: "credit", payment_method: "cash" }],
+    [{ amount: 40, category: "Rent" }, { amount: 10, category: "Rent" }, { amount: 5, category: "Tea" }]
+  );
+  assert.deepEqual([s.bills, s.sales, s.cash, s.digital, s.credit, s.expenses, s.net], [3, 100, 20, 50, 30, 55, 45]);
+  assert.deepEqual(s.byCategory[0], { category: "Rent", amount: 50 });
+  assert.match(periodText({ shopName: "S", title: "Daily report", label: "x", s }), /Sales minus expenses: ₹45/);
+});

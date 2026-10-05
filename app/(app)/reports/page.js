@@ -1,13 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Download, Mail, AlertTriangle, FileBarChart2, FileJson } from "lucide-react";
+import { Loader2, Download, Mail, AlertTriangle, FileBarChart2, FileJson, Share2 } from "lucide-react";
 import { useShop } from "@/components/ShopContext";
 import { fetchShopItems } from "@/lib/products";
 import { rupee } from "@/lib/format";
 import { computeGstSummary, summaryToCsv, buildGstr1Json, downloadFile } from "@/lib/gstReport";
 import ModuleGuard from "@/components/ModuleGuard";
 import UpgradePrompt from "@/components/UpgradePrompt";
+import ShareReport from "@/components/ShareReport";
 import { hasFeature } from "@/lib/platformConfig";
 
 import { useT } from "@/lib/i18n";
@@ -131,12 +132,12 @@ function ReportsPageInner() {
             {t("GST collected on your sales, ready to hand off or file.")}
           </p>
         </div>
-        <input
+        {tab !== "share" && <input
           type="month"
           value={month}
           onChange={(e) => setMonth(e.target.value)}
           className="ks-input w-auto"
-        />
+        />}
       </div>
 
       <div className="inline-flex p-1 rounded-full mb-5" style={{ background: "var(--bg-surface-alt)" }}>
@@ -154,9 +155,18 @@ function ReportsPageInner() {
         >
           <FileJson size={14} /> {t("GST filing export")}
         </button>
+        <button
+          onClick={() => setTab("share")}
+          className="px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-colors"
+          style={tab === "share" ? { background: "var(--accent)", color: "#fff" } : { color: "var(--text-secondary)" }}
+        >
+          <Share2 size={14} /> {t("Share report")}
+        </button>
       </div>
 
-      {loading ? (
+      {tab === "share" ? (
+        <ShareReport />
+      ) : loading ? (
         <div className="pt-6 flex items-center gap-2 text-sm text-muted">
           <Loader2 size={16} className="animate-spin" /> {t("Loading {month} data…", { month: monthLabel })}
         </div>

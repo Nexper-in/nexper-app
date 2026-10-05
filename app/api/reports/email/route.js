@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient, getRequestUser } from "@/lib/supabaseAdmin";
 import { isRateLimited } from "@/lib/rateLimit";
 import { computeGstSummary, summaryToCsv } from "@/lib/gstReport";
+import { isYmd, periodRange, summarizePeriod, periodText, periodCsv, PERIOD_TITLES } from "@/lib/periodReport";
 
 // Emails the signed-in owner their own GST summary for one month.
 // The recipient is ALWAYS the signed-in user's own address; it is never
@@ -21,9 +22,12 @@ export async function POST(request) {
 
   let body;
   try { body = await request.json(); } catch { body = {}; }
-  const month = String(body.month || "");
   const shopId = String(body.shopId || "");
-  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month) || !shopId) {
+  const kind = body.kind === "period" ? "period" : "gst";
+  const period = String(body.period || "");
+  const date = String(body.date || "");
+  const month = String(body.month || "");
+  if (!shopId || (kind === "gst" ? !/^\d{4}-(0[1-9]|1[0-2])$/.test(month) : !(PERIOD_TITLES[period] && isYmd(date)))) {
     return NextResponse.json({ error: "Bad request." }, { status: 400 });
   }
 
@@ -31,20 +35,35 @@ export async function POST(request) {
   const { data: member } = await admin.from("shop_members").select("shop_id").eq("user_id", user.id).eq("shop_id", shopId).maybeSingle();
   if (!member) return NextResponse.json({ error: "Not allowed." }, { status: 403 });
 
-  const start = new Date(`${month}-01T00:00:00Z`);
-  const end = new Date(start);
-  end.setUTCMonth(end.getUTCMonth() + 1);
-  const [{ data: shop }, { data: bills, error }] = await Promise.all([
-    admin.from("shops").select("name").eq("id", shopId).maybeSingle(),
-    admin.from("bills").select("items, total, date").eq("shop_id", shopId).gte("date", start.toISOString()).lt("date", end.toISOString()),
-  ]);
-  if (error) return NextResponse.json({ error: "Could not load bills." }, { status: 500 });
-
-  const summary = computeGstSummary(bills || []);
-  const csv = summaryToCsv(summary);
-  const sales = (bills || []).reduce((a, b) => a + Number(b.total || 0), 0);
-  const label = start.toLocaleDateString("en-IN", { month: "long", year: "numeric", timeZone: "UTC" });
+  const { data: shop } = await admin.from("shops").select("name").eq("id", shopId).maybeSingle();
   const shopName = shop?.name || "Your shop";
+  let subject, html, attachment;
+
+  if (kind === "gst") {
+    const start = new Date(`${month}-01T00:00:00Z`);
+    const end = new Date(start);
+    end.setUTCMonth(end.getUTCMonth() + 1);
+    const { data: bills, error } = await admin.from("bills").select("items, total, date").eq("shop_id", shopId).gte("date", start.toISOString()).lt("date", end.toISOString());
+    if (error) return NextResponse.json({ error: "Could not load bills." }, { status: 500 });
+    const csv = summaryToCsv(computeGstSummary(bills || []));
+    const sales = (bills || []).reduce((a, b) => a + Number(b.total || 0), 0);
+    const label = start.toLocaleDateString("en-IN", { month: "long", year: "numeric", timeZone: "UTC" });
+    subject = `${shopName} – sales & GST report, ${label}`;
+    html = `<p>Your Nexper report for <b>${esc(label)}</b> is attached.</p><p>Bills: ${(bills || []).length}<br>Total sales: ₹${sales.toFixed(2)}</p><p style="color:#666">Sent only to you, on your request.</p>`;
+    attachment = { filename: `gst-summary-${month}.csv`, content: Buffer.from(csv).toString("base64") };
+  } else {
+    const { start, end, label } = periodRange(period, date);
+    const [{ data: bills, error: e1 }, { data: expenses, error: e2 }] = await Promise.all([
+      admin.from("bills").select("total, payment_type, payment_method").eq("shop_id", shopId).gte("date", start).lt("date", end),
+      admin.from("expenses").select("amount, category").eq("shop_id", shopId).gte("date", start).lt("date", end),
+    ]);
+    if (e1 || e2) return NextResponse.json({ error: "Could not load the report." }, { status: 500 });
+    const s = summarizePeriod(bills || [], expenses || []);
+    const title = PERIOD_TITLES[period];
+    subject = `${shopName} – ${title.toLowerCase()}, ${label}`;
+    html = `<pre style="font-family:inherit;white-space:pre-wrap">${esc(periodText({ shopName, title, label, s }).replace(/\*/g, ""))}</pre><p style="color:#666">Sent only to you, on your request. CSV attached.</p>`;
+    attachment = { filename: `${period}-report-${date}.csv`, content: Buffer.from(periodCsv(label, s)).toString("base64") };
+  }
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -52,9 +71,9 @@ export async function POST(request) {
     body: JSON.stringify({
       from: process.env.EMAIL_FROM || "Nexper <onboarding@resend.dev>",
       to: [user.email],
-      subject: `${shopName} – sales & GST report, ${label}`,
-      html: `<p>Your Nexper report for <b>${esc(label)}</b> is attached.</p><p>Bills: ${(bills || []).length}<br>Total sales: ₹${sales.toFixed(2)}</p><p style="color:#666">Sent only to you, on your request.</p>`,
-      attachments: [{ filename: `gst-summary-${month}.csv`, content: Buffer.from(csv).toString("base64") }],
+      subject,
+      html,
+      attachments: [attachment],
     }),
   });
   if (!res.ok) return NextResponse.json({ error: "Email could not be sent." }, { status: 502 });
