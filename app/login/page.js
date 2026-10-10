@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Mail } from "lucide-react";
 import { createClient } from "@/lib/supabaseClient";
@@ -13,6 +13,11 @@ import LanguagePicker from "@/components/LanguagePicker";
 // NEXT_PUBLIC_GOOGLE_SIGNIN=true in Vercel and redeploying; then the button
 // works and the email form folds behind a link.
 const GOOGLE_SIGNIN = process.env.NEXT_PUBLIC_GOOGLE_SIGNIN === "true";
+// When the Google client ID is set, Google's own button signs people in right
+// on this page (a popup that says "Nexper" and our address) and the result is
+// handed to Supabase. Without it, or if Google's script can't load, the
+// redirect button below is used and Google shows the Supabase address.
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -32,6 +37,8 @@ export default function LoginPage() {
   // folded away unless asked for (or a ?mode= link points at it).
   const [showEmail, setShowEmail] = useState(!GOOGLE_SIGNIN);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [gisReady, setGisReady] = useState(false);
+  const gisBox = useRef(null);
   // Sign-up mode from the platform admin page: open, invite_only or closed.
   const [signup, setSignup] = useState({ mode: "open", message: "" });
 
@@ -62,6 +69,68 @@ export default function LoginPage() {
       })
       .catch(() => setCheckingSession(false));
   }, [supabase, router]);
+
+  // Google's own sign-in button (see GOOGLE_CLIENT_ID above).
+  useEffect(() => {
+    if (!GOOGLE_SIGNIN || !GOOGLE_CLIENT_ID || checkingSession || mode === "staff" || mode === "forgot") {
+      setGisReady(false);
+      return;
+    }
+    let cancelled = false;
+    const toHex = (buf) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+    async function start() {
+      try {
+        const raw = toHex(crypto.getRandomValues(new Uint8Array(16)));
+        const hashed = toHex(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(raw)));
+        const g = window.google?.accounts?.id;
+        if (cancelled || !g || !gisBox.current) return;
+        g.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          nonce: hashed,
+          ux_mode: "popup",
+          auto_select: false,
+          callback: async (resp) => {
+            setError("");
+            setGoogleLoading(true);
+            const { error } = await supabase.auth.signInWithIdToken({ provider: "google", token: resp.credential, nonce: raw });
+            if (error) {
+              setError(error.message || t("Couldn't start Google sign-in"));
+              setShowEmail(true);
+              setGoogleLoading(false);
+            } else {
+              router.replace("/dashboard");
+            }
+          },
+        });
+        gisBox.current.innerHTML = "";
+        g.renderButton(gisBox.current, {
+          type: "standard",
+          theme: "outline",
+          size: "large",
+          text: "continue_with",
+          shape: "rectangular",
+          logo_alignment: "center",
+          width: Math.max(200, Math.min(400, gisBox.current.offsetWidth || 320)),
+        });
+        setGisReady(true);
+      } catch {
+        setGisReady(false);
+      }
+    }
+    if (window.google?.accounts?.id) {
+      start();
+    } else {
+      const script = document.createElement("script");
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+      script.onload = start;
+      script.onerror = () => setGisReady(false);
+      document.head.appendChild(script);
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase, router, checkingSession, mode]);
 
   function switchMode(next) {
     setMode(next);
@@ -179,8 +248,14 @@ export default function LoginPage() {
             <div className="mb-5">
               <h2 className="ks-display font-bold text-center">{mode === "signin" ? t("Sign in to your shop") : t("Create your shop account")}</h2>
               <>
+              {GOOGLE_SIGNIN && GOOGLE_CLIENT_ID && (
+                <div className="mt-5 flex justify-center" style={gisReady ? undefined : { display: "none" }}>
+                  <div ref={gisBox} className="w-full flex justify-center" style={{ opacity: googleLoading ? 0.5 : 1, pointerEvents: googleLoading ? "none" : undefined }} />
+                </div>
+              )}
               <button
                 type="button"
+                hidden={gisReady}
                 onClick={GOOGLE_SIGNIN ? handleGoogle : undefined}
                 disabled={googleLoading}
                 aria-disabled={!GOOGLE_SIGNIN}
