@@ -60,8 +60,7 @@ const GROUPS = [
     items: [
       { href: "/suppliers", key: "suppliers", label: T("Suppliers"), icon: Truck, pro: true },
       { href: "/purchase-orders", key: "purchase_orders", label: T("Purchase orders"), icon: ClipboardList, pro: true },
-      { href: "/insights", key: "inventory", label: T("Stock insights"), icon: TrendingDown },
-      { href: "/expiry", key: "inventory", label: T("Expiry"), icon: CalendarClock, feature: "expiry" },
+          { href: "/expiry", key: "inventory", label: T("Expiry"), icon: CalendarClock, feature: "expiry" },
       { href: "/clearance", key: "clearance", label: T("Clearance offers"), icon: Tag, ownerOnly: true },
       { href: "/offers", key: "clearance", label: T("Offers & group"), icon: Megaphone, ownerOnly: true, feature: "offers_group" },
       // Same "inventory" permission as Stock: batches/expiry and barcode labels.

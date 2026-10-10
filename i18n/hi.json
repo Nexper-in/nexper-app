@@ -892,5 +892,10 @@
   "{n} prices updated": "{n} कीमतें अपडेट हुईं",
   "{n} sales from the last few days are not counted yet, because the bank may still be settling them.": "पिछले कुछ दिनों की {n} बिक्री अभी नहीं गिनी गई, क्योंकि बैंक में अभी जमा हो रही हो सकती हैं।",
   "{n} sold items have no purchase price, so their cost is not counted. Add purchase prices in Stock for a true profit.": "बिके हुए {n} आइटम की खरीद कीमत नहीं है, इसलिए उनकी लागत नहीं गिनी गई। सही लाभ के लिए स्टॉक में खरीद कीमत जोड़ें।",
-  "{pct}% of net sales": "शुद्ध बिक्री का {pct}%"
+  "{pct}% of net sales": "शुद्ध बिक्री का {pct}%",
+  "Profit & bank": "लाभ और बैंक",
+  "1 item has a margin problem": "1 आइटम में मार्जिन की समस्या है",
+  "{n} items have a margin problem": "{n} आइटम में मार्जिन की समस्या है",
+  "{amount} stuck in slow stock": "{amount} धीमे स्टॉक में फंसा है",
+  "Margin alerts and dead stock": "मार्जिन अलर्ट और नहीं बिकने वाला स्टॉक"
 }

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ScanLine, Upload, BarChart2, BookOpen, Tags } from "lucide-react";
+import { ScanLine, Upload, BarChart2, BookOpen, Tags, TrendingDown } from "lucide-react";
 import { useShop } from "@/components/ShopContext";
 import { hasFeature } from "@/lib/platformConfig";
 import { fetchShopItems, flattenShopProduct } from "@/lib/products";
@@ -170,6 +170,7 @@ export function useStock() {
     { icon: BookOpen, label: t("Add from catalogue"), sub: t("Common Indian products"), run: () => setShowCatalogPicker(true) },
     { icon: ScanLine, label: t("Scan supplier bill"), sub: t("Photo of a printed bill"), run: () => (hasFeature(activeShop, "ocr_scan") ? setShowScanBill(true) : setShowScanUpgrade(true)) },
     { icon: Upload, label: t("Import a sheet"), sub: t("CSV of many items"), run: () => setShowBulkImport(true) },
+    { icon: TrendingDown, label: t("Stock insights"), sub: t("Margin alerts and dead stock"), run: () => router.push("/insights") },
     { icon: Tags, label: t("Bulk price update"), sub: t("Change prices by % or ₹"), run: () => setShowBulkPrice(true) },
     { icon: BarChart2, label: showInsights ? t("Hide profit per item") : t("Profit per item"), sub: t("Margin on each item"), run: () => setShowInsights((v) => !v) },
   ];

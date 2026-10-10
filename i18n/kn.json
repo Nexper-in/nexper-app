@@ -892,5 +892,10 @@
   "{n} prices updated": "{n} ಬೆಲೆಗಳು ನವೀಕರಿಸಲಾಗಿದೆ",
   "{n} sales from the last few days are not counted yet, because the bank may still be settling them.": "ಕಳೆದ ಕೆಲವು ದಿನಗಳ {n} ಮಾರಾಟಗಳನ್ನು ಇನ್ನೂ ಲೆಕ್ಕಿಸಿಲ್ಲ, ಏಕೆಂದರೆ ಬ್ಯಾಂಕ್ ಇನ್ನೂ ಇತ್ಯರ್ಥಪಡಿಸುತ್ತಿರಬಹುದು.",
   "{n} sold items have no purchase price, so their cost is not counted. Add purchase prices in Stock for a true profit.": "ಮಾರಾಟವಾದ {n} ಐಟಂಗಳಿಗೆ ಖರೀದಿ ಬೆಲೆ ಇಲ್ಲ, ಆದ್ದರಿಂದ ಅವುಗಳ ವೆಚ್ಚ ಲೆಕ್ಕಿಸಿಲ್ಲ. ನಿಜವಾದ ಲಾಭಕ್ಕಾಗಿ ಸ್ಟಾಕ್‌ನಲ್ಲಿ ಖರೀದಿ ಬೆಲೆ ಸೇರಿಸಿ.",
-  "{pct}% of net sales": "ನಿವ್ವಳ ಮಾರಾಟದ {pct}%"
+  "{pct}% of net sales": "ನಿವ್ವಳ ಮಾರಾಟದ {pct}%",
+  "Profit & bank": "ಲಾಭ ಮತ್ತು ಬ್ಯಾಂಕ್",
+  "1 item has a margin problem": "1 ಐಟಂನಲ್ಲಿ ಮಾರ್ಜಿನ್ ಸಮಸ್ಯೆ ಇದೆ",
+  "{n} items have a margin problem": "{n} ಐಟಂಗಳಲ್ಲಿ ಮಾರ್ಜಿನ್ ಸಮಸ್ಯೆ ಇದೆ",
+  "{amount} stuck in slow stock": "{amount} ನಿಧಾನ ಸ್ಟಾಕ್‌ನಲ್ಲಿ ಸಿಲುಕಿದೆ",
+  "Margin alerts and dead stock": "ಮಾರ್ಜಿನ್ ಎಚ್ಚರಿಕೆ ಮತ್ತು ಮಾರಾಟವಾಗದ ಸ್ಟಾಕ್"
 }

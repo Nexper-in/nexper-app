@@ -892,5 +892,10 @@
   "{n} prices updated": "{n} ధరలు అప్‌డేట్ అయ్యాయి",
   "{n} sales from the last few days are not counted yet, because the bank may still be settling them.": "గత కొన్ని రోజుల {n} అమ్మకాలు ఇంకా లెక్కించలేదు, ఎందుకంటే బ్యాంకు ఇంకా సెటిల్ చేస్తుండవచ్చు.",
   "{n} sold items have no purchase price, so their cost is not counted. Add purchase prices in Stock for a true profit.": "అమ్మిన {n} వస్తువులకు కొనుగోలు ధర లేదు, కాబట్టి వాటి ఖర్చు లెక్కించలేదు. నిజమైన లాభం కోసం స్టాక్‌లో కొనుగోలు ధరలు జోడించండి.",
-  "{pct}% of net sales": "నికర అమ్మకాలలో {pct}%"
+  "{pct}% of net sales": "నికర అమ్మకాలలో {pct}%",
+  "Profit & bank": "లాభం మరియు బ్యాంక్",
+  "1 item has a margin problem": "1 వస్తువులో మార్జిన్ సమస్య ఉంది",
+  "{n} items have a margin problem": "{n} వస్తువులలో మార్జిన్ సమస్య ఉంది",
+  "{amount} stuck in slow stock": "{amount} నెమ్మదిగా అమ్ముడయ్యే స్టాక్‌లో చిక్కుకుంది",
+  "Margin alerts and dead stock": "మార్జిన్ హెచ్చరికలు మరియు అమ్ముడుపోని స్టాక్"
 }

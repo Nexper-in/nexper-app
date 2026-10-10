@@ -892,5 +892,10 @@
   "{n} prices updated": "{n} വിലകൾ അപ്ഡേറ്റ് ചെയ്തു",
   "{n} sales from the last few days are not counted yet, because the bank may still be settling them.": "കഴിഞ്ഞ കുറച്ച് ദിവസങ്ങളിലെ {n} വിൽപ്പനകൾ ഇതുവരെ കണക്കാക്കിയിട്ടില്ല, കാരണം ബാങ്ക് ഇപ്പോഴും തീർപ്പാക്കുകയായിരിക്കാം.",
   "{n} sold items have no purchase price, so their cost is not counted. Add purchase prices in Stock for a true profit.": "വിറ്റ {n} ഇനങ്ങൾക്ക് വാങ്ങൽ വില ഇല്ല, അതിനാൽ അവയുടെ ചെലവ് കണക്കാക്കിയിട്ടില്ല. യഥാർത്ഥ ലാഭത്തിനായി സ്റ്റോക്കിൽ വാങ്ങൽ വില ചേർക്കുക.",
-  "{pct}% of net sales": "അറ്റ വിൽപ്പനയുടെ {pct}%"
+  "{pct}% of net sales": "അറ്റ വിൽപ്പനയുടെ {pct}%",
+  "Profit & bank": "ലാഭവും ബാങ്കും",
+  "1 item has a margin problem": "1 ഇനത്തിന് മാർജിൻ പ്രശ്നമുണ്ട്",
+  "{n} items have a margin problem": "{n} ഇനങ്ങൾക്ക് മാർജിൻ പ്രശ്നമുണ്ട്",
+  "{amount} stuck in slow stock": "{amount} വേഗം വിൽക്കാത്ത സ്റ്റോക്കിൽ കുടുങ്ങി",
+  "Margin alerts and dead stock": "മാർജിൻ മുന്നറിയിപ്പും വിൽക്കാത്ത സ്റ്റോക്കും"
 }
