@@ -80,6 +80,7 @@ const SCREEN_TITLES = {
   "/suppliers": T("Suppliers"),
   "/purchase-orders": T("Purchase orders"),
   "/expiry": T("Expiry"),
+  "/insights": T("Stock insights"),
   "/offers": T("Offers & group"),
   "/clearance": T("Clearance offers"),
   "/inventory/config": T("Batches & barcodes"),

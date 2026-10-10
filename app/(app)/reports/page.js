@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Download, Mail, AlertTriangle, FileBarChart2, FileJson, Share2 } from "lucide-react";
+import { Loader2, Download, Mail, AlertTriangle, FileBarChart2, FileJson, Share2, TrendingUp, Landmark } from "lucide-react";
 import { useShop } from "@/components/ShopContext";
 import { fetchShopItems } from "@/lib/products";
 import { rupee } from "@/lib/format";
@@ -9,6 +9,8 @@ import { computeGstSummary, summaryToCsv, buildGstr1Json, downloadFile, returnsA
 import ModuleGuard from "@/components/ModuleGuard";
 import UpgradePrompt from "@/components/UpgradePrompt";
 import ShareReport from "@/components/ShareReport";
+import PnlTab from "@/components/PnlTab";
+import ReconTab from "@/components/ReconTab";
 import { hasFeature } from "@/lib/platformConfig";
 
 import { useT } from "@/lib/i18n";
@@ -142,7 +144,7 @@ function ReportsPageInner() {
             {t("GST collected on your sales, ready to hand off or file.")}
           </p>
         </div>
-        {tab !== "share" && <input
+        {tab !== "share" && tab !== "recon" && <input
           type="month"
           value={month}
           onChange={(e) => setMonth(e.target.value)}
@@ -150,7 +152,7 @@ function ReportsPageInner() {
         />}
       </div>
 
-      <div className="inline-flex p-1 rounded-full mb-5" style={{ background: "var(--bg-surface-alt)" }}>
+      <div className="inline-flex flex-wrap p-1 rounded-3xl mb-5" style={{ background: "var(--bg-surface-alt)" }}>
         <button
           onClick={() => setTab("summary")}
           className="px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-colors"
@@ -172,10 +174,28 @@ function ReportsPageInner() {
         >
           <Share2 size={14} /> {t("Share report")}
         </button>
+        <button
+          onClick={() => setTab("pnl")}
+          className="px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-colors"
+          style={tab === "pnl" ? { background: "var(--accent)", color: "#fff" } : { color: "var(--text-secondary)" }}
+        >
+          <TrendingUp size={14} /> {t("Profit & loss")}
+        </button>
+        <button
+          onClick={() => setTab("recon")}
+          className="px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-colors"
+          style={tab === "recon" ? { background: "var(--accent)", color: "#fff" } : { color: "var(--text-secondary)" }}
+        >
+          <Landmark size={14} /> {t("UPI match")}
+        </button>
       </div>
 
       {tab === "share" ? (
         <ShareReport />
+      ) : tab === "pnl" ? (
+        <PnlTab month={month} monthLabel={monthLabel} />
+      ) : tab === "recon" ? (
+        <ReconTab />
       ) : loading ? (
         <div className="pt-6 flex items-center gap-2 text-sm text-muted">
           <Loader2 size={16} className="animate-spin" /> {t("Loading {month} data…", { month: monthLabel })}

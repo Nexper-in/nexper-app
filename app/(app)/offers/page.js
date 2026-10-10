@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { Loader2, Send, Copy, Printer, Trash2, Users, Tag, Sparkles, Star } from "lucide-react";
 import { useShop } from "@/components/ShopContext";
 import GroupPoster from "@/components/GroupPoster";
+import FestivalPoster from "@/components/FestivalPoster";
+import { upcomingFestivals } from "@/lib/festivals";
 import { isGroupInviteLink, offerMessageText, groupInviteText, whatsappLink, OFFER_KINDS } from "@/lib/messaging";
 import { T, useT } from "@/lib/i18n";
 import { hasFeature } from "@/lib/platformConfig";
@@ -30,6 +32,7 @@ export default function OffersPage() {
   const [activeOffers, setActiveOffers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [poster, setPoster] = useState(false);
+  const [festival, setFestival] = useState(null);
 
   // Owners only: this is a pricing and marketing decision.
   useEffect(() => {
@@ -114,7 +117,23 @@ export default function OffersPage() {
   }
 
   function printPoster() {
+    setFestival(null);
     setPoster(true);
+    setTimeout(() => {
+      window.print();
+      setPoster(false);
+    }, 400);
+  }
+
+  function pickFestival(f) {
+    setFestival(f);
+    setKind("offer");
+    setTitle(t(f.title));
+    setDetails(t(f.details));
+  }
+
+  function printFestivalPoster() {
+    setPoster("festival");
     setTimeout(() => {
       window.print();
       setPoster(false);
@@ -196,6 +215,23 @@ export default function OffersPage() {
           ))}
         </div>
 
+        <div className="mb-3">
+          <p className="text-[11px] font-semibold mb-1.5" style={{ color: "var(--text-secondary)" }}>{t("Festival templates")}</p>
+          <div className="flex gap-1.5 overflow-x-auto ks-scroll pb-1">
+            {upcomingFestivals().slice(0, 6).map((f) => (
+              <button
+                key={f.id}
+                onClick={() => pickFestival(f)}
+                aria-pressed={festival?.id === f.id}
+                className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full"
+                style={festival?.id === f.id ? { background: "var(--strong)", color: "var(--on-strong)" } : { background: "var(--accent-soft-bg)", color: "var(--accent-soft-text)" }}
+              >
+                {f.emoji} {t(f.name)}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {activeOffers.length > 0 && (
           <div className="mb-3">
             <p className="text-[11px] font-semibold mb-1.5" style={{ color: "var(--text-secondary)" }}>{t("Use a running offer")}</p>
@@ -238,6 +274,11 @@ export default function OffersPage() {
           >
             <Copy size={14} /> {t("Copy message")}
           </button>
+          {festival && title.trim() && (
+            <button onClick={printFestivalPoster} className="ks-btn-outline flex items-center gap-1.5 text-sm">
+              <Printer size={14} /> {t("Print festival poster")}
+            </button>
+          )}
         </div>
         <p className="text-[11px] mt-2" style={{ color: "var(--text-secondary)" }}>
           {t("WhatsApp opens with the message ready. Pick your group and tap Send.")}
@@ -270,7 +311,21 @@ export default function OffersPage() {
         </section>
       )}
 
-      {poster && (
+      {poster === "festival" && festival && (
+        <div className="ks-print-only">
+          <FestivalPoster
+            shopName={activeShop?.name}
+            emoji={festival.emoji}
+            theme={festival.theme}
+            title={title}
+            details={details}
+            validText={validTill ? t("Valid till {date}", { date: new Date(`${validTill}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) }) : ""}
+            groupUrl={savedUrl}
+            scanText={t("Scan to join our WhatsApp group")}
+          />
+        </div>
+      )}
+      {poster === true && (
         <div className="ks-print-only">
           <GroupPoster shopName={activeShop?.name} groupUrl={savedUrl} headline={t("Join our WhatsApp group")} sub={t("Scan to get offers and new arrivals")} />
         </div>
