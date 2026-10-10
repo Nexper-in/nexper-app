@@ -152,7 +152,7 @@ the app can be deployed before the SQL is run. Current pending list is in
   QR codes are made in the browser. One documented exception: "Email me this
   report" (`app/api/reports/email`) sends the owner's own month summary to the
   owner's own address through Resend, only on their click.
-- Headers and CSP are in `next.config.js`. A new outside host (script, font,
+- Headers and CSP are in `next.config.js` (login also allows `accounts.google.com/gsi/` for Google's button). A new outside host (script, font,
   API) must be added there on purpose.
 - `npm test` and `node tools/audit.mjs` (npm audit with a short, dated allow-list) must pass.
 

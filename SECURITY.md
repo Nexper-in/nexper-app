@@ -63,3 +63,12 @@ Re-check when braces publishes a fix.
 
 The Reports "Share report" tab also builds a WhatsApp text in the browser and
 opens `wa.me`; the owner picks the chat, nothing is sent by the server.
+
+## Google sign-in button (accepted change)
+
+The login page loads Google's sign-in script (`accounts.google.com/gsi/client`) so
+the Google popup shows "Nexper" instead of the Supabase address. CSP allows only
+`accounts.google.com/gsi/` for script, frame, style and connect, and COOP is
+`same-origin-allow-popups` (Google's popup needs it). Google sees that someone
+opened the login page; no shop data is sent. The ID token is checked by Supabase
+with a one-time nonce. The older redirect button stays as a fallback.
