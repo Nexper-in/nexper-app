@@ -2,13 +2,13 @@
 
 import { Plus, MessageCircle, ChevronRight } from "lucide-react";
 import { rupee } from "@/lib/format";
-import { whatsappLink, creditReminderText } from "@/lib/messaging";
+import RemindersDue from "@/components/RemindersDue";
 import { useT } from "@/lib/i18n";
 
 // Laptop view: the full table, plus how many customers owe you.
 export default function CreditDesktop({ vm }) {
   const t = useT();
-  const { activeShop, customers, overdue, totalOutstanding, setShowNew, setPayFor, setLedgerCustomer } = vm;
+  const { customers, overdue, totalOutstanding, setShowNew, setPayFor, setLedgerCustomer } = vm;
   return (
     <div className="pt-6">
       <div className="ks-card p-5 mb-4 flex items-center justify-between flex-wrap gap-3">
@@ -28,6 +28,7 @@ export default function CreditDesktop({ vm }) {
           <Plus size={16} /> {t("New credit entry")}
         </button>
       </div>
+      <RemindersDue vm={vm} />
 
       <div className="ks-card overflow-hidden overflow-x-auto">
         <table className="w-full text-sm">
@@ -68,7 +69,7 @@ export default function CreditDesktop({ vm }) {
                           {t("Record payment")}
                         </button>
                         <button
-                          onClick={() => window.open(whatsappLink(c.phone, creditReminderText(activeShop?.name, c.name, c.balance)), "_blank", "noopener,noreferrer")}
+                          onClick={() => vm.remind(c)}
                           className="text-xs px-2.5 py-1.5 rounded-full font-semibold flex items-center gap-1 text-white"
                           style={{ background: "#25D366" }}
                         >

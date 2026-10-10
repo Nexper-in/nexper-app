@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState, Fragment } from "react";
-import { Printer, MessageCircle, Loader2 } from "lucide-react";
+import { useEffect, useMemo, useState, Fragment } from "react";
+import { Printer, MessageCircle, Loader2, Undo2 } from "lucide-react";
 import { useShop } from "@/components/ShopContext";
 import { rupee } from "@/lib/format";
 import { billMessageText, whatsappLink } from "@/lib/messaging";
 import PrintBillContent from "@/components/PrintBillContent";
 import ModuleGuard from "@/components/ModuleGuard";
+import ReturnModal from "@/components/ReturnModal";
 
 import { useT } from "@/lib/i18n";
 export default function HistoryPage() {
@@ -19,25 +20,38 @@ export default function HistoryPage() {
 
 function HistoryPageInner() {
   const t = useT();
-  const { supabase, activeShopId, activeShop } = useShop();
+  const { supabase, activeShopId, activeShop, hasPermission, showToast } = useShop();
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(null);
   const [printing, setPrinting] = useState(null);
+  const [returns, setReturns] = useState([]);
+  const [returning, setReturning] = useState(null);
 
   useEffect(() => {
     if (!activeShopId) return;
     setLoading(true);
-    supabase
-      .from("bills")
-      .select("*")
-      .eq("shop_id", activeShopId)
-      .order("date", { ascending: false })
-      .then(({ data }) => {
-        setBills(data || []);
-        setLoading(false);
-      });
+    Promise.all([
+      supabase.from("bills").select("*").eq("shop_id", activeShopId).order("date", { ascending: false }),
+      supabase.from("sale_returns").select("*").eq("shop_id", activeShopId).order("date", { ascending: false }),
+    ]).then(([{ data }, { data: rets }]) => {
+      setBills(data || []);
+      setReturns(rets || []);
+      setLoading(false);
+    });
   }, [supabase, activeShopId]);
+
+  const returnsByBill = useMemo(() => {
+    const m = new Map();
+    for (const r of returns) m.set(r.bill_id, [...(m.get(r.bill_id) || []), r]);
+    return m;
+  }, [returns]);
+
+  function returnDone(row) {
+    setReturns((prev) => [row, ...prev]);
+    setReturning(null);
+    showToast(t("Return recorded. Refund {amount}", { amount: rupee(row.refund_amount) }));
+  }
 
   function doPrint(bill) {
     setPrinting(bill);
@@ -79,6 +93,11 @@ function HistoryPageInner() {
                         {t("UDHAAR")}
                       </span>
                     )}
+                    {returnsByBill.has(b.id) && (
+                      <span className="ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "var(--warn-soft)", color: "var(--warn)" }}>
+                        {t("RETURNED")}
+                      </span>
+                    )}
                     {b.payment_type !== "credit" && b.payment_method && b.payment_method !== "cash" && (
                       <span className="ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "var(--accent-soft-bg)", color: "var(--accent-soft-text)" }}>
                         {b.payment_method.toUpperCase()}
@@ -99,6 +118,18 @@ function HistoryPageInner() {
                       >
                         <Printer size={13} /> {t("Print")}
                       </button>
+                      {hasPermission("billing") && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setReturning(b);
+                          }}
+                          className="text-xs px-2.5 py-1.5 rounded-full font-semibold flex items-center gap-1"
+                          style={{ background: "var(--bg-surface-alt)", color: "var(--text-primary)" }}
+                        >
+                          <Undo2 size={13} /> {t("Return")}
+                        </button>
+                      )}
                       {b.customer_phone && (
                         <button
                           onClick={(e) => {
@@ -127,6 +158,14 @@ function HistoryPageInner() {
                             <span>{rupee(it.qty * it.price)}</span>
                           </div>
                         ))}
+                        {(returnsByBill.get(b.id) || []).map((r) => (
+                          <div key={r.id} className="flex justify-between text-xs ks-mono" style={{ color: "var(--warn)" }}>
+                            <span>
+                              ↩ {t("Returned")} {(r.items || []).map((it) => `${it.name} × ${it.qty}`).join(", ")} · {new Date(r.date).toLocaleDateString("en-IN")}
+                            </span>
+                            <span>−{rupee(r.refund_amount)}</span>
+                          </div>
+                        ))}
                       </div>
                     </td>
                   </tr>
@@ -143,6 +182,9 @@ function HistoryPageInner() {
           </tbody>
         </table>
       </div>
+      {returning && (
+        <ReturnModal bill={returning} returnsForBill={returnsByBill.get(returning.id) || []} supabase={supabase} shopId={activeShopId} onClose={() => setReturning(null)} onDone={returnDone} />
+      )}
       {printing && (
         <div className="ks-print-only">
           <PrintBillContent bill={printing} storeName={activeShop?.name} gstin={activeShop?.gstin} groupUrl={activeShop?.whatsapp_group_url} />

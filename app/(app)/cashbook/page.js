@@ -24,6 +24,7 @@ function CashbookPageInner() {
   const [expenses, setExpenses] = useState([]);
   const [credits, setCredits] = useState([]);
   const [movements, setMovements] = useState([]);
+  const [returns, setReturns] = useState([]);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [range, setRange] = useState("30"); // days
@@ -31,7 +32,7 @@ function CashbookPageInner() {
   const load = useCallback(async () => {
     if (!activeShopId) return;
     setLoading(true);
-    const [{ data: billsData }, { data: drawsData }, { data: expensesData }, { data: creditsData }, { data: movesData }, itemsData] =
+    const [{ data: billsData }, { data: drawsData }, { data: expensesData }, { data: creditsData }, { data: movesData }, itemsData, { data: returnsData }] =
       await Promise.all([
         supabase.from("bills").select("*").eq("shop_id", activeShopId),
         supabase.from("draws").select("*").eq("shop_id", activeShopId),
@@ -39,7 +40,9 @@ function CashbookPageInner() {
         supabase.from("credits").select("*").eq("shop_id", activeShopId),
         supabase.from("movements").select("*").eq("shop_id", activeShopId),
         fetchShopItems(supabase, activeShopId, { orderByCode: false }),
+        supabase.from("sale_returns").select("*").eq("shop_id", activeShopId),
       ]);
+    setReturns(returnsData || []);
     setBills(billsData || []);
     setDraws(drawsData || []);
     setExpenses(expensesData || []);
@@ -59,9 +62,15 @@ function CashbookPageInner() {
       if (b.payment_type !== "credit") rows.push({ id: b.id, date: b.date, type: "in", label: t("Sale — {no}", { no: b.bill_no }), amount: b.total });
     });
     credits
-      .filter((c) => c.type === "payment")
+      // A return that reduced someone's udhaar is not money received.
+      .filter((c) => c.type === "payment" && !c.return_id)
       .forEach((c) => {
         rows.push({ id: c.id, date: c.date, type: "in", label: t("Udhaar payment — {name}", { name: c.name }), amount: c.amount });
+      });
+    returns
+      .filter((r) => r.refund_method !== "credit")
+      .forEach((r) => {
+        rows.push({ id: r.id, date: r.date, type: "out", label: t("Return — {no}", { no: r.bill_no }), amount: Number(r.refund_amount) });
       });
     draws.forEach((d) => {
       rows.push({ id: d.id, date: d.date, type: "out", label: d.note || t("Personal draw"), amount: d.amount });
@@ -85,7 +94,7 @@ function CashbookPageInner() {
         }
       });
     return rows.sort((a, b) => new Date(a.date) - new Date(b.date));
-  }, [bills, draws, expenses, credits, movements, items, t]);
+  }, [bills, draws, expenses, credits, movements, items, returns, t]);
 
   // Balance is a true running total computed over ALL history, not just
   // the entries inside the selected date range — otherwise switching

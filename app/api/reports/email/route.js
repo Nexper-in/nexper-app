@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient, getRequestUser } from "@/lib/supabaseAdmin";
 import { isRateLimited } from "@/lib/rateLimit";
-import { computeGstSummary, summaryToCsv } from "@/lib/gstReport";
+import { computeGstSummary, summaryToCsv, returnsAsBills } from "@/lib/gstReport";
 import { isYmd, fetchPeriodSummary, periodText, periodCsv, PERIOD_TITLES } from "@/lib/periodReport";
 
 // Emails the signed-in owner their own GST summary for one month.
@@ -45,8 +45,9 @@ export async function POST(request) {
     end.setUTCMonth(end.getUTCMonth() + 1);
     const { data: bills, error } = await admin.from("bills").select("items, total, date").eq("shop_id", shopId).gte("date", start.toISOString()).lt("date", end.toISOString());
     if (error) return NextResponse.json({ error: "Could not load bills." }, { status: 500 });
-    const csv = summaryToCsv(computeGstSummary(bills || []));
-    const sales = (bills || []).reduce((a, b) => a + Number(b.total || 0), 0);
+    const { data: rets } = await admin.from("sale_returns").select("items, refund_amount").eq("shop_id", shopId).gte("date", start.toISOString()).lt("date", end.toISOString());
+    const csv = summaryToCsv(computeGstSummary([...(bills || []), ...returnsAsBills(rets || [])]));
+    const sales = (bills || []).reduce((a, b) => a + Number(b.total || 0), 0) - (rets || []).reduce((a, r) => a + Number(r.refund_amount || 0), 0);
     const label = start.toLocaleDateString("en-IN", { month: "long", year: "numeric", timeZone: "UTC" });
     subject = `${shopName} – sales & GST report, ${label}`;
     html = `<p>Your Nexper report for <b>${esc(label)}</b> is attached.</p><p>Bills: ${(bills || []).length}<br>Total sales: ₹${sales.toFixed(2)}</p><p style="color:#666">Sent only to you, on your request.</p>`;
