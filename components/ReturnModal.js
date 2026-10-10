@@ -62,22 +62,24 @@ export default function ReturnModal({ bill, returnsForBill, supabase, shopId, on
               <div key={l.shop_product_id} className="flex items-center gap-3 rounded-xl px-3 py-2" style={{ background: "var(--bg-surface-alt)" }}>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-semibold truncate">{l.name}</div>
-                  <div className="text-xs text-[var(--text-secondary)] ks-mono">
+                  <div className="text-xs text-[var(--text-secondary)] ks-mono break-words">
                     {t("{left} {unit} can be returned · {price} each", { left: l.left, unit: l.unit, price: rupee(l.price) })}
                   </div>
                 </div>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  min="0"
-                  max={l.left}
-                  step="any"
-                  aria-label={t("Quantity to return")}
-                  className="ks-input w-20 text-center ks-mono"
-                  placeholder="0"
-                  value={picked[l.shop_product_id] ?? ""}
-                  onChange={(e) => setQty(l, e.target.value)}
-                />
+                <div className="w-20 shrink-0">
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    min="0"
+                    max={l.left}
+                    step="any"
+                    aria-label={t("Quantity to return")}
+                    className="ks-input w-full text-center ks-mono"
+                    placeholder="0"
+                    value={picked[l.shop_product_id] ?? ""}
+                    onChange={(e) => setQty(l, e.target.value)}
+                  />
+                </div>
               </div>
             ))}
           </div>
