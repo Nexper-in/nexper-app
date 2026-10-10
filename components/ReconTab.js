@@ -58,9 +58,16 @@ export default function ReconTab() {
     const first = credits.map((c) => c.date).sort()[0];
     // Sales inside the statement window only; very recent ones may not have settled yet.
     const inRange = sales.filter((s) => istYmd(s.date) >= first && istYmd(s.date) <= last);
-    const pending = inRange.filter((s) => dayNum(last) - dayNum(istYmd(s.date)) < WINDOW);
-    const checked = inRange.filter((s) => !pending.includes(s));
-    const r = matchCredits(checked, credits.filter((c) => c.date >= first), { windowDays: WINDOW });
+    const isPending = (x) => dayNum(last) - dayNum(istYmd(x.date)) < WINDOW;
+    // Match everything first, so a payout for a recent sale is not shown as "extra".
+    const r = matchCredits(inRange, credits.filter((c) => c.date >= first), { windowDays: WINDOW });
+    // Recent sales with no credit yet may still be settling, so they are not called missing.
+    const pending = r.unmatchedSales.filter(isPending);
+    const missing = r.unmatchedSales.filter((x) => !isPending(x));
+    const cents = (n) => Math.round(n * 100);
+    const sum = (arr) => arr.reduce((a, x) => a + cents(x.amount), 0) / 100;
+    r.unmatchedSales = missing;
+    r.totals = { ...r.totals, sales: sum(inRange) - sum(pending), missing: sum(missing) };
     return { ...r, pending };
   }, [sales, credits]);
 
