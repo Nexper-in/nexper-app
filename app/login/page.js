@@ -253,9 +253,9 @@ export default function LoginPage() {
                   <div ref={gisBox} className="w-full flex justify-center" style={{ opacity: googleLoading ? 0.5 : 1, pointerEvents: googleLoading ? "none" : undefined }} />
                 </div>
               )}
+              {!gisReady && (
               <button
                 type="button"
-                hidden={gisReady}
                 onClick={GOOGLE_SIGNIN ? handleGoogle : undefined}
                 disabled={googleLoading}
                 aria-disabled={!GOOGLE_SIGNIN}
@@ -273,6 +273,7 @@ export default function LoginPage() {
                   </span>
                 )}
               </button>
+              )}
               {!showEmail && (
                 <button
                   type="button"
