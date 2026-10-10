@@ -7,6 +7,9 @@ import Field from "@/components/ui/Field";
 import { useShop } from "@/components/ShopContext";
 import { MODULES } from "@/lib/modules";
 import { callApi } from "@/lib/apiClient";
+import { fetchShopItems } from "@/lib/products";
+import { buildBackupZip } from "@/lib/exportData";
+import { downloadFile } from "@/lib/gstReport";
 
 import { useT } from "@/lib/i18n";
 export default function StoreSettingsModal({ onClose }) {
@@ -25,6 +28,7 @@ export default function StoreSettingsModal({ onClose }) {
   const [everyDays, setEveryDays] = useState(String(activeShop?.reminder_every_days ?? 7));
   const [minAmount, setMinAmount] = useState(String(activeShop?.reminder_min_amount ?? 50));
   const [sendingNow, setSendingNow] = useState(false);
+  const [backingUp, setBackingUp] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -37,6 +41,40 @@ export default function StoreSettingsModal({ onClose }) {
       showToast(err.message, "err");
     } finally {
       setSendingNow(false);
+    }
+  }
+
+  // Reads every row in pages of 1000 (the server's per-request limit).
+  async function readAll(table, select = "*") {
+    const out = [];
+    for (let from = 0; ; from += 1000) {
+      const { data, error } = await supabase.from(table).select(select).eq("shop_id", activeShopId).range(from, from + 999);
+      if (error) {
+        if (/does not exist|schema cache/i.test(error.message)) return out; // table not set up yet
+        throw error;
+      }
+      out.push(...data);
+      if (data.length < 1000) return out;
+    }
+  }
+
+  async function downloadBackup() {
+    setBackingUp(true);
+    try {
+      const [items, bills, credits, expenses, fixed, links, returns, movements, reconciliations] = await Promise.all([
+        fetchShopItems(supabase, activeShopId),
+        readAll("bills"), readAll("credits"), readAll("expenses"), readAll("fixed_expenses"),
+        readAll("shop_suppliers", "owed, supplier:suppliers(*)"),
+        readAll("sale_returns"), readAll("movements"), readAll("reconciliations"),
+      ]);
+      const suppliers = links.map((l) => ({ ...(l.supplier || {}), owed: l.owed }));
+      const { blob, filename } = await buildBackupZip({ shop: activeShop, items, bills, credits, expenses, fixed, suppliers, returns, movements, reconciliations });
+      downloadFile(filename, blob, "application/zip");
+      showToast(t("Backup downloaded"));
+    } catch (err) {
+      showToast(err.message, "err");
+    } finally {
+      setBackingUp(false);
     }
   }
 
@@ -138,6 +176,13 @@ export default function StoreSettingsModal({ onClose }) {
               {t("Email me today's summary now")}
             </button>
           </div>
+        </div>
+        <div>
+          <button type="button" onClick={downloadBackup} disabled={backingUp} className="ks-btn-outline w-full text-sm flex items-center justify-center gap-2">
+            {backingUp && <Loader2 size={14} className="animate-spin" />}
+            {t("Download all my data (ZIP)")}
+          </button>
+          <p className="text-[11px] mt-1.5" style={{ color: "var(--text-secondary)" }}>{t("Items, bills, udhaar, expenses and more as spreadsheet files. Keep it safe: it has customer names and phone numbers.")}</p>
         </div>
         <Field label={t("Enabled features for this shop")}>
           <div className="grid grid-cols-2 gap-2">

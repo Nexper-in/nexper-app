@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ScanLine, Upload, BarChart2, BookOpen } from "lucide-react";
+import { ScanLine, Upload, BarChart2, BookOpen, Tags, TrendingDown } from "lucide-react";
 import { useShop } from "@/components/ShopContext";
 import { hasFeature } from "@/lib/platformConfig";
 import { fetchShopItems, flattenShopProduct } from "@/lib/products";
@@ -26,6 +26,7 @@ export function useStock() {
   const [showInsights, setShowInsights] = useState(false);
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [showCatalogPicker, setShowCatalogPicker] = useState(false);
+  const [showBulkPrice, setShowBulkPrice] = useState(false);
   const [showTools, setShowTools] = useState(false);
   const [showScanUpgrade, setShowScanUpgrade] = useState(false);
   const [expiryDays, setExpiryDays] = useState({});
@@ -169,6 +170,8 @@ export function useStock() {
     { icon: BookOpen, label: t("Add from catalogue"), sub: t("Common Indian products"), run: () => setShowCatalogPicker(true) },
     { icon: ScanLine, label: t("Scan supplier bill"), sub: t("Photo of a printed bill"), run: () => (hasFeature(activeShop, "ocr_scan") ? setShowScanBill(true) : setShowScanUpgrade(true)) },
     { icon: Upload, label: t("Import a sheet"), sub: t("CSV of many items"), run: () => setShowBulkImport(true) },
+    { icon: TrendingDown, label: t("Stock insights"), sub: t("Margin alerts and dead stock"), run: () => router.push("/insights") },
+    { icon: Tags, label: t("Bulk price update"), sub: t("Change prices by % or ₹"), run: () => setShowBulkPrice(true) },
     { icon: BarChart2, label: showInsights ? t("Hide profit per item") : t("Profit per item"), sub: t("Margin on each item"), run: () => setShowInsights((v) => !v) },
   ];
 
@@ -176,7 +179,7 @@ export function useStock() {
     t, supabase, activeShopId, activeShop, showToast,
     items, suppliers, loading, query, setQuery, filtered, insightItems, topMargin, tools,
     showAdd, setShowAdd, adjustItem, setAdjustItem, editPriceItem, setEditPriceItem,
-    showScanBill, setShowScanBill, showInsights, setShowInsights, showBulkImport, setShowBulkImport,
+    showScanBill, setShowScanBill, showInsights, setShowInsights, showBulkImport, setShowBulkImport, showBulkPrice, setShowBulkPrice,
     showCatalogPicker, setShowCatalogPicker, showTools, setShowTools, showScanUpgrade, setShowScanUpgrade,
     expiryDays, addItem, savePrice, logMovement, load,
   };

@@ -4,6 +4,7 @@ import {
   Package, Wallet, AlertTriangle, TrendingUp, ArrowUpCircle, ArrowDownCircle, Activity, Share2, Receipt, CheckCircle2,
 } from "lucide-react";
 import GettingStarted from "@/components/GettingStarted";
+import StockInsightsCard from "@/components/StockInsightsCard";
 import StatCard from "@/components/StatCard";
 import StatDetailModal from "@/components/StatDetailModal";
 import CustomerDetailModal from "@/components/CustomerDetailModal";
@@ -101,6 +102,7 @@ export function AttentionList({ vm }) {
   const { t, attention, TONE, items } = vm;
   return (
     <>
+      <StockInsightsCard />
       {/* Needs attention */}
       <h2 className="ks-display font-bold text-base mb-2">{t("Needs attention")}</h2>
       <div className="ks-card overflow-hidden mb-5">

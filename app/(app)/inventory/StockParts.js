@@ -5,6 +5,7 @@ import AddItemModal from "@/components/AddItemModal";
 import AdjustStockModal from "@/components/AdjustStockModal";
 import EditPriceModal from "@/components/EditPriceModal";
 import ScanBillModal from "@/components/ScanBillModal";
+import BulkPriceModal from "@/components/BulkPriceModal";
 import BulkImportModal from "@/components/BulkImportModal";
 import CatalogPickerModal from "@/components/CatalogPickerModal";
 import UpgradePrompt from "@/components/UpgradePrompt";
@@ -106,11 +107,14 @@ export function StockModals({ vm }) {
   const {
     t, supabase, activeShopId, showToast, items, suppliers, load, addItem, savePrice, logMovement,
     showAdd, setShowAdd, adjustItem, setAdjustItem, editPriceItem, setEditPriceItem,
-    showScanBill, setShowScanBill, showBulkImport, setShowBulkImport,
+    showScanBill, setShowScanBill, showBulkImport, setShowBulkImport, showBulkPrice, setShowBulkPrice,
     showCatalogPicker, setShowCatalogPicker, showScanUpgrade, setShowScanUpgrade,
   } = vm;
   return (
     <>
+    {showBulkPrice && (
+      <BulkPriceModal items={items} supabase={supabase} showToast={showToast} onClose={() => setShowBulkPrice(false)} onDone={() => { setShowBulkPrice(false); load(); }} />
+    )}
     {showBulkImport && (
       <BulkImportModal
         onClose={() => { setShowBulkImport(false); load(); }}
