@@ -118,3 +118,72 @@ test("period reports: IST day/week/month ranges and summary", async () => {
   assert.match(txt, /Net  ₹45/);
   assert.match(txt, /▲ 25% vs yesterday/);
 });
+
+// ---- returns, reminders, reports with returns ----
+const { returnableLines, refundFor, refundMethods } = await import("../lib/returns.js");
+const { dueReminders } = await import("../lib/reminders.js");
+const { summarizePeriod } = await import("../lib/periodReport.js");
+const { computeGstSummary, returnsAsBills } = await import("../lib/gstReport.js");
+
+const sugarBill = {
+  id: "b1", subtotal: 200, total: 180, payment_type: "cash", payment_method: "upi", customer_phone: "9999900000",
+  items: [{ shop_product_id: "p1", name: "Sugar", unit: "kg", price: 50, gst: 5, qty: 4 }],
+};
+
+test("returnable quantity drops by what was already returned", () => {
+  assert.equal(returnableLines(sugarBill, [])[0].left, 4);
+  assert.equal(returnableLines(sugarBill, [{ items: [{ shop_product_id: "p1", qty: 1 }] }])[0].left, 3);
+  assert.equal(returnableLines(sugarBill, [{ items: [{ shop_product_id: "p1", qty: 4 }] }]).length, 0);
+});
+
+test("refund follows the bill's discount, matching the database", () => {
+  const lines = returnableLines(sugarBill, []);
+  assert.equal(refundFor(sugarBill, lines, { p1: 1 }), 45);
+  assert.equal(refundFor(sugarBill, lines, { p1: 4 }), 180);
+  assert.equal(refundFor(sugarBill, lines, {}), 0);
+});
+
+test("refund methods: udhaar bills reduce udhaar, others refund the way they paid", () => {
+  assert.deepEqual(refundMethods({ payment_type: "credit" }), ["credit"]);
+  assert.deepEqual(refundMethods(sugarBill), ["upi", "credit"]);
+  assert.deepEqual(refundMethods({ payment_type: "cash", payment_method: "cash" }), ["cash"]);
+});
+
+test("reports: a return comes off sales, the way it was paid, and top sellers", () => {
+  const bills = [{ items: [{ name: "Sugar", qty: 4, price: 50 }], total: 180, payment_type: "cash", payment_method: "cash" }];
+  const returns = [{ refund_amount: 45, refund_method: "cash", items: [{ name: "Sugar", qty: 1, amount: 45 }] }];
+  const s = summarizePeriod(bills, [], returns);
+  assert.equal(s.sales, 135);
+  assert.equal(s.cash, 135);
+  assert.equal(s.returns, 45);
+  assert.equal(s.topItems[0].qty, 3);
+  assert.equal(summarizePeriod(bills, [], []).sales, 180); // no returns: unchanged
+});
+
+test("GST summary nets returns off the same rate", () => {
+  const bills = [{ items: [{ name: "Sugar", qty: 4, price: 50, gst: 5 }] }];
+  const rets = [{ items: [{ name: "Sugar", qty: 1, price: 50, gst: 5 }] }];
+  const gross = computeGstSummary(bills)[0];
+  const net = computeGstSummary([...bills, ...returnsAsBills(rets)])[0];
+  assert.equal(Math.round(gross.total), 200);
+  assert.equal(Math.round(net.total), 150);
+});
+
+test("udhaar reminders: who is due, who is not", () => {
+  const now = new Date("2026-10-10T12:00:00Z").getTime();
+  const d = (n) => new Date(now - n * 86_400_000).toISOString();
+  const credits = [
+    { phone: "1", name: "Old", type: "charge", amount: 500, date: d(20) },
+    { phone: "2", name: "Fresh", type: "charge", amount: 500, date: d(1) },
+    { phone: "3", name: "Tiny", type: "charge", amount: 20, date: d(30) },
+    { phone: "4", name: "Reminded", type: "charge", amount: 300, date: d(30) },
+    { phone: "5", name: "Paid", type: "charge", amount: 300, date: d(30) },
+    { phone: "5", name: "Paid", type: "payment", amount: 300, date: d(2) },
+    { phone: "6", name: "Remindedlong", type: "charge", amount: 300, date: d(30) },
+  ];
+  const log = [{ phone: "4", sent_at: d(2) }, { phone: "6", sent_at: d(9) }];
+  const due = dueReminders(credits, log, { reminder_every_days: 7, reminder_min_amount: 50 }, now);
+  assert.deepEqual(due.map((c) => c.phone), ["1", "6"]);
+  assert.equal(due[0].balance, 500);
+  assert.equal(due[0].daysOwing, 20);
+});

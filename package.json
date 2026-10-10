@@ -9,7 +9,7 @@
     "lint": "next lint",
     "check:i18n": "node tools/check-i18n.mjs",
     "test": "node --import ./tests/register.mjs --test tests/unit.test.mjs tests/console.test.mjs tests/supplies.test.mjs",
-    "test:db": "node tests/db/supplies.rls.mjs"
+    "test:db": "node tests/db/supplies.rls.mjs && node tests/db/returns.rls.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.123.0",

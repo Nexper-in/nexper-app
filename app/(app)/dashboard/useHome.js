@@ -20,6 +20,7 @@ export function useHome() {
   const [bills, setBills] = useState([]);
   const [movements, setMovements] = useState([]);
   const [credits, setCredits] = useState([]);
+  const [returns, setReturns] = useState([]);
   const [expiringBatches, setExpiringBatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [detail, setDetail] = useState(null); // 'items' | 'value' | 'low' | 'profit'
@@ -31,7 +32,7 @@ export function useHome() {
     setLoading(true);
     const horizon = new Date();
     horizon.setDate(horizon.getDate() + 14);
-    const [itemsData, { data: billsData }, { data: movesData }, { data: creditsData }, { data: batchesData }] = await Promise.all([
+    const [itemsData, { data: billsData }, { data: movesData }, { data: creditsData }, { data: batchesData }, { data: returnsData }] = await Promise.all([
       fetchShopItems(supabase, activeShopId, { orderByCode: false }),
       supabase.from("bills").select("*").eq("shop_id", activeShopId).order("date", { ascending: false }),
       supabase.from("movements").select("*").eq("shop_id", activeShopId).order("date", { ascending: false }).limit(6),
@@ -44,7 +45,9 @@ export function useHome() {
         .not("expiry_date", "is", null)
         .lte("expiry_date", horizon.toISOString().slice(0, 10))
         .order("expiry_date", { ascending: true }),
+      supabase.from("sale_returns").select("refund_amount, date").eq("shop_id", activeShopId),
     ]);
+    setReturns(returnsData || []);
     setItems(itemsData);
     setBills(billsData || []);
     setMovements(movesData || []);
@@ -65,7 +68,12 @@ export function useHome() {
     const t = new Date().toDateString();
     return bills.filter((b) => new Date(b.date).toDateString() === t);
   }, [bills]);
-  const todaysSales = todaysBills.reduce((s, b) => s + b.total, 0);
+  // Today's sales are net of anything handed back today.
+  const todaysReturns = useMemo(() => {
+    const t = new Date().toDateString();
+    return returns.filter((r) => new Date(r.date).toDateString() === t).reduce((s, r) => s + Number(r.refund_amount || 0), 0);
+  }, [returns]);
+  const todaysSales = todaysBills.reduce((s, b) => s + b.total, 0) - todaysReturns;
   const todaysProfit = useMemo(() => {
     return todaysBills.reduce((sum, b) => {
       const billProfit = (b.items || []).reduce((s, line) => {

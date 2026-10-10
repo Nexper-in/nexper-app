@@ -5,7 +5,7 @@ import { Loader2, Download, Mail, AlertTriangle, FileBarChart2, FileJson, Share2
 import { useShop } from "@/components/ShopContext";
 import { fetchShopItems } from "@/lib/products";
 import { rupee } from "@/lib/format";
-import { computeGstSummary, summaryToCsv, buildGstr1Json, downloadFile } from "@/lib/gstReport";
+import { computeGstSummary, summaryToCsv, buildGstr1Json, downloadFile, returnsAsBills } from "@/lib/gstReport";
 import ModuleGuard from "@/components/ModuleGuard";
 import UpgradePrompt from "@/components/UpgradePrompt";
 import ShareReport from "@/components/ShareReport";
@@ -38,6 +38,7 @@ function ReportsPageInner() {
   const [month, setMonth] = useState(currentMonth());
   const [items, setItems] = useState([]);
   const [bills, setBills] = useState([]);
+  const [returnRows, setReturnRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hsnDrafts, setHsnDrafts] = useState({});
   const [savingHsn, setSavingHsn] = useState({});
@@ -47,7 +48,7 @@ function ReportsPageInner() {
     if (!activeShopId) return;
     setLoading(true);
     const { start, end } = monthRange(month);
-    const [itemRows, { data: billRows }] = await Promise.all([
+    const [itemRows, { data: billRows }, { data: retRows }] = await Promise.all([
       fetchShopItems(supabase, activeShopId),
       supabase
         .from("bills")
@@ -55,9 +56,17 @@ function ReportsPageInner() {
         .eq("shop_id", activeShopId)
         .gte("date", start.toISOString())
         .lt("date", end.toISOString()),
+      // Returns net off the month's sales. Before migration 031 the table does not exist; that just means none.
+      supabase
+        .from("sale_returns")
+        .select("items, refund_amount")
+        .eq("shop_id", activeShopId)
+        .gte("date", start.toISOString())
+        .lt("date", end.toISOString()),
     ]);
     setItems(itemRows);
     setBills(billRows || []);
+    setReturnRows(retRows || []);
     setLoading(false);
   }, [supabase, activeShopId, month]);
 
@@ -66,7 +75,8 @@ function ReportsPageInner() {
   }, [load]);
 
   const itemsBySpId = useMemo(() => new Map(items.map((i) => [i.id, i])), [items]);
-  const summary = useMemo(() => computeGstSummary(bills), [bills]);
+  const netBills = useMemo(() => [...bills, ...returnsAsBills(returnRows)], [bills, returnRows]);
+  const summary = useMemo(() => computeGstSummary(netBills), [netBills]);
   const totals = useMemo(
     () =>
       summary.reduce(
@@ -119,7 +129,7 @@ function ReportsPageInner() {
 
   function downloadJson() {
     const [yyyy, mm] = month.split("-");
-    const json = buildGstr1Json({ shop: activeShop, bills, itemsBySpId, period: `${mm}${yyyy}` });
+    const json = buildGstr1Json({ shop: activeShop, bills: netBills, itemsBySpId, period: `${mm}${yyyy}` });
     downloadFile(`gstr1-${month}.json`, JSON.stringify(json, null, 2), "application/json");
   }
 
