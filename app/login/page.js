@@ -15,8 +15,8 @@ import LanguagePicker from "@/components/LanguagePicker";
 const GOOGLE_SIGNIN = process.env.NEXT_PUBLIC_GOOGLE_SIGNIN === "true";
 // When the Google client ID is set, Google's own button signs people in right
 // on this page (a popup that says "Nexper" and our address) and the result is
-// handed to Supabase. Without it, or if Google's script can't load, the
-// redirect button below is used and Google shows the Supabase address.
+// handed to Supabase. Without it, on phones, or if Google's script can't load,
+// the redirect button below is used and Google shows the Supabase address.
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 
 export default function LoginPage() {
@@ -72,7 +72,11 @@ export default function LoginPage() {
 
   // Google's own sign-in button (see GOOGLE_CLIENT_ID above).
   useEffect(() => {
-    if (!GOOGLE_SIGNIN || !GOOGLE_CLIENT_ID || checkingSession || mode === "staff" || mode === "forgot") {
+    // Google's popup button opens as a separate tab on phones and in in-app
+    // browsers (WhatsApp, Instagram...), where it fails with "400 malformed
+    // request". Phones use the redirect button below instead, which works there.
+    const phone = typeof navigator !== "undefined" && /Android|iPhone|iPad|iPod|Mobile|FBAN|FBAV|Instagram|WhatsApp|Line\//i.test(navigator.userAgent);
+    if (!GOOGLE_SIGNIN || !GOOGLE_CLIENT_ID || phone || checkingSession || mode === "staff" || mode === "forgot") {
       setGisReady(false);
       return;
     }
