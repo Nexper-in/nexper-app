@@ -2,14 +2,14 @@
 
 import { Plus, MessageCircle, ChevronRight } from "lucide-react";
 import { rupee } from "@/lib/format";
-import { whatsappLink, creditReminderText } from "@/lib/messaging";
+import RemindersDue from "@/components/RemindersDue";
 import { useT } from "@/lib/i18n";
 
 // Phone and tablet view: the total and one card per customer, with the two
 // things you do for each (take a payment, send a reminder) under your thumb.
 export default function CreditMobile({ vm }) {
   const t = useT();
-  const { activeShop, customers, totalOutstanding, setShowNew, setPayFor, setLedgerCustomer } = vm;
+  const { customers, totalOutstanding, setShowNew, setPayFor, setLedgerCustomer } = vm;
   return (
     <div className="pt-4">
       <div className="ks-card p-4 mb-3 flex items-center justify-between gap-3">
@@ -23,6 +23,8 @@ export default function CreditMobile({ vm }) {
           <Plus size={16} /> {t("New credit entry")}
         </button>
       </div>
+
+      <RemindersDue vm={vm} />
 
       <div className="ks-card overflow-hidden">
         {customers.map((c) => (
@@ -49,7 +51,7 @@ export default function CreditMobile({ vm }) {
                   {t("Record payment")}
                 </button>
                 <button
-                  onClick={() => window.open(whatsappLink(c.phone, creditReminderText(activeShop?.name, c.name, c.balance)), "_blank", "noopener,noreferrer")}
+                  onClick={() => vm.remind(c)}
                   className="flex-1 text-xs py-2.5 rounded-full font-semibold flex items-center justify-center gap-1 text-white"
                   style={{ background: "#25D366" }}
                 >

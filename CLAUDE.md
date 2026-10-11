@@ -82,7 +82,7 @@ tap away (folded sections, a "⋯" menu, or the side menu).
 
 - Owners register and sign in with **email and password** (with "Forgot
   password"). Staff use staff code + PIN.
-- **Fingerprint / Face ID** (`lib/passkeys.js`, `app/api/passkeys/*`, migration 032):
+- **Fingerprint / Face ID** (`lib/passkeys.js`, `app/api/passkeys/*`, migration 034):
   a signed-in person adds a device (account menu, "Fingerprint / Face ID") and can
   then sign in with it. The server verifies the WebAuthn proof and only then asks
   Supabase for a one-time token (`generateLink`), which the browser trades for a
@@ -158,11 +158,12 @@ the app can be deployed before the SQL is run. Current pending list is in
 - Never put user text into HTML you build yourself (print windows,
   `document.write`, `dangerouslySetInnerHTML`): escape it.
 - Don't send shop data (UPI IDs, amounts, customers) to third-party services.
-  QR codes are made in the browser.
-- Headers and CSP are in `next.config.js`. A new outside host (script, font,
+  QR codes are made in the browser. One documented exception: "Email me this
+  report" (`app/api/reports/email`) sends the owner's own month summary to the
+  owner's own address through Resend, only on their click.
+- Headers and CSP are in `next.config.js` (login also allows `accounts.google.com/gsi/` for Google's button). A new outside host (script, font,
   API) must be added there on purpose.
-- `npm test`, `npm run test:db` and `npm run check:audit` must pass. An accepted
-  advisory goes in `tools/audit-allow.json` with a reason and a review date.
+- `npm test`, `npm run test:db` and `node tools/audit.mjs` (npm audit with a short, dated allow-list) must pass.
 
 ## Before you push
 

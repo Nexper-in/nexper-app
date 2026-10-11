@@ -8,7 +8,7 @@ export async function GET(request) {
   if (error) return NextResponse.json({ error }, { status });
 
   // Shops and members are read page by page (the API stops at 1000 rows), and
-  // the bill and udhaar totals are summed by the database (migration 031)
+  // the bill and udhaar totals are summed by the database (migration 033)
   // instead of downloading every bill and credit entry of every shop.
   const [shopsRes, membersRes, statsRes, udhaarRes] = await Promise.all([
     fetchAll(() => admin.from("shops").select("id, owner_id, name, type, created_at, enabled_modules").order("created_at").order("id")),
@@ -18,9 +18,9 @@ export async function GET(request) {
   ]);
   if (shopsRes.error) return serverError(shopsRes.error, "admin/overview shops");
   if (membersRes.error) return serverError(membersRes.error, "admin/overview members");
-  // Before migration 031 the two totals functions do not exist: say so plainly.
+  // Before migration 033 the two totals functions do not exist: say so plainly.
   if (statsRes.error || udhaarRes.error) {
-    return NextResponse.json({ error: "Run database update 031 (see MAQBOOL_TASKS), then reload." }, { status: 500 });
+    return NextResponse.json({ error: "Run database update 033 (see MAQBOOL_TASKS), then reload." }, { status: 500 });
   }
   const shops = shopsRes.data;
   const members = membersRes.data;

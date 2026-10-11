@@ -21,7 +21,7 @@ let supabaseOrigin = "";
 try {
   supabaseOrigin = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin;
 } catch {}
-const connect = ["'self'", supabaseOrigin, supabaseOrigin.replace("https://", "wss://")].filter(Boolean).join(" ");
+const connect = ["'self'", "https://accounts.google.com/gsi/", supabaseOrigin, supabaseOrigin.replace("https://", "wss://")].filter(Boolean).join(" ");
 
 // Content Security Policy. 'unsafe-inline' for scripts is needed by Next.js's
 // own inline bootstrap and the theme script; everything else is locked down:
@@ -29,8 +29,9 @@ const connect = ["'self'", supabaseOrigin, supabaseOrigin.replace("https://", "w
 // calls only to this site and Supabase.
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  `script-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/client${isDev ? " 'unsafe-eval'" : ""}`,
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style",
+  "frame-src https://accounts.google.com/gsi/",
   "font-src 'self' data: https://fonts.gstatic.com",
   "img-src 'self' data: blob: https:",
   `connect-src ${connect}${isDev ? " ws://localhost:*" : ""}`,
@@ -51,7 +52,8 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   // Camera and microphone are used by barcode scanning and voice billing.
   { key: "Permissions-Policy", value: "camera=(self), microphone=(self), geolocation=(), payment=(), usb=()" },
-  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+  // Google's sign-in popup needs to talk back to this page.
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
 ];
 
 /** @type {import('next').NextConfig} */

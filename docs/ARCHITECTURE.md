@@ -55,7 +55,7 @@ movements, as the shop's owner under the access rules:
 | Newest 6 stock movements | 425 ms | 1 ms |
 | Every bill ever (what the old screens did) | 5,000 ms and about 20 MB | no screen does this now |
 
-What changed (migration 031 and the screens):
+What changed (migration 033 and the screens):
 
 - **The API returns at most 1,000 rows and stops without an error.** Screens that loaded
   "everything" were silently wrong past 1,000 bills (Day close totals, bill numbers,
@@ -75,8 +75,7 @@ function; nothing else needs to change.
 - **Backups**: Supabase's free plan has no point-in-time recovery. Real clients need the
   Pro plan (or better) and one test restore. Check the project **region is Mumbai
   (ap-south-1)**: it cannot be changed later without moving the data.
-- **Owner export**: Account menu, "Download my data": a zip of spreadsheets, built from the
-  owner's own session, so it can only contain their shop (`lib/exportData.js`).
+- **Owner backup**: Store settings, "Download backup": a zip of spreadsheets built from the owner's own session (`lib/exportData.js`), so it can only contain their shop.
 - **Deleting a shop** removes everything under it (`on delete cascade`), including supply
   data; admin deletes are in the audit log.
 - Support access: platform admins can see all shops. Their actions are logged; reading is

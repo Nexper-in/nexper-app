@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Fingerprint, Loader2, Mail } from "lucide-react";
 import { createClient } from "@/lib/supabaseClient";
@@ -15,6 +15,11 @@ import { markActive } from "@/lib/appLock";
 // NEXT_PUBLIC_GOOGLE_SIGNIN=true in Vercel and redeploying; then the button
 // works and the email form folds behind a link.
 const GOOGLE_SIGNIN = process.env.NEXT_PUBLIC_GOOGLE_SIGNIN === "true";
+// When the Google client ID is set, Google's own button signs people in right
+// on this page (a popup that says "Nexper" and our address) and the result is
+// handed to Supabase. Without it, on phones, or if Google's script can't load,
+// the redirect button below is used and Google shows the Supabase address.
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -34,6 +39,8 @@ export default function LoginPage() {
   // folded away unless asked for (or a ?mode= link points at it).
   const [showEmail, setShowEmail] = useState(!GOOGLE_SIGNIN);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [gisReady, setGisReady] = useState(false);
+  const gisBox = useRef(null);
   // Sign-up mode from the platform admin page: open, invite_only or closed.
   const [signup, setSignup] = useState({ mode: "open", message: "" });
   // Fingerprint / Face ID sign-in: shown when this browser can do it and the
@@ -91,6 +98,72 @@ export default function LoginPage() {
       })
       .catch(() => setCheckingSession(false));
   }, [supabase, router]);
+
+  // Google's own sign-in button (see GOOGLE_CLIENT_ID above).
+  useEffect(() => {
+    // Google's popup button opens as a separate tab on phones and in in-app
+    // browsers (WhatsApp, Instagram...), where it fails with "400 malformed
+    // request". Phones use the redirect button below instead, which works there.
+    const phone = typeof navigator !== "undefined" && /Android|iPhone|iPad|iPod|Mobile|FBAN|FBAV|Instagram|WhatsApp|Line\//i.test(navigator.userAgent);
+    if (!GOOGLE_SIGNIN || !GOOGLE_CLIENT_ID || phone || checkingSession || mode === "staff" || mode === "forgot") {
+      setGisReady(false);
+      return;
+    }
+    let cancelled = false;
+    const toHex = (buf) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+    async function start() {
+      try {
+        const raw = toHex(crypto.getRandomValues(new Uint8Array(16)));
+        const hashed = toHex(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(raw)));
+        const g = window.google?.accounts?.id;
+        if (cancelled || !g || !gisBox.current) return;
+        g.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          nonce: hashed,
+          ux_mode: "popup",
+          auto_select: false,
+          callback: async (resp) => {
+            setError("");
+            setGoogleLoading(true);
+            const { error } = await supabase.auth.signInWithIdToken({ provider: "google", token: resp.credential, nonce: raw });
+            if (error) {
+              setError(error.message || t("Couldn't start Google sign-in"));
+              setShowEmail(true);
+              setGoogleLoading(false);
+            } else {
+              router.replace("/dashboard");
+            }
+          },
+        });
+        gisBox.current.innerHTML = "";
+        g.renderButton(gisBox.current, {
+          type: "standard",
+          theme: "outline",
+          size: "large",
+          text: "continue_with",
+          shape: "rectangular",
+          logo_alignment: "center",
+          width: Math.max(200, Math.min(400, gisBox.current.offsetWidth || 320)),
+        });
+        setGisReady(true);
+      } catch {
+        setGisReady(false);
+      }
+    }
+    if (window.google?.accounts?.id) {
+      start();
+    } else {
+      const script = document.createElement("script");
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+      script.onload = start;
+      script.onerror = () => setGisReady(false);
+      document.head.appendChild(script);
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase, router, checkingSession, mode]);
 
   function switchMode(next) {
     setMode(next);
@@ -214,6 +287,12 @@ export default function LoginPage() {
             <div className="mb-5">
               <h2 className="ks-display font-bold text-center">{mode === "signin" ? t("Sign in to your shop") : t("Create your shop account")}</h2>
               <>
+              {GOOGLE_SIGNIN && GOOGLE_CLIENT_ID && (
+                <div className="mt-5 flex justify-center" style={gisReady ? undefined : { display: "none" }}>
+                  <div ref={gisBox} className="w-full flex justify-center" style={{ opacity: googleLoading ? 0.5 : 1, pointerEvents: googleLoading ? "none" : undefined }} />
+                </div>
+              )}
+              {!gisReady && (
               <button
                 type="button"
                 onClick={GOOGLE_SIGNIN ? handleGoogle : undefined}
@@ -233,6 +312,7 @@ export default function LoginPage() {
                   </span>
                 )}
               </button>
+              )}
               {passkeyShown && mode === "signin" && <div className="mt-3"><button type="button" onClick={handlePasskey} disabled={passkeyBusy} className="ks-btn-outline w-full flex items-center justify-center gap-2 py-3 font-semibold">
                 {passkeyBusy ? <Loader2 size={18} className="animate-spin" /> : <Fingerprint size={18} />}
                 {t("Sign in with fingerprint / Face ID")}

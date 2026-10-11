@@ -1,4 +1,4 @@
--- 031: ready for big shops, and put purchase orders under version control
+-- 033: ready for big shops, and put purchase orders under version control
 --
 -- 1. Indexes for the questions the app asks of big tables ("this shop, newest
 --    first", "this shop, this month"). Without them a shop with years of bills

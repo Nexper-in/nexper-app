@@ -1,13 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Download, AlertTriangle, FileBarChart2, FileJson } from "lucide-react";
+import { Loader2, Download, Mail, AlertTriangle, FileBarChart2, FileJson, Share2, TrendingUp } from "lucide-react";
 import { useShop } from "@/components/ShopContext";
 import { fetchShopItems } from "@/lib/products";
 import { rupee } from "@/lib/format";
-import { computeGstSummary, summaryToCsv, buildGstr1Json, downloadFile } from "@/lib/gstReport";
+import { computeGstSummary, summaryToCsv, buildGstr1Json, downloadFile, returnsAsBills } from "@/lib/gstReport";
 import ModuleGuard from "@/components/ModuleGuard";
 import UpgradePrompt from "@/components/UpgradePrompt";
+import ShareReport from "@/components/ShareReport";
+import PnlTab from "@/components/PnlTab";
+import ReconTab from "@/components/ReconTab";
 import { hasFeature } from "@/lib/platformConfig";
 
 import { useT } from "@/lib/i18n";
@@ -34,18 +37,21 @@ function ReportsPageInner() {
   const t = useT();
   const { supabase, activeShopId, activeShop, showToast } = useShop();
   const [tab, setTab] = useState("summary");
+  const [sub, setSub] = useState("pnl");
   const [month, setMonth] = useState(currentMonth());
   const [items, setItems] = useState([]);
   const [bills, setBills] = useState([]);
+  const [returnRows, setReturnRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hsnDrafts, setHsnDrafts] = useState({});
   const [savingHsn, setSavingHsn] = useState({});
+  const [emailing, setEmailing] = useState(false);
 
   const load = useCallback(async () => {
     if (!activeShopId) return;
     setLoading(true);
     const { start, end } = monthRange(month);
-    const [itemRows, { data: billRows }] = await Promise.all([
+    const [itemRows, { data: billRows }, { data: retRows }] = await Promise.all([
       fetchShopItems(supabase, activeShopId),
       supabase
         .from("bills")
@@ -53,9 +59,17 @@ function ReportsPageInner() {
         .eq("shop_id", activeShopId)
         .gte("date", start.toISOString())
         .lt("date", end.toISOString()),
+      // Returns net off the month's sales. Before migration 031 the table does not exist; that just means none.
+      supabase
+        .from("sale_returns")
+        .select("items, refund_amount")
+        .eq("shop_id", activeShopId)
+        .gte("date", start.toISOString())
+        .lt("date", end.toISOString()),
     ]);
     setItems(itemRows);
     setBills(billRows || []);
+    setReturnRows(retRows || []);
     setLoading(false);
   }, [supabase, activeShopId, month]);
 
@@ -64,7 +78,8 @@ function ReportsPageInner() {
   }, [load]);
 
   const itemsBySpId = useMemo(() => new Map(items.map((i) => [i.id, i])), [items]);
-  const summary = useMemo(() => computeGstSummary(bills), [bills]);
+  const netBills = useMemo(() => [...bills, ...returnsAsBills(returnRows)], [bills, returnRows]);
+  const summary = useMemo(() => computeGstSummary(netBills), [netBills]);
   const totals = useMemo(
     () =>
       summary.reduce(
@@ -96,9 +111,28 @@ function ReportsPageInner() {
     downloadFile(`gst-summary-${month}.csv`, summaryToCsv(summary), "text/csv");
   }
 
+  async function emailReport() {
+    setEmailing(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch("/api/reports/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ month, shopId: activeShopId }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || "Email could not be sent.");
+      showToast(t("Report emailed to {email}", { email: json.to }));
+    } catch (err) {
+      showToast(err.message, "err");
+    } finally {
+      setEmailing(false);
+    }
+  }
+
   function downloadJson() {
     const [yyyy, mm] = month.split("-");
-    const json = buildGstr1Json({ shop: activeShop, bills, itemsBySpId, period: `${mm}${yyyy}` });
+    const json = buildGstr1Json({ shop: activeShop, bills: netBills, itemsBySpId, period: `${mm}${yyyy}` });
     downloadFile(`gstr1-${month}.json`, JSON.stringify(json, null, 2), "application/json");
   }
 
@@ -111,32 +145,65 @@ function ReportsPageInner() {
             {t("GST collected on your sales, ready to hand off or file.")}
           </p>
         </div>
-        <input
+        {tab !== "share" && !(tab === "more" && sub === "recon") && <input
           type="month"
           value={month}
           onChange={(e) => setMonth(e.target.value)}
           className="ks-input w-auto"
-        />
+        />}
       </div>
 
-      <div className="inline-flex p-1 rounded-full mb-5" style={{ background: "var(--bg-surface-alt)" }}>
+      <div className="grid grid-cols-2 sm:inline-flex gap-1 p-1 rounded-3xl mb-5" style={{ background: "var(--bg-surface-alt)" }}>
         <button
           onClick={() => setTab("summary")}
-          className="px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-colors"
+          className="px-4 py-2 rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors"
           style={tab === "summary" ? { background: "var(--accent)", color: "#fff" } : { color: "var(--text-secondary)" }}
         >
           <FileBarChart2 size={14} /> {t("Summary report")}
         </button>
         <button
           onClick={() => setTab("filing")}
-          className="px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-colors"
+          className="px-4 py-2 rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors"
           style={tab === "filing" ? { background: "var(--accent)", color: "#fff" } : { color: "var(--text-secondary)" }}
         >
           <FileJson size={14} /> {t("GST filing export")}
         </button>
+        <button
+          onClick={() => setTab("share")}
+          className="px-4 py-2 rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors"
+          style={tab === "share" ? { background: "var(--accent)", color: "#fff" } : { color: "var(--text-secondary)" }}
+        >
+          <Share2 size={14} /> {t("Share report")}
+        </button>
+        <button
+          onClick={() => setTab("more")}
+          className="px-4 py-2 rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors"
+          style={tab === "more" ? { background: "var(--accent)", color: "#fff" } : { color: "var(--text-secondary)" }}
+        >
+          <TrendingUp size={14} /> {t("Profit & bank")}
+        </button>
       </div>
 
-      {loading ? (
+      {tab === "share" ? (
+        <ShareReport />
+      ) : tab === "more" ? (
+        <div>
+          <div className="flex gap-1.5 mb-4">
+            {[["pnl", t("Profit & loss")], ["recon", t("UPI match")]].map(([id, label]) => (
+              <button
+                key={id}
+                onClick={() => setSub(id)}
+                aria-pressed={sub === id}
+                className="text-xs font-semibold px-3 py-1.5 rounded-full"
+                style={sub === id ? { background: "var(--strong)", color: "var(--on-strong)" } : { background: "var(--bg-surface-alt)", color: "var(--text-secondary)" }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {sub === "pnl" ? <PnlTab month={month} monthLabel={monthLabel} /> : <ReconTab />}
+        </div>
+      ) : loading ? (
         <div className="pt-6 flex items-center gap-2 text-sm text-muted">
           <Loader2 size={16} className="animate-spin" /> {t("Loading {month} data…", { month: monthLabel })}
         </div>
@@ -199,6 +266,13 @@ function ReportsPageInner() {
             className="ks-btn-primary inline-flex items-center gap-2 disabled:opacity-40"
           >
             <Download size={15} /> {t("Download CSV")}
+          </button>
+          <button
+            onClick={emailReport}
+            disabled={summary.length === 0 || emailing}
+            className="ks-btn-primary inline-flex items-center gap-2 ml-2 disabled:opacity-40"
+          >
+            {emailing ? <Loader2 size={15} className="animate-spin" /> : <Mail size={15} />} {t("Email me this report")}
           </button>
         </div>
       ) : !hasFeature(activeShop, "gstr1_json") ? (

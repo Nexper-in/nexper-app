@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState, Fragment } from "react";
-import { Printer, MessageCircle, Loader2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState, Fragment } from "react";
+import { Printer, MessageCircle, Loader2, Undo2 } from "lucide-react";
 import { useShop } from "@/components/ShopContext";
 import { rupee } from "@/lib/format";
 import { billMessageText, whatsappLink } from "@/lib/messaging";
 import PrintBillContent from "@/components/PrintBillContent";
 import ModuleGuard from "@/components/ModuleGuard";
+import ReturnModal from "@/components/ReturnModal";
 
 import { useT } from "@/lib/i18n";
 export default function HistoryPage() {
@@ -19,13 +20,15 @@ export default function HistoryPage() {
 
 function HistoryPageInner() {
   const t = useT();
-  const { supabase, activeShopId, activeShop } = useShop();
+  const { supabase, activeShopId, activeShop, hasPermission, showToast } = useShop();
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [open, setOpen] = useState(null);
   const [printing, setPrinting] = useState(null);
+  const [returns, setReturns] = useState([]);
+  const [returning, setReturning] = useState(null);
 
   // Newest bills first, 100 at a time: a shop with years of bills should not
   // download all of them just to look at today's.
@@ -39,7 +42,13 @@ function HistoryPageInner() {
         .order("date", { ascending: false })
         .order("id")
         .range(from, from + PAGE - 1);
-      return data || [];
+      const rows = data || [];
+      // Returns are looked up for just these bills (before database update 031
+      // the table does not exist; that just means no returns).
+      const { data: rets } = rows.length
+        ? await supabase.from("sale_returns").select("*").eq("shop_id", activeShopId).in("bill_id", rows.map((b) => b.id)).order("date", { ascending: false })
+        : { data: [] };
+      return { bills: rows, returns: rets || [] };
     },
     [supabase, activeShopId]
   );
@@ -48,8 +57,9 @@ function HistoryPageInner() {
     if (!activeShopId) return;
     setLoading(true);
     loadPage(0).then((rows) => {
-      setBills(rows);
-      setHasMore(rows.length === PAGE);
+      setBills(rows.bills);
+      setReturns(rows.returns);
+      setHasMore(rows.bills.length === PAGE);
       setLoading(false);
     });
   }, [activeShopId, loadPage]);
@@ -57,9 +67,22 @@ function HistoryPageInner() {
   async function showOlder() {
     setLoadingMore(true);
     const rows = await loadPage(bills.length);
-    setBills((prev) => [...prev, ...rows]);
-    setHasMore(rows.length === PAGE);
+    setBills((prev) => [...prev, ...rows.bills]);
+    setReturns((prev) => [...prev, ...rows.returns]);
+    setHasMore(rows.bills.length === PAGE);
     setLoadingMore(false);
+  }
+
+  const returnsByBill = useMemo(() => {
+    const m = new Map();
+    for (const r of returns) m.set(r.bill_id, [...(m.get(r.bill_id) || []), r]);
+    return m;
+  }, [returns]);
+
+  function returnDone(row) {
+    setReturns((prev) => [row, ...prev]);
+    setReturning(null);
+    showToast(t("Return recorded. Refund {amount}", { amount: rupee(row.refund_amount) }));
   }
 
   function doPrint(bill) {
@@ -102,6 +125,11 @@ function HistoryPageInner() {
                         {t("UDHAAR")}
                       </span>
                     )}
+                    {returnsByBill.has(b.id) && (
+                      <span className="ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "var(--warn-soft)", color: "var(--warn)" }}>
+                        {t("RETURNED")}
+                      </span>
+                    )}
                     {b.payment_type !== "credit" && b.payment_method && b.payment_method !== "cash" && (
                       <span className="ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "var(--accent-soft-bg)", color: "var(--accent-soft-text)" }}>
                         {b.payment_method.toUpperCase()}
@@ -122,6 +150,18 @@ function HistoryPageInner() {
                       >
                         <Printer size={13} /> {t("Print")}
                       </button>
+                      {hasPermission("billing") && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setReturning(b);
+                          }}
+                          className="text-xs px-2.5 py-1.5 rounded-full font-semibold flex items-center gap-1"
+                          style={{ background: "var(--bg-surface-alt)", color: "var(--text-primary)" }}
+                        >
+                          <Undo2 size={13} /> {t("Return")}
+                        </button>
+                      )}
                       {b.customer_phone && (
                         <button
                           onClick={(e) => {
@@ -150,6 +190,14 @@ function HistoryPageInner() {
                             <span>{rupee(it.qty * it.price)}</span>
                           </div>
                         ))}
+                        {(returnsByBill.get(b.id) || []).map((r) => (
+                          <div key={r.id} className="flex justify-between text-xs ks-mono" style={{ color: "var(--warn)" }}>
+                            <span>
+                              ↩ {t("Returned")} {(r.items || []).map((it) => `${it.name} × ${it.qty}`).join(", ")} · {new Date(r.date).toLocaleDateString("en-IN")}
+                            </span>
+                            <span>−{rupee(r.refund_amount)}</span>
+                          </div>
+                        ))}
                       </div>
                     </td>
                   </tr>
@@ -173,6 +221,9 @@ function HistoryPageInner() {
             {t("Show older bills")}
           </button>
         </div>
+      )}
+      {returning && (
+        <ReturnModal bill={returning} returnsForBill={returnsByBill.get(returning.id) || []} supabase={supabase} shopId={activeShopId} onClose={() => setReturning(null)} onDone={returnDone} />
       )}
       {printing && (
         <div className="ks-print-only">

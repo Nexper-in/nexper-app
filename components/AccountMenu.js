@@ -4,14 +4,13 @@ import { clearLocalData } from "@/lib/clearLocalData";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
-import { ChevronDown, Download, Fingerprint, LogOut, Moon, Settings, Sun } from "lucide-react";
+import { ChevronDown, Fingerprint, LogOut, Moon, Settings, Sun } from "lucide-react";
 import { useShop } from "@/components/ShopContext";
 import { useTheme } from "@/lib/theme";
 import { displayName, initials } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import { SITE } from "@/lib/site";
 import LanguagePicker from "@/components/LanguagePicker";
-import ExportDataModal from "@/components/ExportDataModal";
 import PasskeyModal from "@/components/PasskeyModal";
 
 // Top-right account button on every app screen: who is signed in, the
@@ -22,7 +21,6 @@ export default function AccountMenu({ onOpenSettings }) {
   const t = useT();
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [showExport, setShowExport] = useState(false);
   const [showPasskeys, setShowPasskeys] = useState(false);
   const ref = useRef(null);
 
@@ -48,7 +46,6 @@ export default function AccountMenu({ onOpenSettings }) {
     else router.replace("/login");
   }
 
-  const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
   const fullName = user?.user_metadata?.full_name || displayName(user);
   const role = isOwner ? t("Owner") : currentMember?.role === "staff" ? t("Staff") : "";
 
@@ -62,7 +59,7 @@ export default function AccountMenu({ onOpenSettings }) {
         aria-label={t("Account")}
         className="flex items-center gap-2 rounded-full pl-1 pr-1 lg:pr-2.5 py-1 transition-colors hover:bg-[var(--bg-surface-alt)]"
       >
-        <Avatar url={avatarUrl} text={initials(user)} />
+        <Avatar text={initials(user)} />
         <span className="hidden lg:block text-sm font-semibold max-w-[140px] truncate">{fullName}</span>
         <ChevronDown size={15} className="hidden lg:block" style={{ color: "var(--text-secondary)" }} />
       </button>
@@ -74,7 +71,7 @@ export default function AccountMenu({ onOpenSettings }) {
           style={{ boxShadow: "0 20px 50px rgba(0,0,0,0.35)" }}
         >
           <div className="flex items-center gap-3 px-2.5 py-2.5">
-            <Avatar url={avatarUrl} text={initials(user)} size={40} />
+            <Avatar text={initials(user)} size={40} />
             <div className="min-w-0">
               <p className="text-sm font-bold truncate">{fullName || t("Signed in")}</p>
               {user?.email && !user.email.endsWith(".internal") && (
@@ -145,21 +142,10 @@ export default function AccountMenu({ onOpenSettings }) {
               setShowPasskeys(true);
             }}
           />
-          {isOwner && (
-            <MenuItem
-              icon={Download}
-              label={t("Download my data")}
-              onClick={() => {
-                setOpen(false);
-                setShowExport(true);
-              }}
-            />
-          )}
           <MenuItem icon={LogOut} label={t("Sign out")} onClick={handleSignOut} danger />
         </div>
       )}
       {/* In the page body, not in this bar: the bar has a blur effect that would trap a full-screen dialog. */}
-      {showExport && createPortal(<ExportDataModal onClose={() => setShowExport(false)} />, document.body)}
       {showPasskeys && createPortal(<PasskeyModal onClose={() => setShowPasskeys(false)} />, document.body)}
     </div>
   );
@@ -179,11 +165,8 @@ function MenuItem({ icon: Icon, label, onClick, danger }) {
   );
 }
 
-function Avatar({ url, text, size = 32 }) {
-  if (url) {
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={url} alt="" width={size} height={size} referrerPolicy="no-referrer" className="rounded-full shrink-0 object-cover" style={{ width: size, height: size }} />;
-  }
+// Initials only. Google profile photos often fail to load and showed a broken icon.
+function Avatar({ text, size = 32 }) {
   return (
     <span
       className="rounded-full flex items-center justify-center font-bold shrink-0 text-white"

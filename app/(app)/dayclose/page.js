@@ -24,6 +24,7 @@ function DayClosePageInner() {
   const { supabase, activeShopId, showToast } = useShop();
   const [bills, setBills] = useState([]);
   const [draws, setDraws] = useState([]);
+  const [returns, setReturns] = useState([]);
   const [reconciliations, setReconciliations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cashCounted, setCashCounted] = useState("");
@@ -33,13 +34,15 @@ function DayClosePageInner() {
   const load = useCallback(async () => {
     if (!activeShopId) return;
     setLoading(true);
-    const [{ data: billsData }, { data: drawsData }, { data: reconData }] = await Promise.all([
+    const [{ data: billsData }, { data: drawsData }, { data: reconData }, { data: returnsData }] = await Promise.all([
       // Only today's money matters here, plus the last few closes for the
       // opening float.
       fetchAll(() => supabase.from("bills").select("*").eq("shop_id", activeShopId).gte("date", startOfToday()).order("date").order("id")),
       fetchAll(() => supabase.from("draws").select("*").eq("shop_id", activeShopId).gte("date", startOfToday()).order("date", { ascending: false }).order("id")),
       supabase.from("reconciliations").select("*").eq("shop_id", activeShopId).order("date", { ascending: false }).limit(30),
+      fetchAll(() => supabase.from("sale_returns").select("id, refund_amount, refund_method, date").eq("shop_id", activeShopId).gte("date", startOfToday()).order("id")),
     ]);
+    setReturns(returnsData || []);
     setBills(billsData || []);
     setDraws(drawsData || []);
     setReconciliations(reconData || []);
@@ -81,7 +84,15 @@ function DayClosePageInner() {
     return past.length > 0 ? Number(past[0].cash_counted) : 0;
   }, [reconciliations]);
 
-  const expectedCash = openingFloat + todaysCashSales - todaysDraws;
+  // Money handed back to customers in cash today leaves the drawer.
+  const todaysCashRefunds = useMemo(() => {
+    const today = new Date().toDateString();
+    return returns
+      .filter((r) => r.refund_method === "cash" && new Date(r.date).toDateString() === today)
+      .reduce((s, r) => s + Number(r.refund_amount || 0), 0);
+  }, [returns]);
+
+  const expectedCash = openingFloat + todaysCashSales - todaysCashRefunds - todaysDraws;
   const diff = cashCounted !== "" ? Number(cashCounted) - expectedCash : null;
 
   async function saveClose() {
@@ -137,6 +148,14 @@ function DayClosePageInner() {
             <span className="text-[var(--text-secondary)] font-medium">{t("Cash sales today (app)")}</span>
             <span className="ks-mono font-bold">{rupee(todaysCashSales)}</span>
           </div>
+          {todaysCashRefunds > 0 && (
+            <div className="flex items-center justify-between text-sm mb-2">
+              <span className="text-[var(--text-secondary)] font-medium">{t("Less: cash refunds (returns)")}</span>
+              <span className="ks-mono font-bold" style={{ color: "var(--danger)" }}>
+                −{rupee(todaysCashRefunds)}
+              </span>
+            </div>
+          )}
           {todaysDigitalSales > 0 && (
             <div className="flex items-center justify-between text-xs mb-2">
               <span style={{ color: "var(--text-secondary)" }}>{t("Digital sales today (UPI/Card/Bank — not in drawer)")}</span>

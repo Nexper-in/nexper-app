@@ -1,4 +1,4 @@
--- 032: sign in with fingerprint, Face ID or a passkey
+-- 034: sign in with fingerprint, Face ID or a passkey
 --
 -- A passkey is a key pair kept by the phone or laptop: the private half never
 -- leaves the device and is unlocked by fingerprint, Face ID or the screen lock;
@@ -6,7 +6,7 @@
 -- the server (service role) after it has checked the device's proof, so they
 -- have no row-level policies at all and are closed to the browser.
 --
--- Run in the Supabase SQL editor after 001-031. Safe to run more than once.
+-- Run in the Supabase SQL editor after 001-033. Safe to run more than once.
 
 create table if not exists passkeys (
   id uuid primary key default gen_random_uuid(),

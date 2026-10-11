@@ -60,6 +60,8 @@ async function seed(X, owner, tag) {
     insert into api_keys (shop_id, name, key_prefix, key_hash) values ('${X}', 'k', 'nxp_${tag}', 'hash${tag}');
     insert into ai_usage (shop_id, kind) values ('${X}', 'scan');
     insert into supply_points (shop_id, name) values ('${X}', 'Dept ${tag}');
+    insert into sale_returns (shop_id, bill_no, items, refund_amount, refund_method) values ('${X}', 'KS-${tag}', '[]', 1, 'cash');
+    insert into reminder_log (shop_id, phone) values ('${X}', '9${tag === "A" ? 1 : 2}');
     insert into passkeys (user_id, credential_id, public_key) values ('${owner}', 'cred${tag}', 'pk');
     insert into passkey_challenges (challenge, kind, user_id) values ('ch${tag}', 'login', '${owner}');
   `);
@@ -95,6 +97,8 @@ const T = {
   shop_suppliers: { a: `shop_id = '${A}'`, insert: `insert into shop_suppliers (shop_id, supplier_id) values ('${A}', '${ids.B.sup}')`, touch: "owed", ownerRead: true },
   bills: { a: `shop_id = '${A}'`, insert: `insert into bills (shop_id, bill_no, items, subtotal, total) values ('${A}', 'sneak', '[]', 1, 1)`, touch: "total", ownerRead: true },
   credits: { a: `shop_id = '${A}'`, insert: `insert into credits (shop_id, phone, name, amount, type) values ('${A}', '1', 'x', 1, 'charge')`, touch: "amount", ownerRead: true, staffBlind: true },
+  sale_returns: { a: `shop_id = '${A}'`, insert: `insert into sale_returns (shop_id, bill_no, items, refund_amount, refund_method) values ('${A}', 'sneak', '[]', 1, 'cash')`, touch: "refund_amount", ownerRead: true },
+  reminder_log: { a: `shop_id = '${A}'`, insert: `insert into reminder_log (shop_id, phone) values ('${A}', '1')`, touch: "amount", ownerRead: true },
   movements: { a: `shop_id = '${A}'`, insert: `insert into movements (shop_id, item_name, type, qty, reason) values ('${A}', 'x', 'in', 1, 'x')`, touch: "qty", ownerRead: true },
   expenses: { a: `shop_id = '${A}'`, insert: `insert into expenses (shop_id, category, amount) values ('${A}', 'x', 1)`, touch: "amount", ownerRead: true, staffBlind: true },
   fixed_expenses: { a: `shop_id = '${A}'`, insert: `insert into fixed_expenses (shop_id, name, category, amount, due_day) values ('${A}', 'x', 'x', 1, 1)`, touch: "amount", ownerRead: true, staffBlind: true },

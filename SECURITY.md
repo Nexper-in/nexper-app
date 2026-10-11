@@ -32,7 +32,13 @@ Nothing here contains secrets.
 
 - Three new tables, all `shop_id` + row-level security needing the `Supplies` permission; `npm run test:db` proves in a real Postgres that another shop (or billing-only staff) cannot read or write them, that prices cannot be set from the browser, and that anonymous callers cannot call the new functions. Runs on every push.
 
-## Fingerprint / Face ID sign-in and app lock (032)
+## Returns, reminders and nightly summary (031)
+
+- `sale_returns` and `reminder_log` carry `shop_id` and row-level security. Returns have no insert policy at all: they are written only by `process_return()`, which needs the billing permission, locks the bill, refuses more than was sold (counting earlier returns), caps the refund at what the customer paid after discount, and is not callable by anonymous users. `npm run test:db` checks all of that, including that another shop cannot read or write them.
+- `/api/cron/notify` refuses to run unless `CRON_SECRET` is set and sent as a Bearer token. It emails each owner only their own shop's summary, to the owner's own address. `/api/notify/summary-now` only ever emails the signed-in user's own address, never one from the request, and is rate limited. Like the report email, this is a documented exception to "no shop data to third parties": the email provider (Resend) sees the summary.
+- WhatsApp Cloud API sending is off unless `WHATSAPP_TOKEN` and `WHATSAPP_PHONE_ID` exist. Until then reminders are one-tap `wa.me` links the owner sends themselves.
+
+## Fingerprint / Face ID sign-in and app lock (034)
 
 - The device proves it holds a private key by signing a one-time challenge; the server checks the signature, the site address (so a look-alike site gets nothing), that the fingerprint/face check happened, and the replay counter, and only then asks Supabase for a one-time sign-in token. Challenges are single-use and expire in five minutes. Tested with real WebAuthn answers, including a wrong key, a phishing address, a replayed answer, a cloned device, a suspended account, and a challenge reused from registration (`tests/passkeys.test.mjs`), and in a real browser engine with a virtual fingerprint reader.
 - Only the public key is stored. The tables have no browser access at all (service role only).
@@ -40,16 +46,14 @@ Nothing here contains secrets.
 - The app lock is a screen lock on the device (works offline); it does not protect the account on another device.
 - Rate limited per address (in memory, like the other limits).
 
-## Multi-tenant isolation and scale (031)
+## Multi-tenant isolation and scale (033)
 
 - `tests/db/isolation.rls.mjs` checks every table (31): another shop, an anonymous visitor and a helper without the permission can read, change, delete or insert nothing of shop A's. A new table fails the build until it is added.
 - The API silently stops at 1000 rows. Screens that loaded everything were quietly wrong past that (Day close totals, bill numbers, balances, item lists, admin totals). Fixed with date windows, paging and database totals; `docs/ARCHITECTURE.md` has the rule and the measurements.
-- The owner export is built in the browser from the owner's own session; spreadsheet formula injection is neutralised.
-- `npm run check:audit` replaces the plain audit gate: a new high advisory in `braces` (build tooling, no fix published) is listed in `tools/audit-allow.json` with a reason and a review date (2026-12-01).
 
 ## Still open (not code)
 
-- Run migrations 024-032 in Supabase. After 028, check:
+- Run migrations 024-034 in Supabase. After 028, check:
   `select has_function_privilege('anon','admin_transfer_shop_ownership(uuid,uuid)','execute');` returns false.
 - The rate limiter is in memory (resets on cold starts). Add a shared one (Upstash/Vercel KV) before heavy public use.
 - Supabase Auth settings to check by hand: email confirmation on, minimum password length 8+, leaked-password protection, redirect URLs limited to the real domains.
@@ -60,3 +64,30 @@ Nothing here contains secrets.
 ## How to re-check
 
 `npm test`, `node tools/check-i18n.mjs`, `npm audit --omit=dev`, `npx next build`. GitHub runs all four on every push.
+
+## Email me this report (accepted exception)
+
+`app/api/reports/email` sends the signed-in owner's own monthly GST summary or
+daily/weekly/monthly sales-and-expenses summary (CSV) to their own sign-in address through Resend. The recipient is never taken
+from the request, the caller must be a member of the shop, and it is rate
+limited (5 per 10 minutes). Resend therefore sees that shop's totals. This is a
+deliberate exception to "no shop data to third parties"; it only happens on the
+owner's click. Needs `RESEND_API_KEY` (Vercel Secret) and optional `EMAIL_FROM`.
+## Accepted audit finding (2026-10-05)
+
+`braces` (GHSA-vfj7-8cjw-p6xm, high, DoS on deeply nested glob patterns) has no
+fixed release. It is only used by build tooling on our own config, never on user
+input. CI uses `tools/audit.mjs`, which fails on any other high/critical finding.
+Re-check when braces publishes a fix.
+
+The Reports "Share report" tab also builds a WhatsApp text in the browser and
+opens `wa.me`; the owner picks the chat, nothing is sent by the server.
+
+## Google sign-in button (accepted change)
+
+The login page loads Google's sign-in script (`accounts.google.com/gsi/client`) so
+the Google popup shows "Nexper" instead of the Supabase address. CSP allows only
+`accounts.google.com/gsi/` for script, frame, style and connect, and COOP is
+`same-origin-allow-popups` (Google's popup needs it). Google sees that someone
+opened the login page; no shop data is sent. The ID token is checked by Supabase
+with a one-time nonce. The older redirect button stays as a fallback.
