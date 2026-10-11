@@ -36,7 +36,7 @@ something different.
 `npm run test:db` loads the real schema and every migration into an in-memory Postgres and
 checks, as real database roles:
 
-- **Every table** (29 today): row-level security is on; shop B's owner and an anonymous
+- **Every table** (35 today): row-level security is on; shop B's owner and an anonymous
   visitor cannot read, change, delete or insert into shop A's rows; a helper without the
   permission cannot read permission-scoped tables; the rightful owner still can.
 - **A new table fails the build until it is added to the test**
@@ -90,9 +90,7 @@ function; nothing else needs to change.
   group, a chain with its own compliance rules). Then: **give that client its own Supabase
   project and its own deployment of the same code** (set that project's URL and keys).
   Nothing in the app assumes a single database.
-- **Not supported today: one owner with several shops.** Migration 013 makes `owner_id`
-  unique on `shops`. The app already has a shop switcher; lifting that constraint (and
-  re-testing isolation, which now covers it) is the way to support a chain under one
-  owner. Decide this before onboarding a chain.
+- **One owner with several shops** is supported since migration 035 (companies, see
+  `docs/CHAINS.md`); the shared model still holds, the company layer only connects shops.
 - Rate limiting is in memory (per server instance). Use a shared store before heavy public
   use.
