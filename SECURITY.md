@@ -46,14 +46,20 @@ Nothing here contains secrets.
 - The app lock is a screen lock on the device (works offline); it does not protect the account on another device.
 - Rate limited per address (in memory, like the other limits).
 
+## Companies / chains (035)
+
+- A company (`organisations`) owns several shops. A company team member gets a `shop_members` row marked `via_org` per shop they cover, so every existing shop policy applies unchanged. Owners and staff cannot create, edit or delete those rows directly (the staff policies and the staff API routes require `via_org is null`); only the team functions can, and they check the caller is the company owner.
+- The shop limit (`max_shops`) is enforced by a database trigger and changed only by a platform admin (service role). A stranger cannot insert a shop for someone else's company (`tests/db/orgs.rls.mjs`, 48 checks).
+- Known trade-off: adding a team member by email tells the owner whether that email has an account.
+
 ## Multi-tenant isolation and scale (033)
 
-- `tests/db/isolation.rls.mjs` checks every table (31): another shop, an anonymous visitor and a helper without the permission can read, change, delete or insert nothing of shop A's. A new table fails the build until it is added.
+- `tests/db/isolation.rls.mjs` checks every table (35): another shop, an anonymous visitor and a helper without the permission can read, change, delete or insert nothing of shop A's. A new table fails the build until it is added.
 - The API silently stops at 1000 rows. Screens that loaded everything were quietly wrong past that (Day close totals, bill numbers, balances, item lists, admin totals). Fixed with date windows, paging and database totals; `docs/ARCHITECTURE.md` has the rule and the measurements.
 
 ## Still open (not code)
 
-- Run migrations 024-034 in Supabase. After 028, check:
+- Run migrations 024-035 in Supabase. After 028, check:
   `select has_function_privilege('anon','admin_transfer_shop_ownership(uuid,uuid)','execute');` returns false.
 - The rate limiter is in memory (resets on cold starts). Add a shared one (Upstash/Vercel KV) before heavy public use.
 - Supabase Auth settings to check by hand: email confirmation on, minimum password length 8+, leaked-password protection, redirect URLs limited to the real domains.

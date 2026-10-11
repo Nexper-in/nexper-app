@@ -74,7 +74,8 @@ async function seed(X, owner, tag) {
     insert into supply_entries (shop_id, point_id, item_name, unit_price, qty, entry_date) values ('${X}', '${point}', 'Tea', 10, 1, current_date);
     insert into supply_payments (shop_id, point_id, amount) values ('${X}', '${point}', 5);
   `);
-  ids[tag] = { X, owner, prod, sp, sup, offer, po, point };
+  const org = (await q(`select org_id from shops where id = '${X}'`))[0].org_id;
+  ids[tag] = { X, owner, prod, sp, sup, offer, po, point, org };
 }
 await seed(A, ownerA, "A");
 await seed(B, ownerB, "B");
@@ -97,6 +98,8 @@ const T = {
   shop_suppliers: { a: `shop_id = '${A}'`, insert: `insert into shop_suppliers (shop_id, supplier_id) values ('${A}', '${ids.B.sup}')`, touch: "owed", ownerRead: true },
   bills: { a: `shop_id = '${A}'`, insert: `insert into bills (shop_id, bill_no, items, subtotal, total) values ('${A}', 'sneak', '[]', 1, 1)`, touch: "total", ownerRead: true },
   credits: { a: `shop_id = '${A}'`, insert: `insert into credits (shop_id, phone, name, amount, type) values ('${A}', '1', 'x', 1, 'charge')`, touch: "amount", ownerRead: true, staffBlind: true },
+  organisations: { a: `id = '${a.org}'`, insert: `insert into organisations (name, owner_id) values ('sneak', '${ownerB}')`, touch: "name", ownerRead: true },
+  org_members: { a: `org_id = '${a.org}'`, insert: `insert into org_members (org_id, user_id, role) values ('${a.org}', '${ownerB}', 'manager')`, touch: "role", ownerRead: true, staffBlind: true },
   sale_returns: { a: `shop_id = '${A}'`, insert: `insert into sale_returns (shop_id, bill_no, items, refund_amount, refund_method) values ('${A}', 'sneak', '[]', 1, 'cash')`, touch: "refund_amount", ownerRead: true },
   reminder_log: { a: `shop_id = '${A}'`, insert: `insert into reminder_log (shop_id, phone) values ('${A}', '1')`, touch: "amount", ownerRead: true },
   movements: { a: `shop_id = '${A}'`, insert: `insert into movements (shop_id, item_name, type, qty, reason) values ('${A}', 'x', 'in', 1, 'x')`, touch: "qty", ownerRead: true },

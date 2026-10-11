@@ -7,6 +7,7 @@ import { defaultPermissions, defaultModulesForType } from "@/lib/modules";
 import { useOfflineQueue } from "@/lib/offlineQueue";
 import { callApi } from "@/lib/apiClient";
 import { setPlatformConfig } from "@/lib/platformConfig";
+import { copyCatalog } from "@/lib/branch";
 
 const ShopContext = createContext(null);
 
@@ -20,6 +21,10 @@ export function ShopProvider({ children }) {
   const [toast, setToast] = useState(null);
   const [user, setUser] = useState(null);
   const [currentMember, setCurrentMember] = useState(null);
+  // The company (chain) the signed-in user belongs to and their role in it:
+  // { org: { id, name, max_shops }, role }. undefined: not loaded yet;
+  // null: no company (before database update 035).
+  const [orgInfo, setOrgInfo] = useState(undefined);
   // Platform admin settings (prices, plans, switches, announcement) and this
   // shop's own admin controls (plan override, limits, feature overrides).
   const [platform, setPlatform] = useState(() => setPlatformConfig([]));
@@ -97,6 +102,19 @@ export function ShopProvider({ children }) {
     };
   }, [supabase, activeShopId, user]);
 
+  // The company and the user's company role. Quietly nothing before update 035.
+  const loadOrg = useCallback(async () => {
+    if (!user) return setOrgInfo(undefined);
+    const { data: org, error } = await supabase.from("organisations").select("*").order("created_at").limit(1).maybeSingle();
+    if (error || !org) return setOrgInfo(null);
+    const { data: me } = await supabase.from("org_members").select("role, shop_ids").eq("org_id", org.id).eq("user_id", user.id).maybeSingle();
+    setOrgInfo({ org, role: me?.role || null, shopIds: me?.shop_ids || [] });
+  }, [supabase, user]);
+
+  useEffect(() => {
+    loadOrg();
+  }, [loadOrg, shops.length]);
+
   async function updateProfile(fields) {
     const { data, error } = await supabase.auth.updateUser({ data: fields });
     if (error) throw error;
@@ -118,7 +136,7 @@ export function ShopProvider({ children }) {
   // A new shop starts empty by default — the owner adds their own items via
   // Inventory. seedTemplate opts into pre-filling a generic starter catalog
   // for the business type instead of typing everything in by hand.
-  async function addShop(name, type, { seedTemplate = false } = {}) {
+  async function addShop(name, type, { seedTemplate = false, copyFromShopId = null } = {}) {
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -169,6 +187,9 @@ export function ShopProvider({ children }) {
       }
     }
 
+    // A branch of a chain can start with another shop's item list.
+    if (copyFromShopId) await copyCatalog(supabase, copyFromShopId, shop.id);
+
     setShops((prev) => [...prev, shop]);
     setActiveShopId(shop.id);
     showToast(`${name} created`);
@@ -192,13 +213,19 @@ export function ShopProvider({ children }) {
     if (!activeShopId) return;
     const { error } = await supabase.from("shops").delete().eq("id", activeShopId);
     if (error) throw error;
-    setShops([]);
-    setActiveShopId(null);
+    // Other branches of a chain stay; the owner lands on one of them.
+    const remaining = shops.filter((s) => s.id !== activeShopId);
+    setShops(remaining);
+    setActiveShopId(remaining[0]?.id ?? null);
   }
 
   const baseShop = shops.find((s) => s.id === activeShopId) || null;
   const activeShop = useMemo(() => (baseShop ? { ...baseShop, controls: controls[baseShop.id] || null } : null), [baseShop, controls]);
   const isOwner = currentMember?.role === "owner";
+  // Company-level roles: the owner and managers see the Company screen.
+  const orgRole = orgInfo?.role || null;
+  const isOrgOwner = orgRole === "owner";
+  const canSeeCompany = orgRole === "owner" || orgRole === "manager";
   function hasPermission(moduleKey) {
     if (!currentMember) return false;
     if (currentMember.role === "owner") return true;
@@ -225,6 +252,11 @@ export function ShopProvider({ children }) {
         updateProfile,
         currentMember,
         isOwner,
+        orgInfo,
+        orgRole,
+        isOrgOwner,
+        canSeeCompany,
+        reloadOrg: loadOrg,
         hasPermission,
         callStaffApi,
         runQueued,

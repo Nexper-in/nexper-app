@@ -12,8 +12,9 @@ export async function buildDb({ upTo = "999" } = {}) {
   const db = new PGlite();
   await db.exec(`
     create schema auth;
-    create table auth.users (id uuid primary key default gen_random_uuid(), email text);
+    create table auth.users (id uuid primary key default gen_random_uuid(), email text, raw_user_meta_data jsonb default '{}'::jsonb);
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
+    create function auth.role() returns text language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claim.role', true), ''), '') $$;
     create function uuid_generate_v4() returns uuid language sql as $$ select gen_random_uuid() $$;
     create role anon nologin; create role authenticated nologin; create role service_role nologin;
   `);
@@ -39,9 +40,15 @@ export async function buildDb({ upTo = "999" } = {}) {
 
 // Run statements as a signed-in user ("uid"), as anonymous, or as the superuser.
 export async function as(db, who) {
-  if (who === null) return db.exec(`reset role; select set_config('request.jwt.claim.sub', '', false);`);
-  if (who === "anon") return db.exec(`reset role; select set_config('request.jwt.claim.sub', '', false); set role anon;`);
-  return db.exec(`reset role; select set_config('request.jwt.claim.sub', '${who}', false); set role authenticated;`);
+  const clear = `set_config('request.jwt.claim.role', '', false)`;
+  if (who === null) return db.exec(`reset role; select set_config('request.jwt.claim.sub', '', false), ${clear};`);
+  if (who === "anon") return db.exec(`reset role; select set_config('request.jwt.claim.sub', '', false), ${clear}; set role anon;`);
+  return db.exec(`reset role; select set_config('request.jwt.claim.sub', '${who}', false), ${clear}; set role authenticated;`);
+}
+
+// The server (service role): what the platform admin's API routes run as.
+export async function asService(db) {
+  return db.exec(`reset role; select set_config('request.jwt.claim.sub', '', false), set_config('request.jwt.claim.role', 'service_role', false);`);
 }
 
 export function counter() {

@@ -14,6 +14,8 @@ something different.
   with a per-screen permission list. Staff are real sign-in accounts (code + PIN).
 - The platform itself (pricing, switches, invites, API keys, audit log, platform admins) is
   in a few shop-less tables that only the server and platform admins can touch.
+- Since migration 035 shops belong to a company (`organisations`) so one owner can run a
+  chain; see `docs/CHAINS.md`. Each shop is still its own tenant.
 - Adding a customer adds rows, never tables. A schema change is one migration for everyone.
 
 ## 2. How separation is enforced

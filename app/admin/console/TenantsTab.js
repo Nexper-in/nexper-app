@@ -75,6 +75,7 @@ function TenantControlsModal({ tenant, supabase, onClose, onSaved }) {
   const [api, setApi] = useState(Boolean(c.api_enabled));
   const [mcp, setMcp] = useState(Boolean(c.mcp_enabled));
   const [notes, setNotes] = useState(c.notes || "");
+  const [maxShops, setMaxShops] = useState(tenant.company?.max_shops ?? "");
 
   const cycle = (key) =>
     setOverrides((o) => {
@@ -108,6 +109,12 @@ function TenantControlsModal({ tenant, supabase, onClose, onSaved }) {
           </Field>
         </div>
 
+        {tenant.company && (
+          <Field label="Shops this company may have" hint={`Now ${tenant.company.shops} shop(s). 1 is a single shop; raise it for a chain (up to 500).`}>
+            <input className="ks-input" type="number" min={tenant.company.shops || 1} max="500" value={maxShops} onChange={(e) => setMaxShops(e.target.value)} />
+          </Field>
+        )}
+
         <div>
           <p className="text-xs font-semibold mb-1" style={{ color: "var(--text-secondary)" }}>Feature overrides (tap to cycle: follow plan → forced on → forced off)</p>
           <div className="flex flex-wrap gap-1.5">
@@ -137,6 +144,7 @@ function TenantControlsModal({ tenant, supabase, onClose, onSaved }) {
           onSave={async () => {
             await callApi(supabase, "/api/admin/tenant-controls", {
               shopId: tenant.id,
+              maxShops: tenant.company ? maxShops : undefined,
               controls: { plan: plan || null, plan_expires_at: ends || null, limits: { maxStaff, aiScansPerMonth: scans }, feature_overrides: overrides, api_enabled: api, mcp_enabled: mcp, notes },
             });
             onSaved();

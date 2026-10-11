@@ -29,12 +29,14 @@ export async function POST(request) {
 
   const { data: target, error: targetError } = await admin
     .from("shop_members")
-    .select("id, shop_id, user_id, role")
+    .select("id, shop_id, user_id, role, via_org")
     .eq("id", memberId)
     .maybeSingle();
   if (targetError) return serverError(targetError, "api");
   if (!target) return NextResponse.json({ error: "Staff member not found" }, { status: 404 });
   if (target.role === "owner") return NextResponse.json({ error: "Can't edit the shop owner here" }, { status: 400 });
+  // Company team members (migration 035) are managed from the Company screen, and their login is not a staff login.
+  if (target.via_org) return NextResponse.json({ error: "This person belongs to the company team. Manage them on the Company screen." }, { status: 400 });
 
   const { data: callerMembership } = await admin
     .from("shop_members")

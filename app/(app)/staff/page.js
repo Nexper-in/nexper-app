@@ -38,7 +38,8 @@ export default function StaffPage() {
     if (!activeShopId) return;
     setLoading(true);
     const { data } = await supabase.from("shop_members").select("*").eq("shop_id", activeShopId).order("created_at");
-    setMembers(data || []);
+    // Company team members (migration 035) are managed on the Company screen, not here.
+    setMembers((data || []).filter((m) => !m.via_org));
     setLoading(false);
   }, [supabase, activeShopId]);
 

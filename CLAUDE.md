@@ -102,6 +102,17 @@ tap away (folded sections, a "⋯" menu, or the side menu).
   `https://<project>.supabase.co/auth/v1/callback` as a redirect URI in
   Google Cloud.
 
+## Companies and chains
+
+- An owner has a company (`organisations`); a chain is a company with `max_shops > 1`
+  (set in `/admin`). Company team (owner, manager, area manager, analyst) lives in
+  `org_members` and is copied into `shop_members` rows with `via_org` set. Never treat a
+  `via_org` row as staff: staff screens and APIs skip it. Plan: `docs/CHAINS.md`.
+- Shop data stays per shop (`shop_id`); a combined view must go through the company
+  roles and read a summary table, never scan every bill of every shop.
+- Code that needs migration 035 must fail politely when it is missing (`orgInfo` is
+  `null` then, `undefined` while loading).
+
 ## Languages (English, Hindi, Telugu, Kannada, Tamil, Malayalam)
 
 The app speaks the same six languages as nexper.in (see
