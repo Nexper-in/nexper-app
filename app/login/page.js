@@ -15,8 +15,9 @@ import LanguagePicker from "@/components/LanguagePicker";
 const GOOGLE_SIGNIN = process.env.NEXT_PUBLIC_GOOGLE_SIGNIN === "true";
 // When the Google client ID is set, Google's own button signs people in right
 // on this page (a popup that says "Nexper" and our address) and the result is
-// handed to Supabase. Without it, on phones, or if Google's script can't load,
-// the redirect button below is used and Google shows the Supabase address.
+// handed to Supabase (on phones the page redirects instead of a popup, see
+// /auth/google). Without it, or if Google's script can't load, the redirect
+// button below is used and Google shows the Supabase address.
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 
 export default function LoginPage() {
@@ -72,11 +73,12 @@ export default function LoginPage() {
 
   // Google's own sign-in button (see GOOGLE_CLIENT_ID above).
   useEffect(() => {
-    // Google's popup button opens as a separate tab on phones and in in-app
-    // browsers (WhatsApp, Instagram...), where it fails with "400 malformed
-    // request". Phones use the redirect button below instead, which works there.
+    // Google's popup fails on phones and in in-app browsers ("400 malformed
+    // request"), so there the same button works by redirecting the page instead.
     const phone = typeof navigator !== "undefined" && /Android|iPhone|iPad|iPod|Mobile|FBAN|FBAV|Instagram|WhatsApp|Line\//i.test(navigator.userAgent);
-    if (!GOOGLE_SIGNIN || !GOOGLE_CLIENT_ID || phone || checkingSession || mode === "staff" || mode === "forgot") {
+    // After a failed phone sign-in (?error=google) the proven redirect button is shown instead.
+    const retry = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("error") === "google";
+    if (!GOOGLE_SIGNIN || !GOOGLE_CLIENT_ID || retry || checkingSession || mode === "staff" || mode === "forgot") {
       setGisReady(false);
       return;
     }
@@ -88,11 +90,14 @@ export default function LoginPage() {
         const hashed = toHex(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(raw)));
         const g = window.google?.accounts?.id;
         if (cancelled || !g || !gisBox.current) return;
+        if (phone) {
+          try { localStorage.setItem("nexper.gnonce", raw); } catch {}
+        }
         g.initialize({
           client_id: GOOGLE_CLIENT_ID,
           nonce: hashed,
-          ux_mode: "popup",
           auto_select: false,
+          ...(phone ? { ux_mode: "redirect", login_uri: `${window.location.origin}/auth/google` } : { ux_mode: "popup" }),
           callback: async (resp) => {
             setError("");
             setGoogleLoading(true);
