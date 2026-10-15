@@ -41,7 +41,7 @@ export default function ScanBillModal({ items, supabase, activeShopId, showToast
     try {
       let data;
       try {
-        data = await callApi(supabase, "/api/scan-supplier-bill", { image: imageData.base64, mediaType: imageData.mediaType });
+        data = await callApi(supabase, "/api/scan-supplier-bill", { image: imageData.base64, mediaType: imageData.mediaType, shopId: activeShopId });
       } catch (err) {
         setError(err.message || "Something went wrong — please try again.");
         setStep(STEP.CAPTURE);

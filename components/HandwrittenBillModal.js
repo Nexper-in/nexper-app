@@ -7,11 +7,13 @@ import { callApi } from "@/lib/apiClient";
 import { photoToJpeg } from "@/lib/imageResize";
 import { matchItem } from "@/lib/matchItems";
 import { useT } from "@/lib/i18n";
+import { useShop } from "@/components/ShopContext";
 
 // Photo of a customer's written list -> items matched to your stock -> review
 // -> added to the bill. Nothing is added until the shopkeeper confirms.
 export default function HandwrittenBillModal({ supabase, items, onAdd, onClose }) {
   const t = useT();
+  const { activeShopId } = useShop();
   const fileRef = useRef(null);
   const [step, setStep] = useState("capture"); // capture | reading | review
   const [preview, setPreview] = useState(null);
@@ -27,7 +29,7 @@ export default function HandwrittenBillModal({ supabase, items, onAdd, onClose }
     try {
       const photo = await photoToJpeg(file);
       setPreview(photo.dataUrl);
-      const data = await callApi(supabase, "/api/scan-handwritten", { image: photo.base64, mediaType: photo.mediaType });
+      const data = await callApi(supabase, "/api/scan-handwritten", { image: photo.base64, mediaType: photo.mediaType, shopId: activeShopId });
       setRows(
         data.items.map((l) => {
           const match = matchItem(l.name, items);
