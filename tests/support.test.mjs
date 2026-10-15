@@ -107,7 +107,7 @@ test("only allow-listed resources exist; anything else is refused before the dat
   const r = await runSupportView({ admin, adminId: ADMIN, body: body({ resource: "auth_users" }) });
   assert.equal(r.status, 400);
   assert.equal(admin.calls.length, 0);
-  assert.deepEqual(Object.keys(RESOURCES).sort(), ["bill", "bills", "day_close", "errors", "expenses", "items", "members", "shop", "udhaar_balances", "udhaar_customer"]);
+  assert.deepEqual(Object.keys(RESOURCES).sort(), ["bill", "bills", "day_close", "deleted", "errors", "expenses", "items", "members", "shop", "udhaar_balances", "udhaar_customer"]);
 });
 
 test("bad ids are refused", async () => {

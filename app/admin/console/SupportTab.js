@@ -14,6 +14,7 @@ const RESOURCES = [
   { key: "udhaar_balances", label: "Who owes what (udhaar)", params: [] },
   { key: "udhaar_customer", label: "One customer's udhaar", params: ["phone"] },
   { key: "day_close", label: "Day close (last 31)", params: [] },
+  { key: "deleted", label: "Recently deleted (30 days): restore", params: [] },
   { key: "expenses", label: "Expenses in a date range", params: ["from", "to"] },
   { key: "errors", label: "Error reports from the shop", params: [] },
 ];
@@ -145,6 +146,15 @@ function SessionViewer({ supabase, session, shops, onEnded }) {
       setBusy(false);
     }
   }
+  async function restore(trashId) {
+    setError("");
+    try {
+      await callApi(supabase, "/api/admin/support/restore", { sessionId: session.id, trashId });
+      await run();
+    } catch (e) {
+      setError(e.message);
+    }
+  }
   async function end() {
     await callApi(supabase, "/api/admin/support/end", { sessionId: session.id });
     onEnded();
@@ -187,12 +197,13 @@ function SessionViewer({ supabase, session, shops, onEnded }) {
           <div className="overflow-x-auto rounded-lg border" style={{ borderColor: "var(--border)" }}>
             <table className="w-full text-xs">
               <thead>
-                <tr>{cols.map((c) => <th key={c} className="text-left px-2 py-1.5" style={{ color: "var(--text-secondary)" }}>{c}</th>)}</tr>
+                <tr>{cols.map((c) => <th key={c} className="text-left px-2 py-1.5" style={{ color: "var(--text-secondary)" }}>{c}</th>)}{result.resource === "deleted" && <th />}</tr>
               </thead>
               <tbody>
                 {result.rows.map((r, i) => (
                   <tr key={i} className="border-t" style={{ borderColor: "var(--border)" }}>
                     {cols.map((c) => <td key={c} className="px-2 py-1.5 align-top max-w-[260px] truncate" title={cell(r[c])}>{cell(r[c])}</td>)}
+                    {result.resource === "deleted" && <td className="px-2 py-1.5"><button onClick={() => restore(r.id)} className="ks-btn-outline !py-1 text-xs">Restore</button></td>}
                   </tr>
                 ))}
               </tbody>

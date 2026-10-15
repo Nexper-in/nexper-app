@@ -79,6 +79,11 @@ export const TABLES = {
   },
   platform_settings: { kind: "public-read", lifecycle: "config" },
   app_migrations: { kind: "platform", lifecycle: "platform" },
+  deleted_rows: {
+    kind: "platform",
+    lifecycle: "short-lived",
+    exceptions: { shopFk: "the copy outlives the shop-level row for 30 days; removed with the shop on purge", shopIndex: "indexed by (shop_id, deleted_at) already" },
+  },
   rate_limit_hits: { kind: "platform", lifecycle: "short-lived" },
   tenant_invites: {
     kind: "platform",

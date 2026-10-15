@@ -84,6 +84,7 @@ await db.exec(`
     select '${admin}', org_id, id, 'T-' || name, 'seed session for isolation', 'support', now() + interval '1 hour' from shops;
   insert into support_access_log (session_id, admin_id, shop_id, resource) select id, admin_id, shop_id, 'items' from support_sessions;
   insert into client_errors (shop_id, message) select id, 'seed error' from shops;
+  insert into deleted_rows (shop_id, table_name, row_id, row) select id, 'products', 'seed', '{}' from shops;
   insert into rate_limit_hits (key, window_start, count) values ('seed', now(), 1);
   insert into tenant_invites (email) values ('someone@x');
   insert into admin_audit_log (admin_id, action, target_type) values ('${admin}', 'x', 'shop');
@@ -132,6 +133,7 @@ const T = {
   passkey_challenges: { a: `true`, insert: `insert into passkey_challenges (challenge, kind) values ('c', 'login')`, touch: "challenge", ownerRead: false },
   support_sessions: { a: `org_id = '${a.org}'`, insert: `insert into support_sessions (admin_id, org_id, ticket_ref, reason, kind, expires_at) values ('${ownerB}', '${a.org}', 'T-1', 'looking at a problem', 'support', now() + interval '1 hour')`, touch: "reason", ownerRead: true },
   support_access_log: { a: `shop_id = '${A}'`, insert: `insert into support_access_log (session_id, admin_id, shop_id, resource) values (gen_random_uuid(), '${ownerB}', '${A}', 'items')`, touch: "resource", ownerRead: false },
+  deleted_rows: { a: `shop_id = '${A}'`, insert: `insert into deleted_rows (shop_id, table_name, row_id, row) values ('${A}', 'products', 'x', '{}')`, touch: "table_name", ownerRead: false },
   shop_day_stats: { a: `shop_id = '${A}'`, insert: `insert into shop_day_stats (shop_id, day) values ('${A}', current_date)`, touch: "bills", ownerRead: true },
   client_errors: { a: `shop_id = '${A}'`, insert: `insert into client_errors (shop_id, message) values ('${A}', 'sneak')`, touch: "message", ownerRead: false },
   rate_limit_hits: { a: `true`, insert: `insert into rate_limit_hits (key, window_start, count) values ('sneak', now(), 1)`, touch: "key", ownerRead: false },

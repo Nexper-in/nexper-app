@@ -938,6 +938,7 @@ const ACTION_META = {
   set_max_shops:          { label: "Changed shop limit", color: "#7EB3F9", bg: "rgba(91,124,250,0.14)" },
   support_start:          { label: "Started support session", color: "#F2A93B", bg: "rgba(242,169,59,0.14)" },
   support_end:            { label: "Ended support session", color: SUCCESS_TEXT, bg: SUCCESS_BG },
+  support_restore:        { label: "Restored a deleted record", color: "#F2A93B", bg: "rgba(242,169,59,0.14)" },
   create_tenant:          { label: "Opened a shop",         color: SUCCESS_TEXT, bg: SUCCESS_BG },
   create_invite:          { label: "Invited",               color: SUCCESS_TEXT, bg: SUCCESS_BG },
   revoke_invite:          { label: "Revoked invite",        color: "#F2A93B", bg: "rgba(242,169,59,0.14)" },

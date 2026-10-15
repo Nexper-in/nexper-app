@@ -59,6 +59,10 @@ Nothing here contains secrets.
 - Until `DATABASE_CA_PEM` is set, the connection is encrypted but the server certificate is not verified (the run prints a warning). Set it (docs/RELEASE.md).
 - Staging holds synthetic data only. The seed refuses a database that has any shop owned by a non-`@staging.nexper.in` account, and never runs unless `NEXPER_ENV=staging`.
 
+## Trash (044, T16)
+
+- Deleting an item, a supplier, a payment entry, a staff member and the like keeps a copy for 30 days (`deleted_rows`, no access for owners or the browser). Support restores one record at a time from the Support tab, only inside an open session that covers the shop (or the owner's company for shared items and suppliers); the restore is written to the access log the owner can count. Closing and removing a shop keeps no trash. `tests/db/trash.rls.mjs`.
+
 ## Saving a bill (042, T14)
 
 - `save_bill` takes stock, writes the bill and (for udhaar) the charge in one transaction, keyed by an id the device made, so a retry or an offline replay can never take stock or add an udhaar charge twice (`tests/db/save_bill.rls.mjs`, 31 checks). The caller must have the billing permission for that shop; a bill id that belongs to another shop is refused without revealing it. Offline writes the server keeps refusing are taken out of the queue after 5 tries and shown to the shopkeeper instead of being retried forever.
