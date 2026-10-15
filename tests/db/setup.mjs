@@ -17,6 +17,9 @@ export async function buildDb({ upTo = "999" } = {}) {
     create function auth.role() returns text language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claim.role', true), ''), '') $$;
     create function uuid_generate_v4() returns uuid language sql as $$ select gen_random_uuid() $$;
     create role anon nologin; create role authenticated nologin; create role service_role nologin;
+    -- Supabase gives its API roles every privilege on each table when it is created; an update that
+    -- later revokes some of them (audit tables are append-only) then really takes effect.
+    alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
   `);
   // The same function production uses: schema.sql, then every update in order.
   await applyMigrations(pgliteClient(db), { root: ROOT, upTo, stripExtensions: true, appliedBy: "test" });
@@ -24,7 +27,6 @@ export async function buildDb({ upTo = "999" } = {}) {
   // leaves the row-level security rules as the only gate. Do the same here.
   await db.exec(`
     grant usage on schema public, auth to anon, authenticated, service_role;
-    grant all on all tables in schema public to anon, authenticated, service_role;
     grant all on all sequences in schema public to anon, authenticated, service_role;
   `);
   return db;

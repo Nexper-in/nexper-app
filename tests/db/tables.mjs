@@ -57,8 +57,23 @@ export const TABLES = {
   ai_usage: { kind: "shop", lifecycle: "with-shop", exceptions: { closedGuard: "a usage counter the server writes" } },
   passkeys: { kind: "user", lifecycle: "with-account" },
   passkey_challenges: { kind: "user", lifecycle: "short-lived" },
-  admin_audit_log: { kind: "platform", lifecycle: "keep-2y" },
+  admin_audit_log: { kind: "platform", lifecycle: "keep-2y", appendOnly: true },
   platform_admins: { kind: "platform", lifecycle: "platform" },
+  support_sessions: {
+    kind: "platform",
+    lifecycle: "keep-2y",
+    appendOnly: true,
+    exceptions: {
+      shopFk: "the record of who looked at a shop must outlive the shop (no foreign key on purpose)",
+      shopIndex: "read by company (org_id, started_at) and by admin, never by shop alone",
+    },
+  },
+  support_access_log: {
+    kind: "platform",
+    lifecycle: "keep-2y",
+    appendOnly: true,
+    exceptions: { shopFk: "the access log must outlive a purged shop (no foreign key on purpose)" },
+  },
   platform_settings: { kind: "public-read", lifecycle: "config" },
   app_migrations: { kind: "platform", lifecycle: "platform" },
   tenant_invites: {

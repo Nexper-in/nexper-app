@@ -80,6 +80,9 @@ async function seed(X, owner, tag) {
 await seed(A, ownerA, "A");
 await seed(B, ownerB, "B");
 await db.exec(`
+  insert into support_sessions (admin_id, org_id, shop_id, ticket_ref, reason, kind, expires_at)
+    select '${admin}', org_id, id, 'T-' || name, 'seed session for isolation', 'support', now() + interval '1 hour' from shops;
+  insert into support_access_log (session_id, admin_id, shop_id, resource) select id, admin_id, shop_id, 'items' from support_sessions;
   insert into tenant_invites (email) values ('someone@x');
   insert into admin_audit_log (admin_id, action, target_type) values ('${admin}', 'x', 'shop');
 `);
@@ -124,6 +127,8 @@ const T = {
   admin_audit_log: { a: `true`, insert: `insert into admin_audit_log (admin_id, action, target_type) values ('${ownerA}', 'x', 'x')`, touch: "action", ownerRead: false },
   passkeys: { a: `user_id = '${ownerA}'`, insert: `insert into passkeys (user_id, credential_id, public_key) values ('${ownerA}', 'sneak', 'k')`, touch: "name", ownerRead: false },
   passkey_challenges: { a: `true`, insert: `insert into passkey_challenges (challenge, kind) values ('c', 'login')`, touch: "challenge", ownerRead: false },
+  support_sessions: { a: `org_id = '${a.org}'`, insert: `insert into support_sessions (admin_id, org_id, ticket_ref, reason, kind, expires_at) values ('${ownerB}', '${a.org}', 'T-1', 'looking at a problem', 'support', now() + interval '1 hour')`, touch: "reason", ownerRead: true },
+  support_access_log: { a: `shop_id = '${A}'`, insert: `insert into support_access_log (session_id, admin_id, shop_id, resource) values (gen_random_uuid(), '${ownerB}', '${A}', 'items')`, touch: "resource", ownerRead: false },
   app_migrations: { a: `true`, insert: `insert into app_migrations (version, name) values ('999', 'x')`, touch: "name", ownerRead: false },
   platform_admins: { a: `true`, insert: `insert into platform_admins (user_id) values ('${ownerA}')`, touch: "user_id", ownerRead: false },
 };
