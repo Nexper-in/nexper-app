@@ -59,6 +59,10 @@ Nothing here contains secrets.
 - Until `DATABASE_CA_PEM` is set, the connection is encrypted but the server certificate is not verified (the run prints a warning). Set it (docs/RELEASE.md).
 - Staging holds synthetic data only. The seed refuses a database that has any shop owned by a non-`@staging.nexper.in` account, and never runs unless `NEXPER_ENV=staging`.
 
+## Saving a bill (042, T14)
+
+- `save_bill` takes stock, writes the bill and (for udhaar) the charge in one transaction, keyed by an id the device made, so a retry or an offline replay can never take stock or add an udhaar charge twice (`tests/db/save_bill.rls.mjs`, 31 checks). The caller must have the billing permission for that shop; a bill id that belongs to another shop is refused without revealing it. Offline writes the server keeps refusing are taken out of the queue after 5 tries and shown to the shopkeeper instead of being retried forever.
+
 ## Our own error log (041, T13)
 
 - The app reports unexpected browser errors to `/api/log-error`, stored in `client_errors` for 30 days in our database, not a third-party tracker (page state and URLs would leave our systems). Long numbers and email addresses are removed before storing; a shop is attached only if the sign-in is valid and the person belongs to it. Only platform admins read it (Admin, Errors).

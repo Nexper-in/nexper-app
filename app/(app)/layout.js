@@ -94,10 +94,17 @@ const SCREEN_TITLES = {
 function AppShell({ children }) {
   const pathname = usePathname();
   const t = useT();
-  const { shops, closedShops, activeShop, addShop, loading, toast, platform } = useShop();
+  const { shops, closedShops, activeShop, addShop, loading, toast, platform, showToast } = useShop();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const router = useRouter();
   const [showStoreSettings, setShowStoreSettings] = useState(false);
+  // A bill or entry saved while offline that the server keeps refusing is taken out of the queue
+  // (lib/offlineQueueCore.js): say so, with the reason, instead of retrying silently forever.
+  useEffect(() => {
+    const failed = (e) => showToast(t("Something saved offline could not be saved: {reason}", { reason: String(e.detail?.[0] || "").slice(0, 120) }), "err");
+    window.addEventListener("nexper:queue-failed", failed);
+    return () => window.removeEventListener("nexper:queue-failed", failed);
+  }, [showToast, t]);
   useEffect(() => {
     const open = () => setShowStoreSettings(true);
     window.addEventListener("nexper:open-settings", open);

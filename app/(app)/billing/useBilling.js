@@ -10,6 +10,7 @@ import { fetchShopItems } from "@/lib/products";
 import { fetchActiveOffers, activeDiscountMap, clearancePrice } from "@/lib/clearance";
 import { cacheProducts, getCachedProducts, cacheBills, getCachedBills, cacheBillCount, getCachedBillCount } from "@/lib/productCache";
 import { useT } from "@/lib/i18n";
+import { isMissingFunction } from "@/lib/offlineQueueCore";
 
 // Everything New bill needs: items, the cart, totals, payment, voice, scan
 // and saving. The phone and laptop screens (BillingMobile / BillingDesktop)
@@ -252,6 +253,31 @@ export function useBilling() {
   const total = subtotal - discountAmount;
   const clearanceSavings = cart.reduce((s, c) => s + (c.originalPrice ? (c.originalPrice - c.price) * c.qty : 0), 0);
 
+  // The older save (before database update 042): stock, then the bill, then the udhaar charge, as
+  // three separate calls. Only used while the database has not been updated yet.
+  async function legacySave(bill, billItems, billNo) {
+    const stockResult = await runQueued({ type: "rpc", fn: "sell_items", args: { p_shop_id: activeShopId, p_lines: billItems } });
+    let billResult;
+    try {
+      billResult = await runQueued({ type: "insert", table: "bills", rows: [bill] });
+    } catch (err) {
+      if (err?.code === "23505") {
+        bill.bill_no = `${billNo}-${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
+        billResult = await runQueued({ type: "insert", table: "bills", rows: [bill] });
+      } else {
+        throw err;
+      }
+    }
+    if (billType === "credit") {
+      await runQueued({
+        type: "insert",
+        table: "credits",
+        rows: [{ shop_id: activeShopId, phone: cleanPhone, name: customer.name || "Customer", amount: total, type: "charge", note: `Bill ${bill.bill_no}` }],
+      });
+    }
+    return Boolean(billResult.queued || stockResult.queued);
+  }
+
   async function generateBill() {
     if (cart.length === 0) return;
     if (billType === "credit" && !cleanPhone) return showToast(t("Add a customer mobile number for udhaar bills"), "err");
@@ -281,42 +307,27 @@ export function useBilling() {
         date: new Date().toISOString(),
       };
 
-      // Stock is validated/deducted BEFORE the bill row is written. If an
-      // item has gone out of stock (e.g. another sale beat this one to it),
-      // sell_items throws and we stop here — no bill is ever created, the
-      // cart stays intact, and the cashier sees exactly what to fix.
-      // Writing the bill first would leave an orphaned bill row with no
-      // matching stock deduction whenever sell_items rejected the sale.
-      const stockResult = await runQueued({
-        type: "rpc",
-        fn: "sell_items",
-        args: { p_shop_id: activeShopId, p_lines: billItems },
-      });
-
-      // bill_no is a client-guessed number (total bills + 1), so another
-      // device/tab can guess the same one before either syncs — a
-      // "bills_shop_id_bill_no_key" unique-violation (23505) means exactly
-      // that happened. Regenerate and retry once rather than failing a
-      // sale whose stock has *already* been deducted above.
-      let billResult;
+      // One call saves the bill, takes the stock and (for udhaar) adds the charge, all or nothing.
+      // The bill's id is made here on the device, so if the call is repeated (a retry, or an offline
+      // bill replayed later) the database answers "already saved" and changes nothing.
+      let offline = false;
+      let saved;
       try {
-        billResult = await runQueued({ type: "insert", table: "bills", rows: [bill] });
-      } catch (err) {
-        if (err?.code === "23505") {
-          bill.bill_no = `${billNo}-${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
-          billResult = await runQueued({ type: "insert", table: "bills", rows: [bill] });
-        } else {
-          throw err;
-        }
-      }
-      const offline = billResult.queued || stockResult.queued;
-
-      if (billType === "credit") {
-        await runQueued({
-          type: "insert",
-          table: "credits",
-          rows: [{ shop_id: activeShopId, phone: cleanPhone, name: customer.name || "Customer", amount: total, type: "charge", note: `Bill ${bill.bill_no}` }],
+        saved = await runQueued({
+          type: "rpc",
+          fn: "save_bill",
+          args: { p_bill: { ...bill, credit_id: billType === "credit" ? crypto.randomUUID() : null } },
         });
+      } catch (err) {
+        if (!isMissingFunction(err)) throw err;
+        saved = null; // the database has not had update 042 yet: use the older three-step save
+      }
+      if (saved) {
+        offline = saved.queued;
+        // The database may have given the bill a different number if another device took this one.
+        if (saved.data?.bill_no) bill.bill_no = saved.data.bill_no;
+      } else {
+        offline = await legacySave(bill, billItems, billNo);
       }
 
       if (offline) {
