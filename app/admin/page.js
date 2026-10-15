@@ -201,10 +201,10 @@ function AdminPageInner() {
     }
   }
 
-  async function deleteShop(shop) {
+  async function deleteShop(shop, mode, confirmName) {
     setBusyId(shop.id);
     try {
-      await callApi(supabase, "/api/admin/delete-shop", { shopId: shop.id });
+      await callApi(supabase, "/api/admin/delete-shop", { shopId: shop.id, mode, confirmName });
       setConfirmDeleteShop(null);
       await load();
     } catch (err) {
@@ -468,7 +468,7 @@ function AdminPageInner() {
           shop={confirmDeleteShop}
           busy={busyId === confirmDeleteShop.id}
           onClose={() => setConfirmDeleteShop(null)}
-          onConfirm={() => deleteShop(confirmDeleteShop)}
+          onConfirm={(mode, name) => deleteShop(confirmDeleteShop, mode, name)}
         />
       )}
 
@@ -834,7 +834,7 @@ function ShopsTab({ owners, expandedShopId, setExpandedShopId, busyId, reinstate
                           role="button"
                           className="w-7 h-7 rounded-full flex items-center justify-center"
                           style={{ background: DANGER_BG, color: DANGER_TEXT }}
-                          title="Delete this shop"
+                          title="Close this shop"
                         >
                           <Trash2 size={13} />
                         </span>
@@ -913,6 +913,9 @@ const ACTION_META = {
   suspend_owner:      { label: "Suspended owner",      color: DANGER_TEXT,   bg: DANGER_BG },
   reinstate_owner:    { label: "Reinstated owner",     color: SUCCESS_TEXT,  bg: SUCCESS_BG },
   delete_shop:        { label: "Deleted shop",         color: "#F2A93B",     bg: "rgba(242,169,59,0.14)" },
+  close_shop:         { label: "Closed shop",          color: "#F2A93B",     bg: "rgba(242,169,59,0.14)" },
+  purge_empty_shop:   { label: "Removed empty shop",   color: "#F2A93B",     bg: "rgba(242,169,59,0.14)" },
+  purge_closed_shop:  { label: "Removed closed shop",  color: "#F2A93B",     bg: "rgba(242,169,59,0.14)" },
   update_member:      { label: "Updated member",       color: "#7EB3F9",     bg: "rgba(91,124,250,0.14)" },
   transfer_ownership: { label: "Transferred ownership",color: "#A78BFA",     bg: "rgba(167,139,250,0.14)" },
   reset_password:     { label: "Reset password",       color: "#7FE0B8",     bg: SUCCESS_BG },
@@ -998,29 +1001,35 @@ function DeleteShopModal({ shop, busy, onClose, onConfirm }) {
   const matches = confirmText.trim() === shop.name;
 
   return (
-    <Modal title="Delete this shop?" onClose={onClose}>
+    <Modal title="Close this shop?" onClose={onClose}>
       <div className="space-y-3.5">
         <div className="flex items-start gap-2 text-xs rounded-lg px-3 py-2.5" style={{ background: DANGER_BG, color: DANGER_TEXT }}>
           <AlertTriangle size={14} className="shrink-0 mt-0.5" />
           <span>
-            This permanently deletes <strong>{shop.name}</strong> and everything in it — items, bills, udhaar, day-close history, expenses. This cannot be undone.
+            <strong>{shop.name}</strong> becomes read-only, staff lose access, and its API keys stop working. The owner can still download everything and reopen it for 90 days; after that it is removed for good.
           </span>
         </div>
-        <Field label={`Type "${shop.name}" to confirm`}>
-          <input className="ks-input" value={confirmText} onChange={(e) => setConfirmText(e.target.value)} />
-        </Field>
-        <div className="flex gap-2">
-          <button onClick={onClose} className="ks-btn-outline flex-1">Cancel</button>
+        <button onClick={() => onConfirm("close")} disabled={busy} className="ks-btn-outline w-full flex items-center justify-center gap-2">
+          {busy && <Loader2 size={16} className="animate-spin" />}
+          Close the shop (90 days to reopen)
+        </button>
+        <div className="pt-3 border-t space-y-2" style={{ borderColor: "var(--border)" }}>
+          <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
+            A test or spam shop that never made a bill can be removed right away. Shops with bills are refused.
+          </p>
+          <Field label={`Type "${shop.name}" to remove it now`}>
+            <input className="ks-input" value={confirmText} onChange={(e) => setConfirmText(e.target.value)} />
+          </Field>
           <button
-            onClick={onConfirm}
+            onClick={() => onConfirm("purge", confirmText)}
             disabled={!matches || busy}
-            className="flex-1 rounded-full text-white text-sm font-semibold py-2.5 disabled:opacity-40 flex items-center justify-center gap-2"
+            className="w-full rounded-full text-white text-sm font-semibold py-2.5 disabled:opacity-40 flex items-center justify-center gap-2"
             style={{ background: "var(--danger-solid)" }}
           >
-            {busy && <Loader2 size={16} className="animate-spin" />}
-            Delete permanently
+            Remove now (no bills only)
           </button>
         </div>
+        <button onClick={onClose} className="ks-btn-outline w-full">Cancel</button>
       </div>
     </Modal>
   );

@@ -59,6 +59,11 @@ Nothing here contains secrets.
 - Until `DATABASE_CA_PEM` is set, the connection is encrypted but the server certificate is not verified (the run prints a warning). Set it (docs/RELEASE.md).
 - Staging holds synthetic data only. The seed refuses a database that has any shop owned by a non-`@staging.nexper.in` account, and never runs unless `NEXPER_ENV=staging`.
 
+## Closing instead of deleting (037, T07)
+
+- Before, an owner could delete a shop and everything under it with one call from the browser. The delete rule is gone; `close_shop` makes the shop read-only (every write is refused, including by the server, unless a closing/reopening/purging function says so for that transaction), removes staff and company roles from it, revokes its API keys, and sets a purge date 90 days out. Only the owner (or the company owner) can close or reopen. `tests/db/closure.rls.mjs` checks all of it, and the new-table checklist fails the build if a shop table lacks the closed-shop guard.
+- The daily purge and the "remove an empty shop now" tool are service-role only, write an audit row per shop, and the second refuses any shop that has bills.
+
 ## Multi-tenant isolation and scale (033)
 
 - `tests/db/isolation.rls.mjs` checks every table (35): another shop, an anonymous visitor and a helper without the permission can read, change, delete or insert nothing of shop A's. A new table fails the build until it is added.

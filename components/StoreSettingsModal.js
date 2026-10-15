@@ -7,14 +7,13 @@ import Field from "@/components/ui/Field";
 import { useShop } from "@/components/ShopContext";
 import { MODULES } from "@/lib/modules";
 import { callApi } from "@/lib/apiClient";
-import { fetchShopItems } from "@/lib/products";
-import { buildBackupZip, readRawShop } from "@/lib/exportData";
+import { createShopBackup } from "@/lib/exportData";
 import { downloadFile } from "@/lib/gstReport";
 
 import { useT } from "@/lib/i18n";
 export default function StoreSettingsModal({ onClose }) {
   const t = useT();
-  const { supabase, activeShop, activeShopId, updateActiveShop, deleteActiveShop, user, updateProfile, showToast } = useShop();
+  const { supabase, activeShop, activeShopId, updateActiveShop, closeActiveShop, user, updateProfile, showToast } = useShop();
   const [fullName, setFullName] = useState(user?.user_metadata?.full_name || "");
   const [name, setName] = useState(activeShop?.name || "");
   const [gstin, setGstin] = useState(activeShop?.gstin || "");
@@ -44,32 +43,10 @@ export default function StoreSettingsModal({ onClose }) {
     }
   }
 
-  // Reads every row in pages of 1000 (the server's per-request limit).
-  async function readAll(table, select = "*") {
-    const out = [];
-    for (let from = 0; ; from += 1000) {
-      const { data, error } = await supabase.from(table).select(select).eq("shop_id", activeShopId).range(from, from + 999);
-      if (error) {
-        if (/does not exist|schema cache/i.test(error.message)) return out; // table not set up yet
-        throw error;
-      }
-      out.push(...data);
-      if (data.length < 1000) return out;
-    }
-  }
-
   async function downloadBackup() {
     setBackingUp(true);
     try {
-      const [items, bills, credits, expenses, fixed, links, returns, movements, reconciliations] = await Promise.all([
-        fetchShopItems(supabase, activeShopId),
-        readAll("bills"), readAll("credits"), readAll("expenses"), readAll("fixed_expenses"),
-        readAll("shop_suppliers", "owed, supplier:suppliers(*)"),
-        readAll("sale_returns"), readAll("movements"), readAll("reconciliations"),
-      ]);
-      const suppliers = links.map((l) => ({ ...(l.supplier || {}), owed: l.owed }));
-      const raw = await readRawShop(supabase, activeShopId);
-      const { blob, filename } = await buildBackupZip({ shop: activeShop, items, bills, credits, expenses, fixed, suppliers, returns, movements, reconciliations, raw });
+      const { blob, filename } = await createShopBackup(supabase, activeShop);
       downloadFile(filename, blob, "application/zip");
       showToast(t("Backup downloaded"));
     } catch (err) {
@@ -119,8 +96,8 @@ export default function StoreSettingsModal({ onClose }) {
     setDeleting(true);
     setDeleteError("");
     try {
-      await deleteActiveShop();
-      showToast(`${activeShop.name} deleted`);
+      await closeActiveShop();
+      showToast(t("{name} is closed", { name: activeShop.name }));
       onClose();
     } catch (err) {
       setDeleteError(err.message);
@@ -217,14 +194,14 @@ export default function StoreSettingsModal({ onClose }) {
               onClick={() => setShowDelete(true)}
               className="text-xs font-semibold text-[var(--danger)] flex items-center gap-1.5"
             >
-              <AlertTriangle size={13} /> {t("Delete this shop")}
+              <AlertTriangle size={13} /> {t("Close this shop")}
             </button>
           ) : (
             <div className="space-y-2.5">
               <div className="flex items-start gap-2 text-xs text-[var(--danger)] bg-[var(--danger-soft)] rounded-lg px-3 py-2.5">
                 <AlertTriangle size={14} className="shrink-0 mt-0.5" />
                 <span>
-                  {t("This permanently deletes {name} and everything in it — items, bills, udhaar, day-close history, expenses. This cannot be undone.", { name: activeShop?.name })}
+                  {t("Closing {name} stops billing and hides it from your staff. You keep everything for 90 days to download or reopen it; after that it is removed for good. Download a backup first, and keep your bills for 6 years for GST.", { name: activeShop?.name })}
                 </span>
               </div>
               <Field label={t("Type \"{name}\" to confirm", { name: activeShop?.name })}>
@@ -251,7 +228,7 @@ export default function StoreSettingsModal({ onClose }) {
                   style={{ background: "var(--danger-solid)" }}
                 >
                   {deleting && <Loader2 size={16} className="animate-spin" />}
-                  {t("Delete permanently")}
+                  {t("Close shop")}
                 </button>
               </div>
             </div>

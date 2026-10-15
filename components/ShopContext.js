@@ -25,6 +25,8 @@ export function ShopProvider({ children }) {
   // { org: { id, name, max_shops }, role }. undefined: not loaded yet;
   // null: no company (before database update 035).
   const [orgInfo, setOrgInfo] = useState(undefined);
+  // Shops the owner closed (read-only, can be reopened for 90 days; migration 037)
+  const [closedShops, setClosedShops] = useState([]);
   // Platform admin settings (prices, plans, switches, announcement) and this
   // shop's own admin controls (plan override, limits, feature overrides).
   const [platform, setPlatform] = useState(() => setPlatformConfig([]));
@@ -41,12 +43,15 @@ export function ShopProvider({ children }) {
     // owner or staff — not just shops they own.
     const { data, error } = await supabase.from("shops").select("*").order("created_at", { ascending: true });
     if (!error) {
-      setShops(data || []);
+      const all = data || [];
+      const open = all.filter((s) => s.status !== "closed");
+      setShops(open);
+      setClosedShops(all.filter((s) => s.status === "closed"));
       setActiveShopIdState((prev) => {
-        if (prev && data.some((s) => s.id === prev)) return prev;
+        if (prev && all.some((s) => s.id === prev)) return prev;
         const stored = typeof window !== "undefined" ? localStorage.getItem(ACTIVE_SHOP_KEY) : null;
-        if (stored && data.some((s) => s.id === stored)) return stored;
-        return data[0]?.id ?? null;
+        if (stored && all.some((s) => s.id === stored)) return stored;
+        return open[0]?.id ?? all[0]?.id ?? null;
       });
     }
     setLoading(false);
@@ -204,22 +209,25 @@ export function ShopProvider({ children }) {
     return data;
   }
 
-  // Permanently deletes the shop and everything under it (items, bills,
-  // movements, credits, day-close history, expenses, supplier links,
-  // staff) — schema.sql cascades all of that from the shops row. Leaves
-  // the owner with zero shops, which sends them back to onboarding to
-  // set up a new one (app/(app)/layout.js checks shops.length === 0).
-  async function deleteActiveShop() {
+  // Closing is not deleting: the shop becomes read-only, staff and company roles lose access,
+  // and the owner can download everything or reopen it for 90 days (migration 037).
+  async function closeActiveShop(reason) {
     if (!activeShopId) return;
-    const { error } = await supabase.from("shops").delete().eq("id", activeShopId);
-    if (error) throw error;
-    // Other branches of a chain stay; the owner lands on one of them.
+    const { error } = await supabase.rpc("close_shop", { p_shop: activeShopId, p_reason: reason || null });
+    if (error) throw new Error(/function|schema cache/i.test(error.message) ? "This needs the latest database update." : error.message);
     const remaining = shops.filter((s) => s.id !== activeShopId);
-    setShops(remaining);
     setActiveShopId(remaining[0]?.id ?? null);
+    await loadShops();
   }
 
-  const baseShop = shops.find((s) => s.id === activeShopId) || null;
+  async function reopenShop(shopId) {
+    const { error } = await supabase.rpc("reopen_shop", { p_shop: shopId });
+    if (error) throw new Error(/function|schema cache/i.test(error.message) ? "This needs the latest database update." : error.message);
+    await loadShops();
+    setActiveShopId(shopId);
+  }
+
+  const baseShop = shops.find((s) => s.id === activeShopId) || closedShops.find((s) => s.id === activeShopId) || null;
   const activeShop = useMemo(() => (baseShop ? { ...baseShop, controls: controls[baseShop.id] || null } : null), [baseShop, controls]);
   const isOwner = currentMember?.role === "owner";
   // Company-level roles: the owner and managers see the Company screen.
@@ -237,13 +245,15 @@ export function ShopProvider({ children }) {
       value={{
         supabase,
         shops,
+        closedShops,
         activeShop,
         platform,
         activeShopId,
         setActiveShopId,
         addShop,
         updateActiveShop,
-        deleteActiveShop,
+        closeActiveShop,
+        reopenShop,
         loading,
         reload: loadShops,
         toast,

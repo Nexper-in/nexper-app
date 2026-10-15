@@ -9,6 +9,7 @@ import AddBranchModal from "@/components/AddBranchModal";
 import Field from "@/components/ui/Field";
 import { shopTypeInfo } from "@/lib/shopTypes";
 import { ORG_ROLES } from "@/lib/branch";
+import { ClosedShopsList } from "@/components/ClosedShops";
 import { T, useT } from "@/lib/i18n";
 
 // Marks the role names for translation (they are read through t() below).
@@ -101,6 +102,7 @@ export default function CompanyPage() {
               )}
             </div>
           )}
+          <ClosedShopsList onOpen={() => router.push("/dashboard")} />
         </>
       ) : (
         <TeamTab supabase={supabase} org={org} shops={shops} canEdit={isOrgOwner} />

@@ -81,8 +81,12 @@ function; nothing else needs to change.
   Pro plan (or better) and one test restore. Check the project **region is Mumbai
   (ap-south-1)**: it cannot be changed later without moving the data.
 - **Owner backup**: Store settings, "Download backup": a zip of spreadsheets built from the owner's own session (`lib/exportData.js`), so it can only contain their shop.
-- **Deleting a shop** removes everything under it (`on delete cascade`), including supply
-  data; admin deletes are in the audit log.
+- **Closing a shop** (migration 037) replaces deleting: the shop becomes read-only (a guard
+  trigger on every table of its books), staff and company roles lose access, the owner keeps
+  access to download everything and can reopen it for 90 days. A daily job (`/api/cron/purge`)
+  then removes it with everything under it (`on delete cascade`), one audit row per shop. No
+  browser or app code can delete a shop; only that job and a support tool for shops that never
+  had a bill.
 - Support access: platform admins can see all shops. Their actions are logged; reading is
   not. Decide and state when support may look at a client's data.
 

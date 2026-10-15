@@ -8,6 +8,7 @@ import { ShopProvider, useShop } from "@/components/ShopContext";
 import Sidebar from "@/components/Sidebar";
 import BottomNav from "@/components/BottomNav";
 import { AddShopOnboarding } from "@/components/ShopOnboarding";
+import { ClosedShopScreen, ClosedShopsList } from "@/components/ClosedShops";
 import StoreSettingsModal from "@/components/StoreSettingsModal";
 import Toast from "@/components/ui/Toast";
 import AccountMenu from "@/components/AccountMenu";
@@ -92,7 +93,7 @@ const SCREEN_TITLES = {
 function AppShell({ children }) {
   const pathname = usePathname();
   const t = useT();
-  const { shops, activeShop, addShop, loading, toast, platform } = useShop();
+  const { shops, closedShops, activeShop, addShop, loading, toast, platform } = useShop();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const router = useRouter();
   const [showStoreSettings, setShowStoreSettings] = useState(false);
@@ -110,10 +111,13 @@ function AppShell({ children }) {
     );
   }
 
+  if (activeShop?.status === "closed") return <ClosedShopScreen />;
+
   if (shops.length === 0) {
     // A new owner lands straight on New bill (starter items are ready).
     return (
       <AddShopOnboarding
+        below={closedShops.length > 0 ? <ClosedShopsList /> : null}
         onAdd={async (name, type, opts) => {
           await addShop(name, type, opts);
           router.replace("/billing");

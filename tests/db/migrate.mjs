@@ -9,6 +9,9 @@ import { buildDb, ROOT, counter } from "./setup.mjs";
 import { applyMigrations, pgliteClient } from "../../tools/migrate-core.mjs";
 
 const t = counter();
+// The strict updates (036 on) that exist in the repository; the tests below adapt as more are added.
+const STRICT = fs.readdirSync(ROOT + "migrations").filter((f) => /^\d{3}b?_.*\.sql$/.test(f) && f.slice(0, 3) >= "036").map((f) => f.split("_")[0]).sort();
+const NEWEST = STRICT[STRICT.length - 1];
 const q = async (db, sql) => (await db.query(sql)).rows;
 const fails = async (fn) => {
   try {
@@ -29,11 +32,11 @@ function tempRoot() {
 const db = await buildDb();
 const rows = await q(db, `select version, checksum, applied_by from app_migrations order by version`);
 const versions = rows.map((r) => r.version);
-t.ok(versions.includes("001") && versions.includes("035") && versions.includes("036"), "empty database: 001..036 are recorded");
+t.ok(versions.includes("001") && versions.includes("035") && versions.includes(NEWEST), "empty database: 001.." + NEWEST + " are recorded");
 t.ok(versions.includes("012b"), "012b is recorded (the Supabase CLI would skip it)");
 t.ok(!versions.includes("032"), "the gap at 032 is not invented");
-t.ok(rows.find((r) => r.version === "036").checksum, "036 has a checksum");
-t.ok((await q(db, `select db_version() v`))[0].v === "036", "db_version() is 036");
+t.ok(rows.find((r) => r.version === NEWEST).checksum, "the newest update has a checksum");
+t.ok((await q(db, `select db_version() v`))[0].v === NEWEST, "db_version() is the newest update");
 
 // ---------- 2. running again applies nothing ----------
 const again = await applyMigrations(pgliteClient(db), { root: ROOT });
@@ -46,7 +49,7 @@ t.ok(again.applied.length === 0, "second run applies nothing");
     create function auth.uid() returns uuid language sql stable as $$ select null::uuid $$; create function auth.role() returns text language sql as $$ select '' $$;
     create function uuid_generate_v4() returns uuid language sql as $$ select gen_random_uuid() $$; create role anon nologin; create role authenticated nologin; create role service_role nologin;`);
   const r = await applyMigrations(pgliteClient(empty), { root: ROOT, dryRun: true });
-  t.ok(r.pending[0] === "schema" && r.pending.includes("036"), "dry run on an empty database lists what it would do");
+  t.ok(r.pending[0] === "schema" && r.pending.includes(NEWEST), "dry run on an empty database lists what it would do");
   t.ok((await q(empty, `select to_regclass('public.shops') is not null as ok`))[0].ok === false, "dry run did not touch the database");
 }
 
@@ -55,7 +58,7 @@ t.ok(again.applied.length === 0, "second run applies nothing");
   const old = await buildDb({ upTo: "035" });
   t.ok((await q(old, `select to_regclass('public.app_migrations') is null as none`))[0].none, "existing database starts without tracking");
   const r = await applyMigrations(pgliteClient(old), { root: ROOT });
-  t.ok(r.applied.join() === "036", `existing database: only 036 applied (got ${r.applied.join()})`);
+  t.ok(r.applied.join() === STRICT.join(), `existing database: only the updates from 036 on are applied (got ${r.applied.join()})`);
   const n = (await q(old, `select count(*)::int c from app_migrations`))[0].c;
   t.ok(n === versions.length, `history backfilled: ${n} rows (expected ${versions.length})`);
 }
@@ -65,7 +68,7 @@ t.ok(again.applied.length === 0, "second run applies nothing");
   const old = await buildDb({ upTo: "035" });
   await old.exec(fs.readFileSync(ROOT + "migrations/036_migration_tracking.sql", "utf8"));
   const r = await applyMigrations(pgliteClient(old), { root: ROOT });
-  t.ok(r.applied.length === 0, "036 run by hand is recognised, nothing applied");
+  t.ok(!r.applied.includes("036") && r.applied.join() === STRICT.filter((v) => v !== "036").join(), "036 run by hand is recognised: only the later updates are applied");
 }
 
 // ---------- 6. a database without 001-035 is refused in plain words ----------
@@ -89,27 +92,27 @@ t.ok(again.applied.length === 0, "second run applies nothing");
 // ---------- 8. a failing update rolls back completely and stops the run ----------
 {
   const dir = tempRoot();
-  fs.writeFileSync(path.join(dir, "migrations/037_bad.sql"), `create table half_done (id int);\ninsert into half_done values (1);\nselect 1/0;\n`);
-  fs.writeFileSync(path.join(dir, "migrations/038_never.sql"), `create table never_runs (id int);\n`);
+  fs.writeFileSync(path.join(dir, "migrations/990_bad.sql"), `create table half_done (id int);\ninsert into half_done values (1);\nselect 1/0;\n`);
+  fs.writeFileSync(path.join(dir, "migrations/991_never.sql"), `create table never_runs (id int);\n`);
   const mdb = await buildDb({ upTo: "035" });
   const msg = await fails(() => applyMigrations(pgliteClient(mdb), { root: dir }));
-  t.ok(msg && /037_bad\.sql failed and was rolled back/.test(msg), "a failing update reports its file and rolls back");
+  t.ok(msg && /990_bad\.sql failed and was rolled back/.test(msg), "a failing update reports its file and rolls back");
   t.ok((await q(mdb, `select to_regclass('public.half_done') is null as none`))[0].none, "nothing of the failed update is left behind");
   t.ok((await q(mdb, `select to_regclass('public.never_runs') is null as none`))[0].none, "later updates did not run");
-  t.ok((await q(mdb, `select db_version() v`))[0].v === "036", "the database stays at the last good update");
+  t.ok((await q(mdb, `select db_version() v`))[0].v === NEWEST, "the database stays at the last good update");
   // fix the file: the next run continues from there
-  fs.writeFileSync(path.join(dir, "migrations/037_bad.sql"), `create table half_done (id int);\n`);
+  fs.writeFileSync(path.join(dir, "migrations/990_bad.sql"), `create table half_done (id int);\n`);
   const r = await applyMigrations(pgliteClient(mdb), { root: dir });
-  t.ok(r.applied.join() === "037,038", `after the fix the run continues (${r.applied.join()})`);
+  t.ok(r.applied.join() === "990,991", `after the fix the run continues (${r.applied.join()})`);
 }
 
 // ---------- 9. a "no-transaction" update runs without one ----------
 {
   const dir = tempRoot();
-  fs.writeFileSync(path.join(dir, "migrations/037_notx.sql"), `-- nexper:no-transaction\ncreate table notx_ok (id int);\n`);
+  fs.writeFileSync(path.join(dir, "migrations/992_notx.sql"), `-- nexper:no-transaction\ncreate table notx_ok (id int);\n`);
   const mdb = await buildDb({ upTo: "035" });
   const r = await applyMigrations(pgliteClient(mdb), { root: dir });
-  t.ok(r.applied.join() === "036,037", "no-transaction update is applied");
+  t.ok(r.applied.join() === [...STRICT, "992"].join(), "no-transaction update is applied");
   t.ok((await q(mdb, `select to_regclass('public.notx_ok') is not null as ok`))[0].ok, "and its table exists");
 }
 

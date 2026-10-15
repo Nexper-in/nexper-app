@@ -6,6 +6,7 @@
 //   S5  every security definer function sets search_path and refuses anon
 //   S6  every table is classified in tests/db/tables.mjs (kind + lifecycle)
 //   S7  tables marked appendOnly cannot be updated or deleted by any API role
+//   S14 every table of a shop's books refuses writes while the shop is closed (migration 037)
 //   S16 every table that holds a shop's books is in the shop export (lib/shopTables.js) or
 //       explicitly left out with a reason, so a restore never silently misses a table
 //   S8  every update from 036 on records itself under its own file name and does
@@ -73,6 +74,13 @@ export async function checkCatalog(db, { tables = TABLES, migrationsDir = ROOT +
       if (!(fk && fk.del === "c")) add("S3", `${n}.${c.fk} must reference ${c.parent} on delete cascade`);
       if (hasShop) add("S3", `${n} is a shop-child but also has shop_id: classify it "shop"`);
     }
+  }
+
+  // S14: a closed shop is read-only, so every table of the shop's books needs the closed-shop guard
+  const guards = new Set((await rows(db, `select c.relname t from pg_trigger g join pg_class c on c.oid = g.tgrelid where g.tgname = c.relname || '_closed_guard' and not g.tgisinternal`)).map((r) => r.t));
+  for (const [n, c] of Object.entries(tables)) {
+    if (!names.has(n) || !["shop", "shop-child"].includes(c.kind) || c.exceptions?.closedGuard) continue;
+    if (!guards.has(n)) add("S14", `${n} needs a closed-shop guard: create trigger ${n}_closed_guard before insert or update or delete on ${n} for each row execute function block_closed_shop_writes() (see migration 037)`);
   }
 
   // S16
@@ -168,6 +176,10 @@ const has = (list, rule, word) => list.some((p) => p.startsWith(rule) && p.inclu
   t.ok(p3.length === 0, "a definer function that follows the rules passes");
 }
 {
+  const p = await brokenWith(`create table dummy_open (id int, shop_id uuid references shops(id) on delete cascade); create index on dummy_open (shop_id); alter table dummy_open enable row level security;`, { tables: { ...TABLES, dummy_open: { kind: "shop", lifecycle: "with-shop" } } });
+  t.ok(has(p, "S14", "dummy_open"), "a shop table without the closed-shop guard fails S14");
+}
+{
   const p = await brokenWith(`create table dummy_books (id int, shop_id uuid references shops(id) on delete cascade); create index on dummy_books (shop_id); alter table dummy_books enable row level security;`, { tables: { ...TABLES, dummy_books: { kind: "shop", lifecycle: "with-shop" } } });
   t.ok(has(p, "S16", "dummy_books"), "a shop table missing from the shop export fails S16");
 }
@@ -183,13 +195,13 @@ const has = (list, rule, word) => list.some((p) => p.startsWith(rule) && p.inclu
   const path = await import("node:path");
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "nexper-cat-"));
   fs.mkdirSync(dir + "/migrations");
-  fs.writeFileSync(dir + "/migrations/037_a.sql", "create table x (id int);\n");
-  fs.writeFileSync(dir + "/migrations/038_b.sql", "alter table x drop column id;\nselect record_migration('038', '038_b.sql');\n");
-  fs.writeFileSync(dir + "/migrations/039_c.sql", "-- nexper:contract\nalter table x drop column id;\nselect record_migration('039', '039_c.sql');\n");
+  fs.writeFileSync(dir + "/migrations/990_a.sql", "create table x (id int);\n");
+  fs.writeFileSync(dir + "/migrations/991_b.sql", "alter table x drop column id;\nselect record_migration('991', '991_b.sql');\n");
+  fs.writeFileSync(dir + "/migrations/992_c.sql", "-- nexper:contract\nalter table x drop column id;\nselect record_migration('992', '992_c.sql');\n");
   const p = await checkCatalog(db, { migrationsDir: dir + "/migrations" });
-  t.ok(has(p, "S8", "037_a.sql"), "an update that does not record itself fails S8");
-  t.ok(has(p, "S8", "038_b.sql") && p.some((x) => x.includes("038_b.sql") && x.includes("drops")), "an update that drops a column without the contract marker fails S8");
-  t.ok(!p.some((x) => x.includes("039_c.sql")), "a marked contract update passes S8");
+  t.ok(has(p, "S8", "990_a.sql"), "an update that does not record itself fails S8");
+  t.ok(has(p, "S8", "991_b.sql") && p.some((x) => x.includes("991_b.sql") && x.includes("drops")), "an update that drops a column without the contract marker fails S8");
+  t.ok(!p.some((x) => x.includes("992_c.sql")), "a marked contract update passes S8");
 }
 
 console.log(`${t.pass} passed, ${t.fail} failed (catalog rules)`);
