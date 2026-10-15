@@ -43,13 +43,15 @@ export default function CompanyPage() {
     );
   }
   const { org } = orgInfo;
-  const atLimit = shops.length >= org.max_shops;
+  // Only this company's shops (the person may belong to several companies).
+  const companyShops = shops.filter((s) => s.org_id === org.id);
+  const atLimit = companyShops.length >= org.max_shops;
 
   return (
     <div className="pt-4">
       <h1 className="ks-display font-bold text-xl">{org.name}</h1>
       <p className="text-sm text-[var(--text-secondary)] mt-0.5 mb-4">
-        {t("{n} of {max} shops", { n: shops.length, max: org.max_shops })} · {t(ROLE_LABELS[orgRole])}
+        {t("{n} of {max} shops", { n: companyShops.length, max: org.max_shops })} · {t(ROLE_LABELS[orgRole])}
       </p>
 
       <div className="flex gap-1.5 mb-4 p-1 rounded-full bg-[var(--bg-surface-alt)] max-w-xs">
@@ -63,7 +65,7 @@ export default function CompanyPage() {
       {tab === "shops" ? (
         <>
           <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
-            {shops.map((s) => (
+            {companyShops.map((s) => (
               <div key={s.id} className="ks-card p-4 flex items-center gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-xl bg-[var(--bg-surface-alt)] flex items-center justify-center shrink-0">
                   <ShopTypeIcon type={s.type} size={18} />
@@ -105,7 +107,7 @@ export default function CompanyPage() {
           <ClosedShopsList onOpen={() => router.push("/dashboard")} />
         </>
       ) : (
-        <TeamTab supabase={supabase} org={org} shops={shops} canEdit={isOrgOwner} />
+        <TeamTab supabase={supabase} org={org} shops={companyShops} canEdit={isOrgOwner} />
       )}
 
       {showAdd && <AddBranchModal onClose={() => setShowAdd(false)} onCreated={() => router.push("/dashboard")} />}

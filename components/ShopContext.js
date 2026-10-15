@@ -8,6 +8,7 @@ import { useOfflineQueue } from "@/lib/offlineQueue";
 import { callApi } from "@/lib/apiClient";
 import { setPlatformConfig } from "@/lib/platformConfig";
 import { copyCatalog } from "@/lib/branch";
+import { pickOrgInfo } from "@/lib/orgInfo";
 
 const ShopContext = createContext(null);
 
@@ -24,7 +25,7 @@ export function ShopProvider({ children }) {
   // The company (chain) the signed-in user belongs to and their role in it:
   // { org: { id, name, max_shops }, role }. undefined: not loaded yet;
   // null: no company (before database update 035).
-  const [orgInfo, setOrgInfo] = useState(undefined);
+  const [orgData, setOrgData] = useState(undefined); // { orgs, roles } or null before update 035
   // Shops the owner closed (read-only, can be reopened for 90 days; migration 037)
   const [closedShops, setClosedShops] = useState([]);
   // Platform admin settings (prices, plans, switches, announcement) and this
@@ -124,18 +125,22 @@ export function ShopProvider({ children }) {
     };
   }, [supabase, activeShopId, user]);
 
-  // The company and the user's company role. Quietly nothing before update 035.
+  // Every company the person belongs to, and their role in each. Quietly nothing before update 035.
   const loadOrg = useCallback(async () => {
-    if (!user) return setOrgInfo(undefined);
-    const { data: org, error } = await supabase.from("organisations").select("*").order("created_at").limit(1).maybeSingle();
-    if (error || !org) return setOrgInfo(null);
-    const { data: me } = await supabase.from("org_members").select("role, shop_ids").eq("org_id", org.id).eq("user_id", user.id).maybeSingle();
-    setOrgInfo({ org, role: me?.role || null, shopIds: me?.shop_ids || [] });
+    if (!user) return setOrgData(undefined);
+    const { data: orgs, error } = await supabase.from("organisations").select("*").order("created_at").limit(50);
+    if (error || !orgs?.length) return setOrgData(null);
+    const { data: mine } = await supabase.from("org_members").select("org_id, role, shop_ids").eq("user_id", user.id);
+    setOrgData({ orgs, roles: Object.fromEntries((mine || []).map((m) => [m.org_id, { role: m.role, shopIds: m.shop_ids || [] }])) });
   }, [supabase, user]);
 
   useEffect(() => {
     loadOrg();
   }, [loadOrg, shops.length]);
+
+  // The company of the shop that is open now, and the person's role in IT (not in some other
+  // company they also belong to).
+  const orgInfo = useMemo(() => pickOrgInfo(orgData, shops, closedShops, activeShopId), [orgData, shops, closedShops, activeShopId]);
 
   async function updateProfile(fields) {
     const { data, error } = await supabase.auth.updateUser({ data: fields });
@@ -283,6 +288,7 @@ export function ShopProvider({ children }) {
         currentMember,
         isOwner,
         orgInfo,
+        orgs: orgData?.orgs || [],
         orgRole,
         isOrgOwner,
         canSeeCompany,

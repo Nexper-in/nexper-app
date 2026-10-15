@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, ChevronDown } from "lucide-react";
 import ShopTypeIcon from "@/components/ShopTypeIcon";
@@ -13,10 +13,13 @@ import { useT } from "@/lib/i18n";
 export default function ShopSwitcher({ onNavigate }) {
   const t = useT();
   const router = useRouter();
-  const { shops, activeShop, setActiveShopId } = useShop();
+  const { shops, orgs, activeShop, setActiveShopId } = useShop();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const several = shops.length > 1;
+  // Shops grouped by company when the person belongs to more than one (an owner who also manages
+  // someone else's shops); one flat list otherwise.
+  const groups = orgs.length > 1 ? orgs.map((o) => ({ id: o.id, name: o.name, shops: shops.filter((x) => x.org_id === o.id) })).filter((g) => g.shops.length) : [{ id: "all", name: "", shops }];
 
   useEffect(() => {
     if (!open) return undefined;
@@ -59,7 +62,14 @@ export default function ShopSwitcher({ onNavigate }) {
       </button>
       {open && (
         <ul role="listbox" className="ks-card absolute left-0 right-0 top-[calc(100%+6px)] z-50 p-1.5 max-h-72 overflow-y-auto" style={{ boxShadow: "0 20px 50px rgba(0,0,0,0.35)" }}>
-          {shops.map((s) => (
+          {groups.map((g) => (
+            <Fragment key={g.id}>
+              {groups.length > 1 && (
+                <li role="presentation" className="px-2.5 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wide" style={{ color: "var(--text-secondary)" }}>
+                  {g.name}
+                </li>
+              )}
+              {g.shops.map((s) => (
             <li key={s.id} role="option" aria-selected={s.id === activeShop.id}>
               <button
                 type="button"
@@ -78,6 +88,8 @@ export default function ShopSwitcher({ onNavigate }) {
                 {s.id === activeShop.id && <Check size={14} className="text-[var(--accent)] shrink-0" />}
               </button>
             </li>
+              ))}
+            </Fragment>
           ))}
         </ul>
       )}

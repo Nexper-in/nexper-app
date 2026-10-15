@@ -21,7 +21,8 @@ export function branchErrorText(message, t) {
 // own prices and stock are created).
 export default function AddBranchModal({ onClose, onCreated }) {
   const t = useT();
-  const { shops, activeShop, addShop } = useShop();
+  const { shops: allShops, activeShop, addShop } = useShop();
+  const shops = allShops.filter((s) => s.org_id === activeShop?.org_id);
   const [name, setName] = useState("");
   const [type, setType] = useState(activeShop?.type || "kirana");
   const [copy, setCopy] = useState(true);

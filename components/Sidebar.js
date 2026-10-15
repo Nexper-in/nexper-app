@@ -103,7 +103,7 @@ export default function Sidebar({ onOpenSettings, onNavigate }) {
   // The Company screen is for the owner and managers of a chain (or a company that may grow into one).
   const allowed = (item) =>
     item.company
-      ? canSeeCompany && (shops.length > 1 || (orgInfo?.org?.max_shops || 1) > 1)
+      ? canSeeCompany && (shops.filter((x) => x.org_id === orgInfo?.org?.id).length > 1 || (orgInfo?.org?.max_shops || 1) > 1)
       : (!item.feature || hasFeature(activeShop, item.feature)) &&
         (item.ownerOnly ? isOwner && isModuleEnabled(activeShop, item.key) : isModuleEnabled(activeShop, item.key) && hasPermission(item.key));
   const mainNav = MAIN_NAV.filter(allowed);
