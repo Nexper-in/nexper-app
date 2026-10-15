@@ -20,6 +20,11 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [checkingSession, setCheckingSession] = useState(true);
+  // password -> (verify | enroll): the authenticator-app step platform admins must pass.
+  const [step, setStep] = useState("password");
+  const [factorId, setFactorId] = useState("");
+  const [enroll, setEnroll] = useState(null); // { qr, secret }
+  const [code, setCode] = useState("");
 
   useEffect(() => {
     delete document.documentElement.dataset.theme; // admin always uses Night
@@ -28,15 +33,59 @@ export default function AdminLoginPage() {
     };
   }, []);
 
+  // After the password: if the authenticator step is already done go on, otherwise ask for the
+  // code (a factor exists) or set one up (none yet).
+  async function afterPassword() {
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aal?.currentLevel === "aal2") {
+      router.replace("/admin");
+      return;
+    }
+    const { data: factors, error: listError } = await supabase.auth.mfa.listFactors();
+    if (listError) throw listError;
+    const verified = factors?.totp?.[0];
+    if (verified) {
+      setFactorId(verified.id);
+      setStep("verify");
+      return;
+    }
+    // Clear half-finished attempts, then start a new one.
+    for (const f of factors?.all || []) if (f.status === "unverified") await supabase.auth.mfa.unenroll({ factorId: f.id });
+    const { data, error: enrollError } = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: `Nexper admin ${new Date().toISOString().slice(0, 10)}` });
+    if (enrollError) throw enrollError;
+    setFactorId(data.id);
+    setEnroll({ qr: data.totp.qr_code, secret: data.totp.secret });
+    setStep("enroll");
+  }
+
   useEffect(() => {
     supabase.auth
       .getSession()
-      .then(({ data: { session } }) => {
-        if (session) router.replace("/admin");
-        else setCheckingSession(false);
+      .then(async ({ data: { session } }) => {
+        if (!session) return setCheckingSession(false);
+        try {
+          await afterPassword();
+        } catch (e) {
+          setError(e.message);
+        }
+        setCheckingSession(false);
       })
       .catch(() => setCheckingSession(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase, router]);
+
+  async function handleCode(e) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    const { error: verifyError } = await supabase.auth.mfa.challengeAndVerify({ factorId, code: code.trim() });
+    if (verifyError) {
+      setError(verifyError.message);
+      setLoading(false);
+      return;
+    }
+    router.replace("/admin");
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -46,9 +95,14 @@ export default function AdminLoginPage() {
     if (error) {
       setError(error.message);
       setLoading(false);
-    } else {
-      router.replace("/admin");
+      return;
     }
+    try {
+      await afterPassword();
+    } catch (e) {
+      setError(e.message);
+    }
+    setLoading(false);
   }
 
   if (checkingSession) {
@@ -75,6 +129,44 @@ export default function AdminLoginPage() {
           </p>
         </div>
 
+        {step !== "password" ? (
+          <form onSubmit={handleCode} className="ks-card space-y-3 p-6">
+            {step === "enroll" && enroll && (
+              <div className="space-y-3 text-sm" style={{ color: "var(--text-secondary)" }}>
+                <p>
+                  First time here: set up two-step sign-in. Open an authenticator app (Google Authenticator, Microsoft Authenticator, 1Password...), scan this code, then type the 6 digits it shows.
+                </p>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={enroll.qr} alt="Authenticator setup code" className="mx-auto bg-white rounded-lg p-2" width={176} height={176} />
+                <p className="text-xs break-all">Cannot scan? Enter this key by hand: <span style={{ color: "var(--text-primary)" }}>{enroll.secret}</span></p>
+              </div>
+            )}
+            {step === "verify" && (
+              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Enter the 6-digit code from your authenticator app.</p>
+            )}
+            <input
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              pattern="[0-9]{6}"
+              maxLength={6}
+              required
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+              className="ks-input text-center tracking-widest"
+              placeholder="123456"
+            />
+            {error && (
+              <p className="text-sm rounded-lg px-3 py-2" style={{ background: "rgba(226,75,74,0.12)", color: "#F29C9C" }}>{error}</p>
+            )}
+            <button type="submit" disabled={loading || code.length !== 6} className="ks-btn-primary w-full flex items-center justify-center gap-2">
+              {loading && <Loader2 size={16} className="animate-spin" />}
+              {step === "enroll" ? "Turn on and sign in" : "Verify"}
+            </button>
+            <button type="button" onClick={async () => { await supabase.auth.signOut(); setStep("password"); setCode(""); setError(""); }} className="text-xs w-full text-center" style={{ color: "var(--text-secondary)" }}>
+              Use a different account
+            </button>
+          </form>
+        ) : (
         <form onSubmit={handleSubmit} className="ks-card space-y-3 p-6">
           <div>
             <label className="text-xs font-medium mb-1 block" style={{ color: "var(--text-secondary)" }}>
@@ -115,6 +207,7 @@ export default function AdminLoginPage() {
             Sign in
           </button>
         </form>
+        )}
       </div>
     </main>
   );

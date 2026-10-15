@@ -12,7 +12,7 @@ export async function GET(request) {
   // instead of downloading every bill and credit entry of every shop.
   const [shopsRes, membersRes, statsRes, udhaarRes] = await Promise.all([
     fetchAll(() => admin.from("shops").select("id, owner_id, name, type, created_at, enabled_modules").order("created_at").order("id")),
-    fetchAll(() => admin.from("shop_members").select("id, shop_id, user_id, role, name, staff_code, permissions").order("role", { ascending: false }).order("id")),
+    fetchAll(() => admin.from("shop_members").select("id, shop_id, user_id, role, name, permissions").order("role", { ascending: false }).order("id")),
     admin.rpc("admin_shop_stats"),
     admin.rpc("admin_udhaar_outstanding"),
   ]);
@@ -66,7 +66,6 @@ export async function GET(request) {
       email: usersById[m.user_id]?.email || "(unknown)",
       role: m.role,
       name: m.name,
-      staff_code: m.staff_code,
       permissions: m.permissions,
     }));
     const shopStaffCount = shopMembers.filter((m) => m.role === "staff").length;

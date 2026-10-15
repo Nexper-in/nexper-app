@@ -59,6 +59,14 @@ Nothing here contains secrets.
 - Until `DATABASE_CA_PEM` is set, the connection is encrypted but the server certificate is not verified (the run prints a warning). Set it (docs/RELEASE.md).
 - Staging holds synthetic data only. The seed refuses a database that has any shop owned by a non-`@staging.nexper.in` account, and never runs unless `NEXPER_ENV=staging`.
 
+## Support access policy (038, T08/T09)
+
+- Nexper staff read a client's shop data only inside a **support session** (Admin console, Support tab): a ticket reference, a reason, one shop, at most 2 hours. Without an open session of that admin, covering that shop, every read is refused by the database (`support_check`). Reads are from a fixed list of screens (shop settings, members without staff codes, items, a bill, bills in at most 31 days, udhaar balances, one customer's udhaar, day close, expenses, the shop's error reports). No free-form queries, no bulk download. Customers' phone numbers are masked unless the session was opened with "show full phone numbers".
+- The log row is written **before** anything is shown; if it cannot be written nothing is shown. `support_access_log`, `support_sessions` and `admin_audit_log` cannot be updated or deleted through the API, not even by the server; they are kept 2 years.
+- The owner sees every session on their company (Store settings, "Nexper support access").
+- Platform admins must sign in with an **authenticator app** (TOTP); admin API routes refuse a token that is not `aal2`. `ADMIN_MFA_REQUIRED=false` is allowed on staging only. The admin overview no longer returns staff codes.
+- **Break glass:** anyone with the Supabase dashboard can still run SQL. Rule: the production SQL editor is used only for an incident, and such use is first recorded as a `break_glass` support session. Supabase organisation members: Maqbool and one backup person, MFA on.
+
 ## Closing instead of deleting (037, T07)
 
 - Before, an owner could delete a shop and everything under it with one call from the browser. The delete rule is gone; `close_shop` makes the shop read-only (every write is refused, including by the server, unless a closing/reopening/purging function says so for that transaction), removes staff and company roles from it, revokes its API keys, and sets a purge date 90 days out. Only the owner (or the company owner) can close or reopen. `tests/db/closure.rls.mjs` checks all of it, and the new-table checklist fails the build if a shop table lacks the closed-shop guard.

@@ -11,6 +11,7 @@ import { createShopBackup } from "@/lib/exportData";
 import { downloadFile } from "@/lib/gstReport";
 
 import { useT } from "@/lib/i18n";
+import SupportAccessList from "@/components/SupportAccessList";
 export default function StoreSettingsModal({ onClose }) {
   const t = useT();
   const { supabase, activeShop, activeShopId, updateActiveShop, closeActiveShop, user, updateProfile, showToast } = useShop();
@@ -162,6 +163,7 @@ export default function StoreSettingsModal({ onClose }) {
           </button>
           <p className="text-[11px] mt-1.5" style={{ color: "var(--text-secondary)" }}>{t("Items, bills, udhaar, expenses and more as spreadsheet files. Keep it safe: it has customer names and phone numbers.")}</p>
         </div>
+        <SupportAccessList />
         <Field label={t("Enabled features for this shop")}>
           <div className="grid grid-cols-2 gap-2">
             {MODULES.map((m) => (

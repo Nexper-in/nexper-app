@@ -32,6 +32,7 @@ import {
   ToggleRight,
   Megaphone,
   Plug,
+  LifeBuoy,
 } from "lucide-react";
 import {
   PieChart,
@@ -58,6 +59,7 @@ import OnboardingTab from "./console/OnboardingTab";
 import PricingTab from "./console/PricingTab";
 import FeaturesTab from "./console/FeaturesTab";
 import PlatformTab from "./console/PlatformTab";
+import SupportTab from "./console/SupportTab";
 import IntegrationsTab from "./console/IntegrationsTab";
 
 const fmtDate = (d) =>
@@ -124,11 +126,16 @@ function AdminPageInner() {
       const json = await callApi(supabase, "/api/admin/overview", null, "GET");
       setData(json);
     } catch (err) {
+      // Signed in with the password only: go and enter the authenticator code (lib/adminMfa.js).
+      if (/Two-step sign-in/.test(err.message)) {
+        router.replace("/admin/login");
+        return;
+      }
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+  }, [supabase, router]);
 
   useEffect(() => {
     let active = true;
@@ -323,6 +330,7 @@ function AdminPageInner() {
     { key: "overview", label: "Overview", icon: LayoutDashboard },
     { key: "shops", label: "Owners & Shops", icon: Building2 },
     { key: "tenants", label: "Tenants", icon: Store },
+    { key: "support", label: "Support", icon: LifeBuoy },
     { key: "onboarding", label: "Onboarding", icon: UserPlus },
     { key: "pricing", label: "Pricing & tax", icon: Tags },
     { key: "features", label: "Features", icon: ToggleRight },
@@ -421,6 +429,7 @@ function AdminPageInner() {
             )}
 
             {activeTab === "tenants" && <TenantsTab supabase={supabase} />}
+            {activeTab === "support" && <SupportTab supabase={supabase} />}
             {activeTab === "onboarding" && <OnboardingTab supabase={supabase} />}
             {activeTab === "pricing" && <PricingTab supabase={supabase} />}
             {activeTab === "features" && <FeaturesTab supabase={supabase} />}

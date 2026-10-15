@@ -190,3 +190,52 @@ test("MCP: calls work, respect scopes, mask phone numbers, never cross shops", a
   assert.equal(denied.result.isError, true);
   assert.equal((await call(c, "tools/call", { name: "drop_database", arguments: {} })).error.code, -32602);
 });
+
+// ---------- admin two-step sign-in (S12) ----------
+const A = await import("../lib/adminMfa.js");
+const fakeJwt = (claims) => ["e30", Buffer.from(JSON.stringify(claims)).toString("base64url"), "sig"].join(".");
+test("the aal claim is read from the token; garbage is not aal2", () => {
+  assert.equal(A.jwtAal(fakeJwt({ aal: "aal2" })), "aal2");
+  assert.equal(A.jwtAal(fakeJwt({ aal: "aal1" })), "aal1");
+  assert.equal(A.jwtAal("not-a-token"), null);
+  assert.equal(A.jwtAal(""), null);
+});
+test("admin MFA is required unless explicitly switched off", () => {
+  assert.equal(A.adminMfaRequired({}), true);
+  assert.equal(A.adminMfaRequired({ ADMIN_MFA_REQUIRED: "true" }), true);
+  assert.equal(A.adminMfaRequired({ ADMIN_MFA_REQUIRED: "false" }), false);
+  assert.equal(A.adminMfaProblem({ aal: "aal1", required: true }).status, 403);
+  assert.equal(A.adminMfaProblem({ aal: null, required: true }).status, 403);
+  assert.equal(A.adminMfaProblem({ aal: "aal2", required: true }), null);
+  assert.equal(A.adminMfaProblem({ aal: "aal1", required: false }), null);
+});
+test("requireAdmin refuses a platform admin whose token is not aal2, and accepts aal2", async () => {
+  process.env.NEXT_PUBLIC_SUPABASE_URL = "http://supabase.test";
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "anon";
+  process.env.SUPABASE_SERVICE_ROLE_KEY = "service";
+  delete process.env.ADMIN_MFA_REQUIRED;
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    const u = String(url);
+    const json = (body) => new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
+    if (u.includes("/auth/v1/user")) return json({ id: "admin-1", email: "a@x", aud: "authenticated" });
+    if (u.includes("/rest/v1/platform_admins")) return json([{ user_id: "admin-1" }]);
+    return json([]);
+  };
+  try {
+    const { requireAdmin } = await import("../lib/supabaseAdmin.js");
+    const req = (aal) => new Request("http://x/api/admin/x", { headers: { authorization: "Bearer " + fakeJwt({ aal, sub: "admin-1" }) } });
+    const weak = await requireAdmin(req("aal1"));
+    assert.equal(weak.status, 403);
+    assert.match(weak.error, /Two-step sign-in/);
+    assert.equal(weak.caller, undefined, "no caller handed back, so no admin data can be read");
+    const strong = await requireAdmin(req("aal2"));
+    assert.equal(strong.error, undefined);
+    assert.equal(strong.caller.id, "admin-1");
+    process.env.ADMIN_MFA_REQUIRED = "false";
+    assert.equal((await requireAdmin(req("aal1"))).error, undefined, "switched off (staging only)");
+  } finally {
+    globalThis.fetch = realFetch;
+    delete process.env.ADMIN_MFA_REQUIRED;
+  }
+});
