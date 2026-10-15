@@ -59,6 +59,10 @@ Nothing here contains secrets.
 - Until `DATABASE_CA_PEM` is set, the connection is encrypted but the server certificate is not verified (the run prints a warning). Set it (docs/RELEASE.md).
 - Staging holds synthetic data only. The seed refuses a database that has any shop owned by a non-`@staging.nexper.in` account, and never runs unless `NEXPER_ENV=staging`.
 
+## Closing an account (046, T18)
+
+- "My account data" shows the signed-in person what Nexper holds: sign-in, shops and roles, how many support sessions touched their shops, and a download of every shop they own. "Close my account" (owner; the email must be typed) closes every open shop of their companies (read-only, 90 days to download or reopen), records the closure, and the daily job deletes the sign-in and the helpers' staff-code sign-ins 91 days later, once no shop is left; an owner who reopened a shop in the meantime keeps the account. Cancelling removes the closure. `tests/account.test.mjs`.
+
 ## Trash (044, T16)
 
 - Deleting an item, a supplier, a payment entry, a staff member and the like keeps a copy for 30 days (`deleted_rows`, no access for owners or the browser). Support restores one record at a time from the Support tab, only inside an open session that covers the shop (or the owner's company for shared items and suppliers); the restore is written to the access log the owner can count. Closing and removing a shop keeps no trash. `tests/db/trash.rls.mjs`.

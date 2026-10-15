@@ -974,5 +974,20 @@
   "Nexper support can look inside your shop only when you ask for help, with a ticket, for at most 2 hours. Every time is listed here.": "നിങ്ങൾ സഹായം ചോദിക്കുമ്പോൾ മാത്രം, ടിക്കറ്റോടെ, പരമാവധി 2 മണിക്കൂർ Nexper സപ്പോർട്ട് നിങ്ങളുടെ കട കാണും. ഓരോ തവണയും ഇവിടെ കാണിക്കും.",
   "Nobody from Nexper has looked at your shop.": "Nexper ൽ നിന്ന് ആരും നിങ്ങളുടെ കട കണ്ടിട്ടില്ല.",
   "{n} screens viewed": "{n} സ്ക്രീനുകൾ കണ്ടു",
-  "Something saved offline could not be saved: {reason}": "ഓഫ്‌ലൈനിൽ സേവ് ചെയ്തത് സേവ് ചെയ്യാനായില്ല: {reason}"
+  "Something saved offline could not be saved: {reason}": "ഓഫ്‌ലൈനിൽ സേവ് ചെയ്തത് സേവ് ചെയ്യാനായില്ല: {reason}",
+  "My account data": "എന്റെ അക്കൗണ്ട് ഡാറ്റ",
+  "Your sign-in": "നിങ്ങളുടെ സൈൻ-ഇൻ",
+  "joined {date}": "{date} ന് ചേർന്നു",
+  "Your shops and roles": "നിങ്ങളുടെ കടകളും റോളുകളും",
+  "closed": "അടച്ചു",
+  "No shops yet.": "ഇതുവരെ കടകളില്ല.",
+  "{n} support sessions on your shops. The list is in Store settings.": "നിങ്ങളുടെ കടകളിൽ {n} സപ്പോർട്ട് സെഷനുകൾ നടന്നു. പട്ടിക സ്റ്റോർ സെറ്റിംഗ്സിൽ ഉണ്ട്.",
+  "Download everything": "എല്ലാം ഡൗൺലോഡ് ചെയ്യുക",
+  "Your account closes for good on {date}.": "നിങ്ങളുടെ അക്കൗണ്ട് {date} ന് എന്നെന്നേക്കുമായി അടയ്ക്കും.",
+  "Cancel closing": "അടയ്ക്കുന്നത് റദ്ദാക്കുക",
+  "Close my account": "എന്റെ അക്കൗണ്ട് അടയ്ക്കുക",
+  "This closes all your shops. For 90 days you can still download everything or reopen a shop. After that your shops and your sign-in are deleted for good. Keep your bills for 6 years for GST.": "ഇത് നിങ്ങളുടെ എല്ലാ കടകളും അടയ്ക്കും. 90 ദിവസം നിങ്ങൾക്ക് എല്ലാം ഡൗൺലോഡ് ചെയ്യാം അല്ലെങ്കിൽ കട വീണ്ടും തുറക്കാം. അതിനുശേഷം നിങ്ങളുടെ കടകളും സൈൻ-ഇനും എന്നെന്നേക്കുമായി ഇല്ലാതാകും. GST ക്കായി ബില്ലുകൾ 6 വർഷം സൂക്ഷിക്കുക.",
+  "Type your email to confirm": "സ്ഥിരീകരിക്കാൻ നിങ്ങളുടെ ഇമെയിൽ ടൈപ്പ് ചെയ്യുക",
+  "Your account is closing": "നിങ്ങളുടെ അക്കൗണ്ട് അടയ്ക്കുന്നു",
+  "Account closing cancelled. Open each closed shop and tap Reopen.": "അക്കൗണ്ട് അടയ്ക്കുന്നത് റദ്ദാക്കി. അടച്ച ഓരോ കടയും തുറന്ന് വീണ്ടും തുറക്കുക അമർത്തുക."
 }

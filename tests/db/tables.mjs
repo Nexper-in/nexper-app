@@ -84,6 +84,7 @@ export const TABLES = {
     lifecycle: "short-lived",
     exceptions: { shopFk: "the copy outlives the shop-level row for 30 days; removed with the shop on purge", shopIndex: "indexed by (shop_id, deleted_at) already" },
   },
+  account_closures: { kind: "platform", lifecycle: "short-lived" },
   rate_limit_hits: { kind: "platform", lifecycle: "short-lived" },
   tenant_invites: {
     kind: "platform",

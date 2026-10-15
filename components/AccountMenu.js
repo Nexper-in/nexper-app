@@ -4,7 +4,7 @@ import { clearLocalData } from "@/lib/clearLocalData";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
-import { ChevronDown, Fingerprint, LogOut, Moon, Settings, Sun } from "lucide-react";
+import { ChevronDown, Fingerprint, LogOut, Moon, Settings, Sun, UserRound } from "lucide-react";
 import { useShop } from "@/components/ShopContext";
 import { useTheme } from "@/lib/theme";
 import { displayName, initials } from "@/lib/format";
@@ -12,6 +12,7 @@ import { useT } from "@/lib/i18n";
 import { SITE } from "@/lib/site";
 import LanguagePicker from "@/components/LanguagePicker";
 import PasskeyModal from "@/components/PasskeyModal";
+import AccountDataModal from "@/components/AccountDataModal";
 
 // Top-right account button on every app screen: who is signed in, the
 // Night/Light switch for this device, store settings and sign out.
@@ -22,6 +23,7 @@ export default function AccountMenu({ onOpenSettings }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [showPasskeys, setShowPasskeys] = useState(false);
+  const [showData, setShowData] = useState(false);
   const ref = useRef(null);
 
   useEffect(() => {
@@ -142,10 +144,19 @@ export default function AccountMenu({ onOpenSettings }) {
               setShowPasskeys(true);
             }}
           />
+          <MenuItem
+            icon={UserRound}
+            label={t("My account data")}
+            onClick={() => {
+              setOpen(false);
+              setShowData(true);
+            }}
+          />
           <MenuItem icon={LogOut} label={t("Sign out")} onClick={handleSignOut} danger />
         </div>
       )}
       {/* In the page body, not in this bar: the bar has a blur effect that would trap a full-screen dialog. */}
+      {showData && createPortal(<AccountDataModal onClose={() => setShowData(false)} />, document.body)}
       {showPasskeys && createPortal(<PasskeyModal onClose={() => setShowPasskeys(false)} />, document.body)}
     </div>
   );

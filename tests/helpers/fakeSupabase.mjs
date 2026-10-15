@@ -10,6 +10,7 @@ export function installFakeSupabase(db, { user = { id: "u1", email: "u1@x" }, rp
     const method = (init.method || "GET").toUpperCase();
     if (u.pathname === "/auth/v1/user") return user ? json({ id: user.id, email: user.email, aud: "authenticated" }) : json({ message: "no" }, 401);
     const au = u.pathname.match(/^\/auth\/v1\/admin\/users\/([0-9a-f-]+)$/);
+    if (au) log.push(["auth-admin", (init.method || "GET").toUpperCase(), au[1]]);
     if (au) return json({ id: au[1], email: `staff-x@workers.nexper.internal`, aud: "authenticated" });
     const r = u.pathname.match(/^\/rest\/v1\/rpc\/([a-z_]+)$/);
     if (r) {
@@ -33,6 +34,12 @@ export function installFakeSupabase(db, { user = { id: "u1", email: "u1@x" }, rp
         if (f[1] === "in") return f[2].replace(/^\(|\)$/g, "").split(",").map((x) => x.replace(/^"|"$/g, "")).includes(String(r[k]));
         return f[2] === "null" ? r[k] == null : true;
       });
+    }
+    if (method === "DELETE") {
+      const gone = rows;
+      db[table] = db[table].filter((r) => !gone.includes(r));
+      log.push(["delete", table, gone]);
+      return json(gone);
     }
     if (method === "POST") {
       const body = JSON.parse(init.body || "{}");

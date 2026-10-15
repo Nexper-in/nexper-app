@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "check:i18n": "node tools/check-i18n.mjs",
-    "test": "node --import ./tests/register.mjs --test tests/unit.test.mjs tests/console.test.mjs tests/supplies.test.mjs tests/insights.test.mjs tests/fetchall.test.mjs tests/passkeys.test.mjs tests/dbversion.test.mjs tests/exportraw.test.mjs tests/support.test.mjs tests/aiguard.test.mjs tests/orginfo.test.mjs tests/ratelimit.test.mjs tests/offlinequeue.test.mjs tests/daystats.test.mjs",
+    "test": "node --import ./tests/register.mjs --test tests/unit.test.mjs tests/console.test.mjs tests/supplies.test.mjs tests/insights.test.mjs tests/fetchall.test.mjs tests/passkeys.test.mjs tests/dbversion.test.mjs tests/exportraw.test.mjs tests/support.test.mjs tests/aiguard.test.mjs tests/orginfo.test.mjs tests/ratelimit.test.mjs tests/offlinequeue.test.mjs tests/daystats.test.mjs tests/account.test.mjs",
     "db:migrate": "node tools/migrate.mjs",
     "test:db": "node tests/db/supplies.rls.mjs && node tests/db/returns.rls.mjs && node tests/db/isolation.rls.mjs && node tests/db/orgs.rls.mjs && node tests/db/migrate.mjs && node tests/db/closure.rls.mjs && node tests/db/support.rls.mjs && node tests/db/company_plans.rls.mjs && node tests/db/identity.rls.mjs && node tests/db/ops.rls.mjs && node tests/db/save_bill.rls.mjs && node tests/db/stats.rls.mjs && node tests/db/trash.rls.mjs && node tests/db/usage.rls.mjs && node tests/db/catalog.mjs && node tests/db/drift.mjs && node tests/db/seed.mjs && node tests/db/shop_roundtrip.mjs && node tests/db/scale.mjs"
   },

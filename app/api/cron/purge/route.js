@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabaseAdmin";
+import { finishClosures } from "@/lib/accountClose";
 
 // Daily housekeeping (vercel.json): removes shops whose 90 days after closing are over.
 // Protected by CRON_SECRET like the nightly summary. Safe to run twice.
@@ -23,5 +24,7 @@ export async function GET(request) {
     result[name] = r.error ? 0 : r.data;
     if (r.error && !/function|schema cache/i.test(r.error.message)) console.error(`[cron/purge] ${fn}:`, r.error.message);
   }
+  // Owners who closed their account: the sign-in goes once their last shop has been removed.
+  Object.assign(result, await finishClosures(admin));
   return NextResponse.json({ ok: true, ...result });
 }

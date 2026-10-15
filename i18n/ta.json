@@ -974,5 +974,20 @@
   "Nexper support can look inside your shop only when you ask for help, with a ticket, for at most 2 hours. Every time is listed here.": "நீங்கள் உதவி கேட்கும்போது மட்டும், டிக்கெட்டுடன், அதிகபட்சம் 2 மணி நேரம் Nexper சப்போர்ட் உங்கள் கடையைப் பார்க்கலாம். ஒவ்வொரு முறையும் இங்கே காட்டப்படும்.",
   "Nobody from Nexper has looked at your shop.": "Nexper இலிருந்து யாரும் உங்கள் கடையைப் பார்க்கவில்லை.",
   "{n} screens viewed": "{n} திரைகள் பார்க்கப்பட்டன",
-  "Something saved offline could not be saved: {reason}": "ஆஃப்லைனில் சேமித்தது சேமிக்க முடியவில்லை: {reason}"
+  "Something saved offline could not be saved: {reason}": "ஆஃப்லைனில் சேமித்தது சேமிக்க முடியவில்லை: {reason}",
+  "My account data": "என் கணக்கு தரவு",
+  "Your sign-in": "உங்கள் உள்நுழைவு",
+  "joined {date}": "{date} அன்று சேர்ந்தீர்கள்",
+  "Your shops and roles": "உங்கள் கடைகளும் பங்குகளும்",
+  "closed": "மூடப்பட்டது",
+  "No shops yet.": "இன்னும் கடைகள் இல்லை.",
+  "{n} support sessions on your shops. The list is in Store settings.": "உங்கள் கடைகளில் {n} சப்போர்ட் அமர்வுகள் நடந்தன. பட்டியல் ஸ்டோர் செட்டிங்ஸில் உள்ளது.",
+  "Download everything": "எல்லாவற்றையும் பதிவிறக்கு",
+  "Your account closes for good on {date}.": "உங்கள் கணக்கு {date} அன்று நிரந்தரமாக மூடப்படும்.",
+  "Cancel closing": "மூடுவதை ரத்து செய்",
+  "Close my account": "என் கணக்கை மூடு",
+  "This closes all your shops. For 90 days you can still download everything or reopen a shop. After that your shops and your sign-in are deleted for good. Keep your bills for 6 years for GST.": "இது உங்கள் எல்லா கடைகளையும் மூடும். 90 நாள் நீங்கள் எல்லாவற்றையும் பதிவிறக்கலாம் அல்லது கடையை மீண்டும் திறக்கலாம். அதன் பிறகு உங்கள் கடைகளும் உள்நுழைவும் நிரந்தரமாக நீக்கப்படும். GST க்காக பில்களை 6 ஆண்டுகள் வைத்திருங்கள்.",
+  "Type your email to confirm": "உறுதிப்படுத்த உங்கள் மின்னஞ்சலை உள்ளிடுங்கள்",
+  "Your account is closing": "உங்கள் கணக்கு மூடப்படுகிறது",
+  "Account closing cancelled. Open each closed shop and tap Reopen.": "கணக்கு மூடுவது ரத்து செய்யப்பட்டது. மூடிய ஒவ்வொரு கடையையும் திறந்து மீண்டும் திற என்பதை அழுத்துங்கள்."
 }

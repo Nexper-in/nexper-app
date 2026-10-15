@@ -974,5 +974,20 @@
   "Nexper support can look inside your shop only when you ask for help, with a ticket, for at most 2 hours. Every time is listed here.": "ನೀವು ಸಹಾಯ ಕೇಳಿದಾಗ ಮಾತ್ರ, ಟಿಕೆಟ್‌ನೊಂದಿಗೆ, ಗರಿಷ್ಠ 2 ಗಂಟೆ Nexper ಸಪೋರ್ಟ್ ನಿಮ್ಮ ಅಂಗಡಿಯನ್ನು ನೋಡಬಹುದು. ಪ್ರತಿ ಬಾರಿ ಇಲ್ಲಿ ಕಾಣಿಸುತ್ತದೆ.",
   "Nobody from Nexper has looked at your shop.": "Nexper ನಿಂದ ಯಾರೂ ನಿಮ್ಮ ಅಂಗಡಿಯನ್ನು ನೋಡಿಲ್ಲ.",
   "{n} screens viewed": "{n} ಪರದೆಗಳನ್ನು ನೋಡಲಾಗಿದೆ",
-  "Something saved offline could not be saved: {reason}": "ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿ ಉಳಿಸಿದ್ದು ಉಳಿಸಲು ಆಗಲಿಲ್ಲ: {reason}"
+  "Something saved offline could not be saved: {reason}": "ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿ ಉಳಿಸಿದ್ದು ಉಳಿಸಲು ಆಗಲಿಲ್ಲ: {reason}",
+  "My account data": "ನನ್ನ ಖಾತೆಯ ಡೇಟಾ",
+  "Your sign-in": "ನಿಮ್ಮ ಸೈನ್-ಇನ್",
+  "joined {date}": "{date} ರಂದು ಸೇರಿದ್ದೀರಿ",
+  "Your shops and roles": "ನಿಮ್ಮ ಅಂಗಡಿಗಳು ಮತ್ತು ಪಾತ್ರಗಳು",
+  "closed": "ಮುಚ್ಚಲಾಗಿದೆ",
+  "No shops yet.": "ಇನ್ನೂ ಅಂಗಡಿಗಳಿಲ್ಲ.",
+  "{n} support sessions on your shops. The list is in Store settings.": "ನಿಮ್ಮ ಅಂಗಡಿಗಳಲ್ಲಿ {n} ಸಪೋರ್ಟ್ ಸೆಷನ್‌ಗಳು ನಡೆದಿವೆ. ಪಟ್ಟಿ ಸ್ಟೋರ್ ಸೆಟ್ಟಿಂಗ್ಸ್‌ನಲ್ಲಿದೆ.",
+  "Download everything": "ಎಲ್ಲವನ್ನೂ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ",
+  "Your account closes for good on {date}.": "ನಿಮ್ಮ ಖಾತೆ {date} ರಂದು ಶಾಶ್ವತವಾಗಿ ಮುಚ್ಚಲಾಗುತ್ತದೆ.",
+  "Cancel closing": "ಮುಚ್ಚುವುದನ್ನು ರದ್ದುಮಾಡಿ",
+  "Close my account": "ನನ್ನ ಖಾತೆಯನ್ನು ಮುಚ್ಚಿ",
+  "This closes all your shops. For 90 days you can still download everything or reopen a shop. After that your shops and your sign-in are deleted for good. Keep your bills for 6 years for GST.": "ಇದರಿಂದ ನಿಮ್ಮ ಎಲ್ಲ ಅಂಗಡಿಗಳು ಮುಚ್ಚಲ್ಪಡುತ್ತವೆ. 90 ದಿನ ನೀವು ಎಲ್ಲವನ್ನೂ ಡೌನ್‌ಲೋಡ್ ಮಾಡಬಹುದು ಅಥವಾ ಅಂಗಡಿಯನ್ನು ಮತ್ತೆ ತೆರೆಯಬಹುದು. ನಂತರ ನಿಮ್ಮ ಅಂಗಡಿಗಳು ಮತ್ತು ಸೈನ್-ಇನ್ ಶಾಶ್ವತವಾಗಿ ಅಳಿಸಲ್ಪಡುತ್ತವೆ. GST ಗಾಗಿ ಬಿಲ್‌ಗಳನ್ನು 6 ವರ್ಷ ಇಟ್ಟುಕೊಳ್ಳಿ.",
+  "Type your email to confirm": "ಖಚಿತಪಡಿಸಲು ನಿಮ್ಮ ಇಮೇಲ್ ಟೈಪ್ ಮಾಡಿ",
+  "Your account is closing": "ನಿಮ್ಮ ಖಾತೆ ಮುಚ್ಚಲಾಗುತ್ತಿದೆ",
+  "Account closing cancelled. Open each closed shop and tap Reopen.": "ಖಾತೆ ಮುಚ್ಚುವುದು ರದ್ದಾಯಿತು. ಪ್ರತಿ ಮುಚ್ಚಿದ ಅಂಗಡಿಯನ್ನು ತೆರೆದು ಮತ್ತೆ ತೆರೆಯಿರಿ ಒತ್ತಿ."
 }
