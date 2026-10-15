@@ -1,6 +1,6 @@
 # Nexper multi-tenant design (v1, 2026-10-11)
 
-Status: **decided design, ready to build.** Written for the person (or model) who implements
+Status: **built (T01-T19), waiting on the dashboard steps in MAQBOOL_TASKS.md.** Written for the person (or model) who implements
 it. Every section gives a decision, not a menu. Where I disagree with the recommendations I
 was given, it says so and why. Estimates are labelled as estimates and show the arithmetic.
 

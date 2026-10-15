@@ -79,7 +79,7 @@ function; nothing else needs to change.
 
 ## 5. Safety of the data
 
-- **Backups**: Supabase's free plan has no point-in-time recovery. Real clients need the
+- **Backups**: our own nightly encrypted dump to S3 Mumbai (`backup.yml`), plus Supabase's. Supabase's free plan has no point-in-time recovery. Real clients need the
   Pro plan (or better) and one test restore. Check the project **region is Mumbai
   (ap-south-1)**: it cannot be changed later without moving the data.
 - **Owner backup**: Store settings, "Download backup": a zip of spreadsheets built from the owner's own session (`lib/exportData.js`), so it can only contain their shop.
@@ -89,8 +89,8 @@ function; nothing else needs to change.
   then removes it with everything under it (`on delete cascade`), one audit row per shop. No
   browser or app code can delete a shop; only that job and a support tool for shops that never
   had a bill.
-- Support access: platform admins can see all shops. Their actions are logged; reading is
-  not. Decide and state when support may look at a client's data.
+- Support access: platform admins reach a shop's data only through a support session
+  (reason, time limit, every read logged, phones masked). See `SECURITY.md`.
 
 ## 6. When to do something different
 
@@ -101,5 +101,8 @@ function; nothing else needs to change.
   Nothing in the app assumes a single database.
 - **One owner with several shops** is supported since migration 035 (companies, see
   `docs/CHAINS.md`); the shared model still holds, the company layer only connects shops.
-- Rate limiting is in memory (per server instance). Use a shared store before heavy public
-  use.
+- Rate limiting is shared in Postgres since migration 041 (`rate_hit`), with a per-instance
+  memory fallback if the database call fails.
+- **Support access** (migration 038) is time-limited, reason-logged and read-logged inside the
+  database; see `SECURITY.md`. **Releases, backups and restore** are in `docs/RELEASE.md` and
+  `docs/RUNBOOK_RESTORE.md`. **Silos** are in `docs/SILOS.md`.

@@ -119,7 +119,7 @@ screens, same app and same login.** Do not go back to one stretched layout.
 `024_write_off_batch.sql`, `025_offers_whatsapp_group.sql`,
 `026_receive_po_with_quantities.sql`, `027_default_modules_include_reports.sql`,
 `028_lock_down_function_access.sql` (security, run soon), `029_platform_console.sql`,
-`030_supplies.sql`, `031_returns_reminders_summary.sql`, `033_scale_and_tracking.sql`, `034_passkeys.sql`, `035_companies.sql`, `036_migration_tracking.sql`.
+`030_supplies.sql`, `031_returns_reminders_summary.sql`, `033_scale_and_tracking.sql`, `034_passkeys.sql`, `035_companies.sql`, then `036` to `046` (migration tracking, shop closing, support access, company plans, identity guards, ops tables, save_bill, day stats, trash, usage, account closing). From 036 on they are run by `tools/migrate.mjs` / the release workflow, not by hand; the full ordered list and steps are in `MAQBOOL_TASKS.md`.
 The app works without 024-027 and 029 but removing expired stock, saving the group
 link, receiving with expiry, Reports for new shops and the whole console need them.
 
@@ -199,8 +199,7 @@ Then "Continue with Google" shows first and email becomes a fallback link.
 - The GitHub Pages copy of the site is unused.
 
 **Security:**
-- Scan APIs are signed-in only now. The rate limit is in memory (best effort);
-  add a shared limiter (Upstash/Vercel KV) before heavy public use.
+- Scan APIs are signed-in only now. The rate limit is shared in Postgres since 041 (memory fallback).
 - Support contact and legal pages still need real details (see above).
 
 **Backlog (agreed, build feature by feature):** fast first bill and onboarding

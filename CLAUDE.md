@@ -162,7 +162,11 @@ function (`tools/migrate-core.mjs`) the database tests use. Rules for a file fro
   that is already live (add now, drop in a later release, marked `-- nexper:contract`).
 Code that depends on a new update must fail politely when it is missing (show "needs the
 latest database update"): check `lib/dbVersion.js` / `useDbVersion().atLeast("NNN")`.
-Current pending list is in `PROJECT_ABDUL.md`.
+Current pending list is in `PROJECT_ABDUL.md`. After adding a file, raise
+`EXPECTED_DB_VERSION` in `lib/dbVersion.js` (a unit test keeps it equal to the newest file).
+A new table also follows the checklist in `tests/db/catalog.mjs` (row-level security,
+`shop_id` cascade, index, isolation entry) and, if it holds shop books, `lib/shopTables.js`
+and a closed-shop guard trigger (migration 037 shows how).
 
 ## Security rules
 
@@ -183,6 +187,28 @@ Current pending list is in `PROJECT_ABDUL.md`.
 - Headers and CSP are in `next.config.js` (login also allows `accounts.google.com/gsi/` for Google's button). A new outside host (script, font,
   API) must be added there on purpose.
 - `npm test`, `npm run test:db` and `node tools/audit.mjs` (npm audit with a short, dated allow-list) must pass.
+
+## Rules from the multi-tenant work (docs/MULTITENANT_DESIGN.md)
+
+- **Closed shops are read-only in the database** (`<table>_closed_guard`). Never delete a
+  shop from app code: use `close_shop`; the purge job removes it after 90 days.
+- **Support access** is only through the `support_*` database functions and
+  `/api/admin/support/*`: a reason, a time limit, every read logged before it is returned,
+  phone numbers masked, audit logs append-only. Do not add another way to read a client's data.
+- **Admin routes need MFA**: `requireAdmin` checks the `aal2` claim. Keep it first.
+- **Saving a bill** goes through `save_bill` with an id made on the device (so a retry or
+  the offline queue cannot double-save). Keep `legacySave` only until all shops have 042.
+- **Rate limits** use `isRateLimited` (async, shared in Postgres, falls back to memory):
+  always `await` it.
+- **Deleting rows people may want back** (items, customers, bills...) goes through the
+  30-day trash (`deleted_rows`, migration 044), not a bare delete.
+- **Totals for a day** come from `shop_day_stats` (IST day); don't re-add all bills on a screen.
+- **Plans and limits** are evaluated shop override, then company, then legacy shop plan
+  (`lib/platformConfig.js`). Never read a plan column directly.
+- **No hard-coded Supabase URL, key or app address**: use the env vars
+  (`NEXT_PUBLIC_APP_URL`); `tests/guardrails.test.mjs` fails otherwise. Silos: `docs/SILOS.md`.
+- Errors from the app go to our own log (`/api/log-error`); scrub with `lib/errorScrub.js`.
+  Releases, backups and restore: `docs/RELEASE.md`, `docs/RUNBOOK_RESTORE.md`.
 
 ## Before you push
 
