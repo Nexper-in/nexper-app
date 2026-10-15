@@ -77,7 +77,7 @@ screens, same app and same login.** Do not go back to one stretched layout.
 - Next.js 15 App Router (JavaScript), Tailwind plus `ks-*` classes and theme
   tokens in `app/globals.css`. Never hard-code colours.
 - Supabase: Postgres with row-level security, Auth (email + password for
-  owners; staff code + PIN), `supabase/schema.sql` plus migrations `001`-`035`.
+  owners; staff code + PIN), `supabase/schema.sql` plus migrations `001`-`036`.
 - Server routes under `app/api/` use the service-role key and an Anthropic call
   (`/api/scan-supplier-bill`).
 - Env vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
@@ -119,7 +119,7 @@ screens, same app and same login.** Do not go back to one stretched layout.
 `024_write_off_batch.sql`, `025_offers_whatsapp_group.sql`,
 `026_receive_po_with_quantities.sql`, `027_default_modules_include_reports.sql`,
 `028_lock_down_function_access.sql` (security, run soon), `029_platform_console.sql`,
-`030_supplies.sql`, `031_returns_reminders_summary.sql`, `033_scale_and_tracking.sql`, `034_passkeys.sql`, `035_companies.sql`.
+`030_supplies.sql`, `031_returns_reminders_summary.sql`, `033_scale_and_tracking.sql`, `034_passkeys.sql`, `035_companies.sql`, `036_migration_tracking.sql`.
 The app works without 024-027 and 029 but removing expired stock, saving the group
 link, receiving with expiry, Reports for new shops and the whole console need them.
 

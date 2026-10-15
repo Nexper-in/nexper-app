@@ -1,12 +1,12 @@
 // Builds the real database in memory (PGlite): the stand-ins for what Supabase
 // provides, schema.sql, then every migration in order. Shared by the database
-// tests. A migration is allowed to fail only if schema.sql already contains what
-// it adds ("already exists"), or it is the one-off data fix for named accounts.
+// tests. Updates run through tools/migrate-core.mjs, the same code production uses.
+// An older update (before 036) may fail only if schema.sql already contains what it
+// adds ("already exists"), or it is the one-off data fix for named accounts.
 import { PGlite } from "@electric-sql/pglite";
-import fs from "node:fs";
+import { applyMigrations, pgliteClient } from "../../tools/migrate-core.mjs";
 
 export const ROOT = new URL("../../supabase/", import.meta.url).pathname;
-const SKIPPABLE = /already exists|has not signed up yet/;
 
 export async function buildDb({ upTo = "999" } = {}) {
   const db = new PGlite();
@@ -18,16 +18,8 @@ export async function buildDb({ upTo = "999" } = {}) {
     create function uuid_generate_v4() returns uuid language sql as $$ select gen_random_uuid() $$;
     create role anon nologin; create role authenticated nologin; create role service_role nologin;
   `);
-  await db.exec(fs.readFileSync(ROOT + "schema.sql", "utf8").replace(/create extension[^;]*;/gi, ""));
-  const files = fs.readdirSync(ROOT + "migrations").filter((f) => f.endsWith(".sql")).sort();
-  for (const f of files) {
-    if (f.slice(0, 3) > upTo) continue;
-    try {
-      await db.exec(fs.readFileSync(ROOT + "migrations/" + f, "utf8"));
-    } catch (e) {
-      if (!SKIPPABLE.test(e.message)) throw new Error(`migration ${f} failed: ${e.message}`);
-    }
-  }
+  // The same function production uses: schema.sql, then every update in order.
+  await applyMigrations(pgliteClient(db), { root: ROOT, upTo, stripExtensions: true, appliedBy: "test" });
   // Supabase gives these roles access to everything in the public schema and
   // leaves the row-level security rules as the only gate. Do the same here.
   await db.exec(`

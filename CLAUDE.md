@@ -150,11 +150,19 @@ phone's language.
 
 ## Database changes (migrations)
 
-New tables and functions go in `supabase/migrations/NNN_*.sql`, run by hand in
-the Supabase SQL editor in order. Code that depends on a new migration must fail
-politely when it is missing (show "needs the latest database update"), because
-the app can be deployed before the SQL is run. Current pending list is in
-`PROJECT_ABDUL.md`.
+New tables and functions go in `supabase/migrations/NNN_*.sql` (next number after the
+highest). Since 036 every update is recorded in `app_migrations` and applied by
+`tools/migrate.mjs` (`DATABASE_URL=... npm run db:migrate [-- --dry-run]`), the same
+function (`tools/migrate-core.mjs`) the database tests use. Rules for a file from 036 on:
+- it runs in one transaction and must not fail (no "already exists" tolerance);
+- it ends with `select record_migration('NNN', 'NNN_name.sql');` (so a file pasted by hand
+  into the Supabase SQL editor, the emergency fallback, records itself too);
+- never edit a file after it has been applied (the runner checks its checksum): add a new one;
+- release order is database first, then app, so every update must work with the app version
+  that is already live (add now, drop in a later release, marked `-- nexper:contract`).
+Code that depends on a new update must fail politely when it is missing (show "needs the
+latest database update"): check `lib/dbVersion.js` / `useDbVersion().atLeast("NNN")`.
+Current pending list is in `PROJECT_ABDUL.md`.
 
 ## Security rules
 

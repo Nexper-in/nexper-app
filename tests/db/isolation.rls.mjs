@@ -124,6 +124,7 @@ const T = {
   admin_audit_log: { a: `true`, insert: `insert into admin_audit_log (admin_id, action, target_type) values ('${ownerA}', 'x', 'x')`, touch: "action", ownerRead: false },
   passkeys: { a: `user_id = '${ownerA}'`, insert: `insert into passkeys (user_id, credential_id, public_key) values ('${ownerA}', 'sneak', 'k')`, touch: "name", ownerRead: false },
   passkey_challenges: { a: `true`, insert: `insert into passkey_challenges (challenge, kind) values ('c', 'login')`, touch: "challenge", ownerRead: false },
+  app_migrations: { a: `true`, insert: `insert into app_migrations (version, name) values ('999', 'x')`, touch: "name", ownerRead: false },
   platform_admins: { a: `true`, insert: `insert into platform_admins (user_id) values ('${ownerA}')`, touch: "user_id", ownerRead: false },
 };
 // Readable by everyone on purpose (prices and switches the app needs); nobody may write.
