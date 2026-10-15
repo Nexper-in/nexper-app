@@ -44,7 +44,7 @@ Nothing here contains secrets.
 - Only the public key is stored. The tables have no browser access at all (service role only).
 - Suspended accounts cannot get back in through a passkey. Platform admins can switch the feature off.
 - The app lock is a screen lock on the device (works offline); it does not protect the account on another device.
-- Rate limited per address (in memory, like the other limits).
+- Rate limited per address (shared limit in the database, see below).
 
 ## Companies / chains (035)
 
@@ -58,6 +58,10 @@ Nothing here contains secrets.
 - The database connection strings live only in GitHub environment secrets (`staging`, `production`, `production-readonly`). The weekly drift check uses a login that can read structure and the update list only (`ops/readonly-role.sql`), never shop data.
 - Until `DATABASE_CA_PEM` is set, the connection is encrypted but the server certificate is not verified (the run prints a warning). Set it (docs/RELEASE.md).
 - Staging holds synthetic data only. The seed refuses a database that has any shop owned by a non-`@staging.nexper.in` account, and never runs unless `NEXPER_ENV=staging`.
+
+## Our own error log (041, T13)
+
+- The app reports unexpected browser errors to `/api/log-error`, stored in `client_errors` for 30 days in our database, not a third-party tracker (page state and URLs would leave our systems). Long numbers and email addresses are removed before storing; a shop is attached only if the sign-in is valid and the person belongs to it. Only platform admins read it (Admin, Errors).
 
 ## Support access policy (038, T08/T09)
 
@@ -81,7 +85,7 @@ Nothing here contains secrets.
 
 - Run migrations 024-035 in Supabase. After 028, check:
   `select has_function_privilege('anon','admin_transfer_shop_ownership(uuid,uuid)','execute');` returns false.
-- The rate limiter is in memory (resets on cold starts). Add a shared one (Upstash/Vercel KV) before heavy public use.
+- Rate limits are counted in the database (`rate_hit`, update 041) so they hold across server instances; if that call fails they fall back to a per-instance in-memory count. The staff-code lookup is also limited per code (15 in 15 minutes) from any address, because every PIN guess starts with it (the PIN itself is checked by Supabase Auth). Add an edge limiter (Vercel Firewall) before heavy public use.
 - Supabase Auth settings to check by hand: email confirmation on, minimum password length 8+, leaked-password protection, redirect URLs limited to the real domains.
 - Before taking payments, turn off "Let owners switch plan themselves" in the console (Pricing & tax) so only you can change a plan.
 - Staff can read the staff codes of other staff in the same shop (a code alone is not enough to sign in, the PIN is also needed).

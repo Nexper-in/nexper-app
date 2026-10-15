@@ -7,7 +7,7 @@ import { isRateLimited } from "@/lib/rateLimit";
 export async function POST(request) {
   const { caller, admin, error, status } = await requireAdmin(request);
   if (error) return NextResponse.json({ error }, { status });
-  if (isRateLimited(`support-start:${caller.id}`, { windowMs: 3_600_000, max: 30 })) return NextResponse.json({ error: "Too many sessions. Wait a while." }, { status: 429 });
+  if (await isRateLimited(`support-start:${caller.id}`, { windowMs: 3_600_000, max: 30 })) return NextResponse.json({ error: "Too many sessions. Wait a while." }, { status: 429 });
 
   const { shopId, orgId, ticket, reason, minutes, kind, unmaskPhones } = await readJson(request);
   if (!shopId && !orgId) return NextResponse.json({ error: "Choose a shop or a company." }, { status: 400 });

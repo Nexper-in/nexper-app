@@ -12,7 +12,7 @@ export async function POST(request) {
   const caller = await getRequestUser(request);
   if (!caller) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
 
-  if (isRateLimited(`staff-update:${caller.id}`, { windowMs: 60_000, max: 10 })) {
+  if (await isRateLimited(`staff-update:${caller.id}`, { windowMs: 60_000, max: 10 })) {
     return NextResponse.json({ error: "Too many attempts — wait a minute and try again" }, { status: 429 });
   }
 

@@ -16,5 +16,12 @@ export async function GET(request) {
   // Before database update 037 the function does not exist: nothing to do yet.
   result.shopsRemoved = error ? 0 : shops;
   if (error && !/function|schema cache/i.test(error.message)) return NextResponse.json({ error: "Could not purge." }, { status: 500 });
+  // The other housekeeping (old rate-limit windows and error reports, audit records past 2 years).
+  // Each is skipped quietly before its database update exists.
+  for (const [name, fn] of [["opsRemoved", "purge_ops"], ["auditRemoved", "purge_old_audit"]]) {
+    const r = await admin.rpc(fn);
+    result[name] = r.error ? 0 : r.data;
+    if (r.error && !/function|schema cache/i.test(r.error.message)) console.error(`[cron/purge] ${fn}:`, r.error.message);
+  }
   return NextResponse.json({ ok: true, ...result });
 }

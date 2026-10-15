@@ -1,7 +1,7 @@
 // A small stand-in for the Supabase REST API (PostgREST + auth) for server-route tests. It holds
 // tables as arrays and understands what the routes use: eq/gte filters, limit, single/maybeSingle,
 // HEAD counts, inserts. Install it with `install(db)`; it replaces globalThis.fetch until `restore()`.
-export function installFakeSupabase(db, { user = { id: "u1", email: "u1@x" } } = {}) {
+export function installFakeSupabase(db, { user = { id: "u1", email: "u1@x" }, rpc = {} } = {}) {
   const realFetch = globalThis.fetch;
   const log = [];
   const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json", ...headers } });
@@ -9,6 +9,15 @@ export function installFakeSupabase(db, { user = { id: "u1", email: "u1@x" } } =
     const u = new URL(String(url));
     const method = (init.method || "GET").toUpperCase();
     if (u.pathname === "/auth/v1/user") return user ? json({ id: user.id, email: user.email, aud: "authenticated" }) : json({ message: "no" }, 401);
+    const au = u.pathname.match(/^\/auth\/v1\/admin\/users\/([0-9a-f-]+)$/);
+    if (au) return json({ id: au[1], email: `staff-x@workers.nexper.internal`, aud: "authenticated" });
+    const r = u.pathname.match(/^\/rest\/v1\/rpc\/([a-z_]+)$/);
+    if (r) {
+      const args = JSON.parse(init.body || "{}");
+      log.push(["rpc", r[1], args]);
+      if (!rpc[r[1]]) return json({ code: "PGRST202", message: `Could not find the function public.${r[1]}` }, 404);
+      return json(rpc[r[1]](args));
+    }
     const m = u.pathname.match(/^\/rest\/v1\/([a-z_]+)$/);
     if (!m) return json({}, 404);
     const table = m[1];

@@ -11,12 +11,19 @@ import { isRateLimited, requestIp } from "@/lib/rateLimit";
 // enumerating valid staff codes before ever touching Supabase's auth
 // rate limiting (see lib/rateLimit.js for this limiter's caveats).
 export async function POST(request) {
-  if (isRateLimited(`staff-login:${requestIp(request)}`, { windowMs: 60_000, max: 10 })) {
+  if (await isRateLimited(`staff-login:${requestIp(request)}`, { windowMs: 60_000, max: 10 })) {
     return NextResponse.json({ error: "Too many attempts — wait a minute and try again" }, { status: 429 });
   }
 
   const { staffCode } = await readJson(request);
   if (!staffCode || typeof staffCode !== "string" || staffCode.length > 20) return NextResponse.json({ error: "Staff code is required" }, { status: 400 });
+
+  // Every PIN guess starts with this lookup, so the lookups for ONE code are limited from anywhere,
+  // not only per address: a guess spread over many addresses is slowed too. A real helper signs in
+  // a handful of times a day; 15 in 15 minutes is generous.
+  if (await isRateLimited(`staff-code:${String(staffCode).trim().toUpperCase()}`, { windowMs: 15 * 60_000, max: 15 })) {
+    return NextResponse.json({ error: "Too many attempts for this code — wait a few minutes and try again" }, { status: 429 });
+  }
 
   const admin = createAdminClient();
   const { data: member, error } = await admin

@@ -18,7 +18,7 @@ export async function GET(request) {
 export async function POST(request) {
   const { caller, admin, error, status } = await requireAdmin(request);
   if (error) return NextResponse.json({ error }, { status });
-  if (isRateLimited(`admin-invite:${caller.id}`, { windowMs: 60_000, max: 30 })) {
+  if (await isRateLimited(`admin-invite:${caller.id}`, { windowMs: 60_000, max: 30 })) {
     return NextResponse.json({ error: "Too many invites. Wait a minute." }, { status: 429 });
   }
   const body = await readJson(request);

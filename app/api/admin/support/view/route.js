@@ -8,7 +8,7 @@ import { runSupportView } from "@/lib/supportView";
 export async function POST(request) {
   const { caller, admin, error, status } = await requireAdmin(request);
   if (error) return NextResponse.json({ error }, { status });
-  if (isRateLimited(`support-view:${caller.id}`, { windowMs: 60_000, max: 60 })) return NextResponse.json({ error: "Slow down." }, { status: 429 });
+  if (await isRateLimited(`support-view:${caller.id}`, { windowMs: 60_000, max: 60 })) return NextResponse.json({ error: "Slow down." }, { status: 429 });
   const { status: code, body } = await runSupportView({ admin, adminId: caller.id, body: await readJson(request) });
   return NextResponse.json(body, { status: code });
 }

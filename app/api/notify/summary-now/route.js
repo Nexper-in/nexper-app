@@ -8,7 +8,7 @@ import { buildNightly, sendEmail } from "@/lib/notify";
 export async function POST(request) {
   const user = await getRequestUser(request);
   if (!user?.email) return NextResponse.json({ error: "Please sign in again." }, { status: 401 });
-  if (isRateLimited(`summary-now:${user.id}`, { windowMs: 60_000 * 10, max: 5 })) {
+  if (await isRateLimited(`summary-now:${user.id}`, { windowMs: 60_000 * 10, max: 5 })) {
     return NextResponse.json({ error: "Too many emails. Try again in a few minutes." }, { status: 429 });
   }
   let body;

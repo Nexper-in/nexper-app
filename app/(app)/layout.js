@@ -9,6 +9,7 @@ import Sidebar from "@/components/Sidebar";
 import BottomNav from "@/components/BottomNav";
 import { AddShopOnboarding } from "@/components/ShopOnboarding";
 import { ClosedShopScreen, ClosedShopsList } from "@/components/ClosedShops";
+import ErrorReporter from "@/components/ErrorReporter";
 import StoreSettingsModal from "@/components/StoreSettingsModal";
 import Toast from "@/components/ui/Toast";
 import AccountMenu from "@/components/AccountMenu";
@@ -143,6 +144,7 @@ function AppShell({ children }) {
     <AppLock>
     <div className="min-h-screen flex">
       <OfflineBanner />
+      <ErrorReporter />
       <StackTables />
       <div className="ks-no-print ks-mobile-bar ks-topbar fixed top-0 left-0 right-0 z-30 items-center justify-between gap-2 px-3 py-2">
         <button

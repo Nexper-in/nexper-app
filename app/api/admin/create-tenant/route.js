@@ -19,7 +19,7 @@ function tempPassword() {
 export async function POST(request) {
   const { caller, admin, error, status } = await requireAdmin(request);
   if (error) return NextResponse.json({ error }, { status });
-  if (isRateLimited(`admin-create-tenant:${caller.id}`, { windowMs: 60_000, max: 10 })) {
+  if (await isRateLimited(`admin-create-tenant:${caller.id}`, { windowMs: 60_000, max: 10 })) {
     return NextResponse.json({ error: "Too many attempts. Wait a minute." }, { status: 429 });
   }
   const body = await readJson(request);
