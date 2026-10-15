@@ -132,6 +132,7 @@ const T = {
   passkey_challenges: { a: `true`, insert: `insert into passkey_challenges (challenge, kind) values ('c', 'login')`, touch: "challenge", ownerRead: false },
   support_sessions: { a: `org_id = '${a.org}'`, insert: `insert into support_sessions (admin_id, org_id, ticket_ref, reason, kind, expires_at) values ('${ownerB}', '${a.org}', 'T-1', 'looking at a problem', 'support', now() + interval '1 hour')`, touch: "reason", ownerRead: true },
   support_access_log: { a: `shop_id = '${A}'`, insert: `insert into support_access_log (session_id, admin_id, shop_id, resource) values (gen_random_uuid(), '${ownerB}', '${A}', 'items')`, touch: "resource", ownerRead: false },
+  shop_day_stats: { a: `shop_id = '${A}'`, insert: `insert into shop_day_stats (shop_id, day) values ('${A}', current_date)`, touch: "bills", ownerRead: true },
   client_errors: { a: `shop_id = '${A}'`, insert: `insert into client_errors (shop_id, message) values ('${A}', 'sneak')`, touch: "message", ownerRead: false },
   rate_limit_hits: { a: `true`, insert: `insert into rate_limit_hits (key, window_start, count) values ('sneak', now(), 1)`, touch: "key", ownerRead: false },
   app_migrations: { a: `true`, insert: `insert into app_migrations (version, name) values ('999', 'x')`, touch: "name", ownerRead: false },

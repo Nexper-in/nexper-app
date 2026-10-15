@@ -24,9 +24,15 @@ export function installFakeSupabase(db, { user = { id: "u1", email: "u1@x" }, rp
     if (!(table in db)) return json({ code: "42P01", message: `relation "public.${table}" does not exist` }, 404);
     let rows = db[table];
     for (const [k, v] of u.searchParams) {
-      const f = String(v).match(/^(eq|gte|is)\.(.*)$/);
+      const f = String(v).match(/^(eq|gte|lt|is|in)\.(.*)$/);
       if (!f) continue;
-      rows = rows.filter((r) => (f[1] === "eq" ? String(r[k]) === f[2] : f[1] === "gte" ? String(r[k]) >= f[2] : f[2] === "null" ? r[k] == null : true));
+      rows = rows.filter((r) => {
+        if (f[1] === "eq") return String(r[k]) === f[2];
+        if (f[1] === "gte") return String(r[k]) >= f[2];
+        if (f[1] === "lt") return String(r[k]) < f[2];
+        if (f[1] === "in") return f[2].replace(/^\(|\)$/g, "").split(",").map((x) => x.replace(/^"|"$/g, "")).includes(String(r[k]));
+        return f[2] === "null" ? r[k] == null : true;
+      });
     }
     if (method === "POST") {
       const body = JSON.parse(init.body || "{}");

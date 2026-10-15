@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabaseAdmin";
 import { buildNightly, sendEmail } from "@/lib/notify";
 import { sendTemplate, whatsappReady } from "@/lib/whatsappCloud";
 import { creditReminderText } from "@/lib/messaging";
+import { istDateString } from "@/lib/periodReport";
 
 // Runs once a night (vercel.json, 21:30 India time). For every shop that
 // turned it on:
@@ -22,14 +23,30 @@ export async function GET(request) {
   if (request.headers.get("authorization") !== `Bearer ${secret}`) return NextResponse.json({ error: "Not allowed." }, { status: 401 });
 
   const admin = createAdminClient();
-  const { data: shops, error } = await admin
+  const today = istDateString();
+  // A batch of shops that still need today's summary, not all of them in one 60-second run: the job
+  // runs every 10 minutes through the evening (vercel.json) and each shop is marked when done.
+  // Closed shops are skipped. Before database update 043 this falls back to the old single pass.
+  const BATCH = 100;
+  let { data: shops, error } = await admin
     .from("shops")
     .select("id, name, owner_id, notify_phone, summary_enabled, reminders_enabled, reminder_every_days, reminder_min_amount")
     .or("summary_enabled.eq.true,reminders_enabled.eq.true")
-    .limit(500);
+    .or(`summary_sent_on.is.null,summary_sent_on.neq.${today}`)
+    .neq("status", "closed")
+    .order("id")
+    .limit(BATCH);
+  let batched = !error;
+  if (error) {
+    ({ data: shops, error } = await admin
+      .from("shops")
+      .select("id, name, owner_id, notify_phone, summary_enabled, reminders_enabled, reminder_every_days, reminder_min_amount")
+      .or("summary_enabled.eq.true,reminders_enabled.eq.true")
+      .limit(500));
+  }
   if (error) return NextResponse.json({ error: "Could not load shops." }, { status: 500 });
 
-  const out = { shops: shops.length, summaries: 0, reminders: 0, failed: 0 };
+  const out = { shops: shops.length, batched, summaries: 0, reminders: 0, failed: 0 };
   for (const shop of shops) {
     try {
       const night = await buildNightly(admin, shop);
@@ -52,6 +69,7 @@ export async function GET(request) {
           }
         }
       }
+      if (batched) await admin.from("shops").update({ summary_sent_on: today }).eq("id", shop.id);
     } catch {
       out.failed += 1;
     }

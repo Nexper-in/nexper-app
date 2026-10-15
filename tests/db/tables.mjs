@@ -55,6 +55,7 @@ export const TABLES = {
   reminder_log: { kind: "shop", lifecycle: "with-shop" },
   tenant_controls: { kind: "shop", lifecycle: "with-shop", exceptions: { closedGuard: "set by Nexper support through the server, not part of the shop's books" } },
   api_keys: { kind: "shop", lifecycle: "with-shop", exceptions: { closedGuard: "revoked when the shop closes; managed through the server" } },
+  shop_day_stats: { kind: "shop", lifecycle: "with-shop", exceptions: { closedGuard: "derived from the books by triggers and a refresh function; never written by a person" } },
   client_errors: { kind: "shop", lifecycle: "with-shop", exceptions: { closedGuard: "the server records error reports even for a closed shop; purged after 30 days" } },
   ai_usage: { kind: "shop", lifecycle: "with-shop", exceptions: { closedGuard: "a usage counter the server writes" } },
   passkeys: { kind: "user", lifecycle: "with-account" },
