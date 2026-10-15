@@ -1,0 +1,98 @@
+# Release pipeline (docs/RELEASE.md). On every merge to main:
+#   1. verify   tests, translations, audit, build
+#   2. staging  database updates are applied to the staging project (automatic)
+#   3. production  waits for Maqbool's approval, then: dry run, database updates,
+#      read-only checks, and only then the app is released (branch "production",
+#      which Vercel deploys). A red database step leaves the app untouched.
+name: release
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm test
+      - run: npm run test:db
+      - run: node tools/check-i18n.mjs
+      - run: node tools/audit.mjs
+      - run: npx next build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder
+
+  staging:
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: staging
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DATABASE_CA_PEM: ${{ secrets.DATABASE_CA_PEM }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - name: Database updates (staging)
+        run: ops/run-migrate.sh
+      - name: Read-only checks
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f ops/verify.sql
+      - name: Release note
+        run: |
+          {
+            echo "## Ready for production approval"
+            echo
+            echo "Staging is updated: https://staging.nexper.in"
+            echo
+            echo "### What is in this release"
+            git fetch origin production --quiet 2>/dev/null || true
+            if git rev-parse --verify origin/production >/dev/null 2>&1; then
+              git log --format='- %s' origin/production..HEAD | head -40
+            else
+              echo "- (first release: the production branch does not exist yet)"
+            fi
+            echo
+            echo "### Check on staging (3 minutes)"
+            echo "1. Sign in as owner@staging.nexper.in."
+            echo "2. Make a bill and save it."
+            echo "3. Open Udhaar, then open /admin and look at the Platform tab."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  production:
+    needs: staging
+    runs-on: ubuntu-latest
+    environment: production        # required reviewer: Maqbool
+    permissions:
+      contents: write              # only to move the "production" branch
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DATABASE_CA_PEM: ${{ secrets.DATABASE_CA_PEM }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - name: What would run (dry run)
+        run: ops/run-migrate.sh --dry-run
+      - name: Database updates (production)
+        run: ops/run-migrate.sh
+      - name: Read-only checks
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f ops/verify.sql
+      - name: Release the app
+        # Fast-forward only: this fails (and changes nothing) if "production" is not an ancestor.
+        run: git push origin "${GITHUB_SHA}:refs/heads/production"

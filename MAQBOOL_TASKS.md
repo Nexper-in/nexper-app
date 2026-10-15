@@ -168,6 +168,69 @@ Save, open **Accounts** and check it shows an amount. Tell me the result. Ask me
 leave the test shop or remove it (in the admin console, Owners & Shops); do not remove it
 without my yes.
 
+### Part 5: Release pipeline and staging (one time, about 40 minutes)
+
+This sets up a practice copy ("staging") of Nexper and the approval step for releases. Read
+`docs/RELEASE.md` in the repo first. Do this after Part 1 is finished. Do not put any
+password, key or connection string in this chat: copy it and paste it straight into the field.
+
+**Step 15. Staging database.** In Supabase create a **new project** named `nexper-staging`,
+region **Mumbai (ap-south-1)**, in the same organisation. Ask me before confirming if it shows
+a price. Choose a strong database password and save it in the password manager (not here).
+Do not run any SQL in it: the first release builds it.
+
+**Step 16. Connection strings.** For **both** projects (nexper-staging and the real one) open
+Connect, choose **Session pooler**, and copy the connection string (it starts with
+`postgresql://postgres.` and contains the database password: replace `[YOUR-PASSWORD]` with the
+real password when pasting into GitHub). Also open Database settings, SSL, and copy the text
+of the **SSL certificate** (the root certificate).
+
+**Step 17. GitHub environments.** In the `Nexper-in/nexper-app` repo open Settings, Environments
+and create three environments:
+- `staging`: no reviewers. Secrets: `DATABASE_URL` (staging session pooler string),
+  `DATABASE_CA_PEM` (the certificate text), `SUPABASE_URL` (staging project URL),
+  `SUPABASE_SERVICE_ROLE_KEY` (staging service_role key: this is staging only, never the
+  real one), `STAGING_TEST_PASSWORD` (a new strong password for the test account).
+- `production`: **Required reviewers: Maqbool**, and tick "Prevent self-review" only if
+  asked to by me. Secrets: `DATABASE_URL` (the REAL project's session pooler string),
+  `DATABASE_CA_PEM`.
+- `production-readonly`: no reviewers. Secrets: `DATABASE_URL`, `DATABASE_CA_PEM` filled after
+  step 19.
+
+**Step 18. Branch.** In the repo create the branch `production` from `main` (branch selector,
+type `production`, "Create branch"). Do not protect it with rules that block the Actions bot.
+
+**Step 19. Read-only login for the weekly check.** Open ops/readonly-role.sql from the repo
+(`https://github.com/Nexper-in/nexper-app/blob/main/ops/readonly-role.sql`). Make a long random
+password in your password manager (30+ letters and digits). In the SQL editor of **each**
+project (staging and the real one) run the file with `PASTE-A-LONG-RANDOM-PASSWORD` replaced by
+that password. Then build the connection string for `production-readonly`: same pooler address
+as step 16 but with the user name `nexper_drift.<project-ref>` and that password, and save it as
+the `DATABASE_URL` secret of the `production-readonly` environment (plus `DATABASE_CA_PEM`).
+
+**Step 20. Vercel.** In the nexper-app project: Settings, Git, set **Production Branch** to
+`production`. Settings, Environment Variables: for **Preview** (branch `main` only) add the
+staging values of `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+`SUPABASE_SERVICE_ROLE_KEY` (all from the staging project), `NEXT_PUBLIC_NEXPER_ENV` =
+`staging`, `NEXT_PUBLIC_APP_URL` = `https://staging.nexper.in`. Settings, Domains: add
+`staging.nexper.in` and assign it to branch `main`. Tell me the DNS record Vercel asks for;
+**do not change DNS without asking me**.
+
+**Step 21. Supabase staging settings.** In nexper-staging, Authentication, URL Configuration:
+Site URL `https://staging.nexper.in`, redirect URL `https://staging.nexper.in/**`.
+
+**Step 22. First run.** In GitHub, Actions, open the `release` workflow and press
+**Run workflow** (branch `main`). Watch: verify, staging go green; production waits for you.
+Open https://staging.nexper.in (it should load). Then Actions, **Seed staging**, Run workflow;
+when green, sign in at https://staging.nexper.in as `owner@staging.nexper.in` with the staging
+test password and make a bill.
+
+**Step 23. First approval.** Back on the `release` run press **Review deployments**, tick
+**production**, **Approve and deploy**. The production step applies the one missing update
+(036) and then releases the app. Tell me the result; if it is red copy the text of the error.
+
+After this, every release is the 5 steps in `docs/RELEASE.md`.
+
 ### Do NOT do these today
 Google sign-in, payments (Razorpay), WhatsApp Business API, changing the website, buying
 anything. They come later.

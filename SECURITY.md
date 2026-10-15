@@ -52,6 +52,13 @@ Nothing here contains secrets.
 - The shop limit (`max_shops`) is enforced by a database trigger and changed only by a platform admin (service role). A stranger cannot insert a shop for someone else's company (`tests/db/orgs.rls.mjs`, 48 checks).
 - Known trade-off: adding a team member by email tells the owner whether that email has an account.
 
+## Releases and database access (T01-T03)
+
+- Database updates are applied by `tools/migrate.mjs` from GitHub Actions, one transaction per update, with checksums (an edited applied update fails the run) and read-only checks afterwards (`ops/verify.sql`: row-level security on everywhere, definer functions safe, 028 still in place). Production waits for a required reviewer; the app is released only after the database step is green.
+- The database connection strings live only in GitHub environment secrets (`staging`, `production`, `production-readonly`). The weekly drift check uses a login that can read structure and the update list only (`ops/readonly-role.sql`), never shop data.
+- Until `DATABASE_CA_PEM` is set, the connection is encrypted but the server certificate is not verified (the run prints a warning). Set it (docs/RELEASE.md).
+- Staging holds synthetic data only. The seed refuses a database that has any shop owned by a non-`@staging.nexper.in` account, and never runs unless `NEXPER_ENV=staging`.
+
 ## Multi-tenant isolation and scale (033)
 
 - `tests/db/isolation.rls.mjs` checks every table (35): another shop, an anonymous visitor and a helper without the permission can read, change, delete or insert nothing of shop A's. A new table fails the build until it is added.

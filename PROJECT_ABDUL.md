@@ -150,6 +150,7 @@ deduction, working offline. Tables `supply_points`, `supply_entries`, `supply_pa
 - **Backup** (Store settings): a zip of spreadsheets, paged so it is complete for big shops.
 - **Fingerprint / Face ID / passkey sign-in** and an optional **app lock** (account menu,
   "Fingerprint / Face ID"; sign-in page button). Owners and staff. Needs migration 034.
+- **Release pipeline** (`docs/RELEASE.md`): merge to main updates staging; production needs Maqbool's approval; database first, then the app. Needs the one-time setup in MAQBOOL_TASKS part 5. Multi-tenant plan: `docs/MULTITENANT_DESIGN.md` (T01-T03 built; T04 onwards next).
 - **Chains** (`docs/CHAINS.md`): a company can have several shops, each with its own data,
   and a team (owner, manager, area manager, analyst). Company screen + shop switcher; the
   shops limit per company is set in `/admin` (Tenants, Manage). Needs migration 035.
