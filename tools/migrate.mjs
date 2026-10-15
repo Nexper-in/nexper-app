@@ -6,6 +6,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { applyMigrations, pgClient } from "./migrate-core.mjs";
+import { connect } from "./connect.mjs";
 
 const url = process.env.DATABASE_URL;
 if (!url) {
@@ -15,26 +16,7 @@ if (!url) {
 const dryRun = process.argv.includes("--dry-run");
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "supabase");
 
-const { default: pg } = await import("pg");
-// The connection is checked against the server's certificate. Supabase signs with its
-// own authority: download "SSL certificate" from Database settings and point
-// DATABASE_CA at the file. --no-verify-ssl skips the check (encrypted, but the server
-// is not verified): use it only if you must, and say so in the release notes.
-const local = /localhost|127\.0\.0\.1/.test(url);
-let ssl = false;
-if (!local) {
-  if (process.argv.includes("--no-verify-ssl")) {
-    console.warn("WARNING: server certificate is not being verified.");
-    ssl = { rejectUnauthorized: false };
-  } else if (process.env.DATABASE_CA) {
-    const { readFileSync } = await import("node:fs");
-    ssl = { rejectUnauthorized: true, ca: readFileSync(process.env.DATABASE_CA, "utf8") };
-  } else {
-    ssl = { rejectUnauthorized: true };
-  }
-}
-const client = new pg.Client({ connectionString: url, ssl });
-await client.connect();
+const client = await connect(url);
 try {
   const r = await applyMigrations(pgClient(client), {
     root,

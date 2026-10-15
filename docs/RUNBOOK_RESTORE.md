@@ -93,7 +93,8 @@ When one shop lost data and the rest of the platform is fine, never roll the who
 back. Instead:
 
 1. Restore the last backup that still has the data into a **scratch** project with the steps
-   above (or use the owner's own backup zip, which holds `data.json`).
+   above. (If the owner has their own backup zip: its `data.json` is the same file format, so
+   skip to step 2 and use it as `shop.json` after both databases are at the same update.)
 2. Check what is missing with a dry run, then copy it back:
    ```
    node tools/shop-export.mjs --from "$SCRATCH_URL" --shop SHOP_ID --out shop.json

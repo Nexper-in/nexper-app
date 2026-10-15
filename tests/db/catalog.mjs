@@ -6,6 +6,8 @@
 //   S5  every security definer function sets search_path and refuses anon
 //   S6  every table is classified in tests/db/tables.mjs (kind + lifecycle)
 //   S7  tables marked appendOnly cannot be updated or deleted by any API role
+//   S16 every table that holds a shop's books is in the shop export (lib/shopTables.js) or
+//       explicitly left out with a reason, so a restore never silently misses a table
 //   S8  every update from 036 on records itself under its own file name and does
 //       not drop a table or column unless it says "-- nexper:contract"
 // The checks live in checkCatalog(); the second half of this file feeds it a
@@ -13,6 +15,7 @@
 import fs from "node:fs";
 import { buildDb, ROOT, counter } from "./setup.mjs";
 import { TABLES, KINDS, LIFECYCLES, ANON_CALLABLE } from "./tables.mjs";
+import { SHOP_EXPORT, NOT_EXPORTED } from "../../lib/shopTables.js";
 
 const rows = async (db, sql) => (await db.query(sql)).rows;
 
@@ -71,6 +74,14 @@ export async function checkCatalog(db, { tables = TABLES, migrationsDir = ROOT +
       if (hasShop) add("S3", `${n} is a shop-child but also has shop_id: classify it "shop"`);
     }
   }
+
+  // S16
+  const exported = new Set(SHOP_EXPORT.map((e) => e.table));
+  for (const [n, c] of Object.entries(tables)) {
+    if (!names.has(n) || !["tenant", "shop", "shop-child", "owner"].includes(c.kind)) continue;
+    if (!exported.has(n) && !NOT_EXPORTED[n]) add("S16", `${n} holds shop data but is not in lib/shopTables.js (SHOP_EXPORT, or NOT_EXPORTED with a reason): a restore would miss it`);
+  }
+  for (const e of exported) if (!names.has(e)) add("S16", `lib/shopTables.js lists ${e} but there is no such table`);
 
   // S5
   const fns = await rows(
@@ -145,7 +156,7 @@ const has = (list, rule, word) => list.some((p) => p.startsWith(rule) && p.inclu
 {
   const p = await brokenWith(`create table dummy_ok (id int, shop_id uuid references shops(id) on delete cascade); alter table dummy_ok enable row level security;`, { tables: { ...TABLES, dummy_ok: { kind: "shop", lifecycle: "with-shop" } } });
   t.ok(has(p, "S4", "dummy_ok") && !has(p, "S3", "dummy_ok") && !has(p, "S6", "dummy_ok"), "classified + cascade but no index: only S4 fails");
-  const p2 = await brokenWith(`create table dummy_ok (id int, shop_id uuid references shops(id) on delete cascade); create index on dummy_ok (shop_id); alter table dummy_ok enable row level security;`, { tables: { ...TABLES, dummy_ok: { kind: "shop", lifecycle: "with-shop" } } });
+  const p2 = await brokenWith(`create table dummy_ok (id int, shop_id uuid references shops(id) on delete cascade); create index on dummy_ok (shop_id); alter table dummy_ok enable row level security;`, { tables: { ...TABLES, dummy_ok: { kind: "platform", lifecycle: "with-shop" } } });
   t.ok(p2.length === 0, "a table that follows every rule passes");
 }
 {
@@ -155,6 +166,10 @@ const has = (list, rule, word) => list.some((p) => p.startsWith(rule) && p.inclu
   t.ok(has(p2, "S5", "open_door") && p2.some((x) => x.includes("anon")), "a definer function callable by anon fails S5");
   const p3 = await brokenWith(`create function closed_door() returns int language sql security definer set search_path = public as $$ select 1 $$; revoke all on function closed_door() from public, anon;`);
   t.ok(p3.length === 0, "a definer function that follows the rules passes");
+}
+{
+  const p = await brokenWith(`create table dummy_books (id int, shop_id uuid references shops(id) on delete cascade); create index on dummy_books (shop_id); alter table dummy_books enable row level security;`, { tables: { ...TABLES, dummy_books: { kind: "shop", lifecycle: "with-shop" } } });
+  t.ok(has(p, "S16", "dummy_books"), "a shop table missing from the shop export fails S16");
 }
 {
   const p = await brokenWith(`select 1`, { tables: { ...TABLES, bills: { ...TABLES.bills, appendOnly: true } } });

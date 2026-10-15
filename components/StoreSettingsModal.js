@@ -8,7 +8,7 @@ import { useShop } from "@/components/ShopContext";
 import { MODULES } from "@/lib/modules";
 import { callApi } from "@/lib/apiClient";
 import { fetchShopItems } from "@/lib/products";
-import { buildBackupZip } from "@/lib/exportData";
+import { buildBackupZip, readRawShop } from "@/lib/exportData";
 import { downloadFile } from "@/lib/gstReport";
 
 import { useT } from "@/lib/i18n";
@@ -68,7 +68,8 @@ export default function StoreSettingsModal({ onClose }) {
         readAll("sale_returns"), readAll("movements"), readAll("reconciliations"),
       ]);
       const suppliers = links.map((l) => ({ ...(l.supplier || {}), owed: l.owed }));
-      const { blob, filename } = await buildBackupZip({ shop: activeShop, items, bills, credits, expenses, fixed, suppliers, returns, movements, reconciliations });
+      const raw = await readRawShop(supabase, activeShopId);
+      const { blob, filename } = await buildBackupZip({ shop: activeShop, items, bills, credits, expenses, fixed, suppliers, returns, movements, reconciliations, raw });
       downloadFile(filename, blob, "application/zip");
       showToast(t("Backup downloaded"));
     } catch (err) {
