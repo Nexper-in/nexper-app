@@ -39,9 +39,12 @@ checks, as real database roles:
 - **Every table** (35 today): row-level security is on; shop B's owner and an anonymous
   visitor cannot read, change, delete or insert into shop A's rows; a helper without the
   permission cannot read permission-scoped tables; the rightful owner still can.
-- **A new table fails the build until it is added to the test**
-  (`tests/db/isolation.rls.mjs`). That is the checklist: a table that holds shop data needs
-  `shop_id`, row-level security, indexes for how it is read, and an entry in that test.
+- **A new table fails the build until it follows the checklist**
+  (`tests/db/catalog.mjs`, `tests/db/tables.mjs`, `tests/db/isolation.rls.mjs`): row-level
+  security on, classified (kind and lifecycle), and if it holds shop data a cascading
+  `shop_id` foreign key, an index starting with `shop_id` and an isolation entry. Every
+  `security definer` function must set `search_path` and refuse anon. The test also proves
+  each rule fails on a deliberately broken table.
 - **Large shops**: a synthetic shop with 40,000 bills (150,000 when run by hand) stays fast
   under the real access rules (`tests/db/scale.mjs`).
 

@@ -214,9 +214,14 @@ Current pending list is in `PROJECT_ABDUL.md`.
   takes the price from the shop's own item). Do not add direct insert policies on
   `supply_entries`.
 - Departments are never deleted (history stays correct); they are hidden instead.
-- Any new table that holds shop data needs `shop_id`, row-level security, indexes for
-  how it is read, and an entry in `tests/db/isolation.rls.mjs` (the build fails until
-  it is there). See `docs/ARCHITECTURE.md`.
+- **New-table checklist (the build fails until all of it is true):** row-level security on;
+  a line in `tests/db/tables.mjs` (kind and lifecycle: what the data is and when it goes
+  away); if it holds shop data, `shop_id uuid references shops(id) on delete cascade` and an
+  index that starts with `shop_id`; an entry in `tests/db/isolation.rls.mjs`. A
+  `security definer` function sets `search_path` and revokes `anon`/`public`. An update
+  from 036 on ends with `record_migration(...)` and never drops a table or column unless
+  marked `-- nexper:contract`. `tests/db/catalog.mjs` checks all of it. See
+  `docs/ARCHITECTURE.md`.
 - **Never read a growing table without a window or `fetchAll`** (`lib/fetchAll.js`): the
   API silently stops at 1000 rows.
 
