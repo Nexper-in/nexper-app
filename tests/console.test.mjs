@@ -239,3 +239,60 @@ test("requireAdmin refuses a platform admin whose token is not aal2, and accepts
     delete process.env.ADMIN_MFA_REQUIRED;
   }
 });
+
+// ---------- company plans (S17): shop override, company, legacy plan, free ----------
+const enforcing = D.mergeSettings([{ key: "gating", value: { enforce: true, allowSelfPlanSwitch: true } }]);
+const open_ = D.mergeSettings([]);
+const future = new Date(Date.now() + 86400000 * 30).toISOString();
+const past = new Date(Date.now() - 86400000).toISOString();
+test("plan order: the shop's override beats the company's, which beats the shop's own plan", () => {
+  assert.equal(C.planOf({ plan: "free" }), "free");
+  assert.equal(C.planOf({ plan: "pro" }), "pro", "no controls anywhere: the legacy plan, exactly as before");
+  assert.equal(C.planOf({ plan: "free", orgControls: { plan: "pro" } }), "pro", "a company plan applies to its shops");
+  assert.equal(C.planOf({ plan: "pro", orgControls: { plan: "free" } }), "free", "and beats the shop's old self-switched plan");
+  assert.equal(C.planOf({ plan: "free", orgControls: { plan: "pro" }, controls: { plan: "free" } }), "free", "a shop override beats the company");
+  assert.equal(C.planOf({ plan: "pro", orgControls: { plan: null }, controls: null }), "pro", "an empty company row changes nothing");
+});
+test("plan expiry applies at both levels and falls to free, not through", () => {
+  assert.equal(C.planOf({ plan: "free", orgControls: { plan: "pro", plan_expires_at: future } }), "pro");
+  assert.equal(C.planOf({ plan: "free", orgControls: { plan: "pro", plan_expires_at: past } }), "free", "an expired company plan is free");
+  assert.equal(C.planOf({ plan: "pro", orgControls: { plan: "pro", plan_expires_at: past } }), "free", "and does not fall back to the shop's old plan");
+  assert.equal(C.planOf({ plan: "free", controls: { plan: "pro", plan_expires_at: past }, orgControls: { plan: "pro" } }), "free", "an expired shop override is free too");
+  assert.equal(C.planOf({ plan: "free", controls: { plan: "pro", plan_expires_at: future } }), "pro");
+});
+test("features: kill switch, shop override, company override, then the plan", () => {
+  const killed = D.mergeSettings([{ key: "gating", value: { enforce: true } }, { key: "flags", value: { ocr_scan: false } }]);
+  assert.equal(C.evalFeature(killed, { orgControls: { feature_overrides: { ocr_scan: true } } }, "ocr_scan"), false, "the global switch beats everything");
+  assert.equal(C.evalFeature(enforcing, { plan: "free" }, "gstr1_json"), false, "pro-only feature is off on free");
+  assert.equal(C.evalFeature(enforcing, { plan: "free", orgControls: { feature_overrides: { gstr1_json: true } } }, "gstr1_json"), true, "a company override turns it on for every shop");
+  assert.equal(C.evalFeature(enforcing, { plan: "free", orgControls: { feature_overrides: { gstr1_json: true } }, controls: { feature_overrides: { gstr1_json: false } } }, "gstr1_json"), false, "a shop override beats the company's");
+  assert.equal(C.evalFeature(enforcing, { plan: "free", orgControls: { plan: "pro" } }, "gstr1_json"), true, "the company plan's list applies");
+  assert.equal(C.evalFeature(open_, { plan: "free" }, "gstr1_json"), true, "plans not enforced: everything on");
+  assert.equal(C.evalFeature(open_, { plan: "free", orgControls: { feature_overrides: { api_access: true } } }, "api_access"), true, "a company can switch the API on");
+  assert.equal(C.evalFeature(open_, { plan: "free" }, "api_access"), false);
+});
+test("limits: shop override, company override, then the plan; pooled scans are the company's", () => {
+  assert.equal(C.evalLimit(open_, { plan: "free" }, "aiScansPerMonth"), null, "not enforced, nothing set: no limit");
+  assert.equal(C.evalLimit(open_, { orgControls: { limits: { aiScansPerMonth: 300 } } }, "aiScansPerMonth"), 300, "a company limit bites even when plans are not enforced");
+  assert.equal(C.evalLimit(open_, { orgControls: { limits: { aiScansPerMonth: 300 } }, controls: { limits: { aiScansPerMonth: 5 } } }, "aiScansPerMonth"), 5, "a shop limit beats the company's");
+  assert.equal(C.evalLimit(enforcing, { plan: "free" }, "aiScansPerMonth"), 20);
+  assert.equal(C.evalLimit(enforcing, { plan: "free", orgControls: { plan: "pro" } }, "aiScansPerMonth"), 500);
+  assert.equal(C.limitScope({ controls: { limits: { aiScansPerMonth: 5 } } }, "aiScansPerMonth"), "shop");
+  assert.equal(C.limitScope({ orgControls: { limits: { aiScansPerMonth: 5 } } }, "aiScansPerMonth"), "company");
+  assert.equal(C.limitScope({}, "aiScansPerMonth"), "company");
+});
+test("company controls are validated", () => {
+  const ok = D.normalizeOrgControls({ plan: "pro", plan_expires_at: "2027-03-31", limits: { aiScansPerMonth: "300", evil: 1 }, feature_overrides: { gstr1_json: true, nope: true }, billing_name: " Sri Stores Pvt Ltd ", billing_gstin: "07aaaaa0000a1z5", billing_email: "accounts@sri.in", deployment: "Shared", notes: "x" });
+  assert.equal(ok.plan, "pro");
+  assert.deepEqual(ok.limits, { aiScansPerMonth: 300 });
+  assert.deepEqual(ok.feature_overrides, { gstr1_json: true });
+  assert.equal(ok.billing_gstin, "07AAAAA0000A1Z5");
+  assert.equal(ok.billing_name, "Sri Stores Pvt Ltd");
+  assert.equal(ok.deployment, "shared");
+  assert.throws(() => D.normalizeOrgControls({ billing_gstin: "BAD" }));
+  assert.throws(() => D.normalizeOrgControls({ billing_email: "not-an-email" }));
+  assert.throws(() => D.normalizeOrgControls({ deployment: "Not Allowed!" }));
+  assert.throws(() => D.normalizeOrgControls({ plan_expires_at: "never" }));
+  assert.equal(D.normalizeOrgControls({}).plan, null);
+  assert.equal(D.normalizeOrgControls({}).deployment, "shared");
+});

@@ -103,6 +103,7 @@ const T = {
   credits: { a: `shop_id = '${A}'`, insert: `insert into credits (shop_id, phone, name, amount, type) values ('${A}', '1', 'x', 1, 'charge')`, touch: "amount", ownerRead: true, staffBlind: true },
   organisations: { a: `id = '${a.org}'`, insert: `insert into organisations (name, owner_id) values ('sneak', '${ownerB}')`, touch: "name", ownerRead: true },
   org_members: { a: `org_id = '${a.org}'`, insert: `insert into org_members (org_id, user_id, role) values ('${a.org}', '${ownerB}', 'manager')`, touch: "role", ownerRead: true, staffBlind: true },
+  org_controls: { a: `org_id = '${a.org}'`, insert: `insert into org_controls (org_id) values ('${a.org}')`, touch: "notes", ownerRead: true },
   sale_returns: { a: `shop_id = '${A}'`, insert: `insert into sale_returns (shop_id, bill_no, items, refund_amount, refund_method) values ('${A}', 'sneak', '[]', 1, 'cash')`, touch: "refund_amount", ownerRead: true },
   reminder_log: { a: `shop_id = '${A}'`, insert: `insert into reminder_log (shop_id, phone) values ('${A}', '1')`, touch: "amount", ownerRead: true },
   movements: { a: `shop_id = '${A}'`, insert: `insert into movements (shop_id, item_name, type, qty, reason) values ('${A}', 'x', 'in', 1, 'x')`, touch: "qty", ownerRead: true },

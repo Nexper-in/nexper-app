@@ -31,6 +31,8 @@ export function ShopProvider({ children }) {
   // shop's own admin controls (plan override, limits, feature overrides).
   const [platform, setPlatform] = useState(() => setPlatformConfig([]));
   const [controls, setControls] = useState({});
+  // The active shop's company controls (plan, limits, overrides; migration 039), by company
+  const [orgControls, setOrgControls] = useState({});
   const { run: runQueued, pendingCount } = useOfflineQueue(supabase);
 
   const showToast = useCallback((msg, tone = "ok") => {
@@ -84,6 +86,21 @@ export function ShopProvider({ children }) {
       live = false;
     };
   }, [supabase, activeShopId]);
+
+  const activeOrgId = (shops.find((x) => x.id === activeShopId) || closedShops.find((x) => x.id === activeShopId))?.org_id || null;
+  useEffect(() => {
+    if (!activeOrgId) return;
+    let live = true;
+    supabase
+      .from("org_controls")
+      .select("*")
+      .eq("org_id", activeOrgId)
+      .maybeSingle()
+      .then(({ data, error }) => live && !error && setOrgControls((c) => ({ ...c, [activeOrgId]: data || null })));
+    return () => {
+      live = false;
+    };
+  }, [supabase, activeOrgId]);
 
   // Which shop_members row (role + permissions) the signed-in user holds
   // for the active shop — drives nav filtering and action gating.
@@ -228,7 +245,10 @@ export function ShopProvider({ children }) {
   }
 
   const baseShop = shops.find((s) => s.id === activeShopId) || closedShops.find((s) => s.id === activeShopId) || null;
-  const activeShop = useMemo(() => (baseShop ? { ...baseShop, controls: controls[baseShop.id] || null } : null), [baseShop, controls]);
+  const activeShop = useMemo(
+    () => (baseShop ? { ...baseShop, controls: controls[baseShop.id] || null, orgControls: orgControls[baseShop.org_id] || null } : null),
+    [baseShop, controls, orgControls]
+  );
   const isOwner = currentMember?.role === "owner";
   // Company-level roles: the owner and managers see the Company screen.
   const orgRole = orgInfo?.role || null;

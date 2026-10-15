@@ -29,6 +29,7 @@ export const TABLES = {
   organisations: { kind: "org", lifecycle: "with-account" },
   shops: { kind: "tenant", lifecycle: "root" },
   org_members: { kind: "org", lifecycle: "with-org" },
+  org_controls: { kind: "org", lifecycle: "with-org" },
   shop_members: { kind: "shop", lifecycle: "with-shop" },
   products: { kind: "owner", lifecycle: "with-owner" },
   suppliers: { kind: "owner", lifecycle: "with-owner" },
