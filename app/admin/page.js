@@ -34,6 +34,7 @@ import {
   Plug,
   LifeBuoy,
   Bug,
+  BarChart3,
 } from "lucide-react";
 import {
   PieChart,
@@ -62,6 +63,7 @@ import FeaturesTab from "./console/FeaturesTab";
 import PlatformTab from "./console/PlatformTab";
 import SupportTab from "./console/SupportTab";
 import ErrorsTab from "./console/ErrorsTab";
+import UsageTab from "./console/UsageTab";
 import IntegrationsTab from "./console/IntegrationsTab";
 
 const fmtDate = (d) =>
@@ -333,6 +335,7 @@ function AdminPageInner() {
     { key: "shops", label: "Owners & Shops", icon: Building2 },
     { key: "tenants", label: "Tenants", icon: Store },
     { key: "support", label: "Support", icon: LifeBuoy },
+    { key: "usage", label: "Usage", icon: BarChart3 },
     { key: "errors", label: "Errors", icon: Bug },
     { key: "onboarding", label: "Onboarding", icon: UserPlus },
     { key: "pricing", label: "Pricing & tax", icon: Tags },
@@ -433,6 +436,7 @@ function AdminPageInner() {
 
             {activeTab === "tenants" && <TenantsTab supabase={supabase} />}
             {activeTab === "support" && <SupportTab supabase={supabase} />}
+            {activeTab === "usage" && <UsageTab supabase={supabase} />}
             {activeTab === "errors" && <ErrorsTab supabase={supabase} />}
             {activeTab === "onboarding" && <OnboardingTab supabase={supabase} />}
             {activeTab === "pricing" && <PricingTab supabase={supabase} />}
