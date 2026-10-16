@@ -1028,12 +1028,12 @@ function DeleteShopModal({ shop, busy, onClose, onConfirm }) {
         <div className="flex items-start gap-2 text-xs rounded-lg px-3 py-2.5" style={{ background: DANGER_BG, color: DANGER_TEXT }}>
           <AlertTriangle size={14} className="shrink-0 mt-0.5" />
           <span>
-            <strong>{shop.name}</strong> becomes read-only, staff lose access, and its API keys stop working. The owner can still download everything and reopen it for 90 days; after that it is removed for good.
+            <strong>{shop.name}</strong> becomes read-only, staff lose access, and its API keys stop working. The owner can still download everything and reopen it any time. It is never deleted automatically.
           </span>
         </div>
         <button onClick={() => onConfirm("close")} disabled={busy} className="ks-btn-outline w-full flex items-center justify-center gap-2">
           {busy && <Loader2 size={16} className="animate-spin" />}
-          Close the shop (90 days to reopen)
+          Close the shop (can be reopened any time)
         </button>
         <div className="pt-3 border-t space-y-2" style={{ borderColor: "var(--border)" }}>
           <p className="text-xs" style={{ color: "var(--text-secondary)" }}>

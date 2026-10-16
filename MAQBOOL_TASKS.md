@@ -190,16 +190,15 @@ Variables):
 | --- | --- |
 | `NEXT_PUBLIC_NEXPER_ENV` | `production` |
 | `HEALTH_TOKEN` | a long random text I give you (30+ letters and digits). Paste it into the field only; it is used to check the app's health from one place. Keep a copy in my password manager. |
-| `CRON_SECRET` | must already exist (used by the nightly jobs). If it is missing tell me before adding one. |
 
 Then, in Vercel, Settings, **Functions**: confirm the function region is **Mumbai (bom1)**
-(the repo's `vercel.json` sets it; report what you see). Settings, **Cron Jobs**: after the
-next deployment it must list `/api/cron/notify` and `/api/cron/purge`. Tell me what is there.
-Both jobs run once a day, which the Hobby plan allows (we stay on Hobby until the business earns; Pro is not needed yet). If Vercel still refuses a schedule, copy the exact message and tell me.
+(the repo's `vercel.json` sets it; report what you see). The app has **no scheduled jobs** now, so
+Settings, **Cron Jobs** should list nothing. `CRON_SECRET` is no longer used (leave it alone).
 
-**Step 12b. Plans (report only).** Tell me which plan Supabase and Vercel are on. Vercel's Hobby
-plan is for non-commercial use, so for real customers we need **Vercel Pro**; Supabase **Pro** is
-needed for daily backups. Do not upgrade: I decide.
+**Step 12b. Plans (report only).** Tell me which plan Supabase and Vercel are on. We stay on Vercel
+**Hobby** until the business earns (decision; Hobby is officially for non-commercial use, so Pro comes
+with the first paying customers). Supabase **Pro** is what gives daily backups, which are our only
+backups. Do not upgrade anything: I decide.
 
 ### Part 4: Quick test of the live app
 

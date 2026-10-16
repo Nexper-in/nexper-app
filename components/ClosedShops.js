@@ -10,13 +10,12 @@ import { useT } from "@/lib/i18n";
 const day = (iso) => (iso ? new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "");
 
 // What the owner sees when the shop they opened is closed: nothing to bill, but everything
-// can be downloaded and, for 90 days, the shop can be reopened.
+// can be downloaded and the shop can be reopened at any time.
 export function ClosedShopScreen() {
   const t = useT();
   const { supabase, activeShop, shops, setActiveShopId, reopenShop, showToast } = useShop();
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
-  const expired = activeShop?.purge_after && new Date(activeShop.purge_after) <= new Date();
 
   async function backup() {
     setBusy("backup");
@@ -51,19 +50,15 @@ export function ClosedShopScreen() {
         </div>
         <h1 className="ks-display text-xl font-bold">{t("This shop is closed")}</h1>
         <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-          {expired
-            ? t("{name} is waiting to be removed.", { name: activeShop.name })
-            : t("{name} was closed on {date}. It is removed for good on {removal}. Until then you can download everything or reopen it.", { name: activeShop.name, date: day(activeShop.closed_at), removal: day(activeShop.purge_after) })}
+          {t("{name} was closed on {date}. You can download everything or reopen it any time.", { name: activeShop.name, date: day(activeShop.closed_at) })}
         </p>
         {error && <p className="text-sm text-[var(--danger)] bg-[var(--danger-soft)] border border-[var(--danger-line)] rounded-lg px-3 py-2">{error}</p>}
         <button onClick={backup} disabled={!!busy} className="ks-btn-outline w-full flex items-center justify-center gap-2">
           {busy === "backup" ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />} {t("Download backup")}
         </button>
-        {!expired && (
-          <button onClick={reopen} disabled={!!busy} className="ks-btn-primary w-full flex items-center justify-center gap-2">
-            {busy === "reopen" ? <Loader2 size={16} className="animate-spin" /> : <RotateCcw size={16} />} {t("Reopen shop")}
-          </button>
-        )}
+        <button onClick={reopen} disabled={!!busy} className="ks-btn-primary w-full flex items-center justify-center gap-2">
+          {busy === "reopen" ? <Loader2 size={16} className="animate-spin" /> : <RotateCcw size={16} />} {t("Reopen shop")}
+        </button>
         {shops.length === 0 && (
           <button onClick={() => setActiveShopId(null)} className="text-sm font-semibold" style={{ color: "var(--accent-soft-text)" }}>
             {t("Set up a new shop")}
@@ -94,7 +89,7 @@ export function ClosedShopsList({ onOpen }) {
             <Archive size={16} className="shrink-0" style={{ color: "var(--text-secondary)" }} />
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold truncate">{s.name}</p>
-              <p className="text-xs" style={{ color: "var(--text-secondary)" }}>{t("Removed for good on {date}", { date: day(s.purge_after) })}</p>
+              <p className="text-xs" style={{ color: "var(--text-secondary)" }}>{t("Closed on {date}", { date: day(s.closed_at) })}</p>
             </div>
             <button
               type="button"

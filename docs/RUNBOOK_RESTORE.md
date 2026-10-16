@@ -17,7 +17,7 @@ before you need it.
 
 **Targets until PITR:** we can lose up to 24 hours of bills in a disaster (RPO 24 h), and a
 whole-database restore should take under 4 hours (RTO 4 h). One shop: one working day.
-A purged shop can still sit in a backup for up to 8 weeks (the privacy policy says so).
+Nothing purges shops automatically any more, so a closed shop stays in the live database.
 
 ## Set up the backup key (once, on Maqbool's own computer)
 

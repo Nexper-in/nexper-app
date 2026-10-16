@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { readJson, serverError } from "@/lib/apiSafe";
 import { requireAdmin, logAdminAction } from "@/lib/supabaseAdmin";
 
-// Closes a shop for the platform (it is read-only, hidden from staff, and removed after 90 days),
+// Closes a shop for the platform (it is read-only and hidden from staff; it is never deleted automatically),
 // or, for a shop that never had a bill (a test or spam sign-up), removes it at once after the
 // admin types its name. Nothing deletes a shop with bills straight away any more.
 export async function POST(request) {

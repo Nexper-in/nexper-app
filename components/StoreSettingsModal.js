@@ -6,7 +6,6 @@ import Modal from "@/components/ui/Modal";
 import Field from "@/components/ui/Field";
 import { useShop } from "@/components/ShopContext";
 import { MODULES } from "@/lib/modules";
-import { callApi } from "@/lib/apiClient";
 import { createShopBackup } from "@/lib/exportData";
 import { downloadFile } from "@/lib/gstReport";
 
@@ -22,27 +21,12 @@ export default function StoreSettingsModal({ onClose }) {
   const [enabledModules, setEnabledModules] = useState(
     activeShop?.enabled_modules || MODULES.map((m) => m.key)
   );
-  const [notifyPhone, setNotifyPhone] = useState(activeShop?.notify_phone || "");
-  const [summaryOn, setSummaryOn] = useState(!!activeShop?.summary_enabled);
   const [remindersOn, setRemindersOn] = useState(!!activeShop?.reminders_enabled);
   const [everyDays, setEveryDays] = useState(String(activeShop?.reminder_every_days ?? 7));
   const [minAmount, setMinAmount] = useState(String(activeShop?.reminder_min_amount ?? 50));
-  const [sendingNow, setSendingNow] = useState(false);
   const [backingUp, setBackingUp] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-
-  async function sendSummaryNow() {
-    setSendingNow(true);
-    try {
-      const json = await callApi(supabase, "/api/notify/summary-now", { shopId: activeShopId });
-      showToast(t("Summary emailed to {email}", { email: json.to }));
-    } catch (err) {
-      showToast(err.message, "err");
-    } finally {
-      setSendingNow(false);
-    }
-  }
 
   async function downloadBackup() {
     setBackingUp(true);
@@ -79,8 +63,6 @@ export default function StoreSettingsModal({ onClose }) {
         gstin: gstin.trim() || null,
         upi_id: upiId.trim() || null,
         enabled_modules: enabledModules,
-        notify_phone: notifyPhone.replace(/\D/g, "") || null,
-        summary_enabled: summaryOn,
         reminders_enabled: remindersOn,
         reminder_every_days: Math.min(60, Math.max(1, Math.round(Number(everyDays)) || 7)),
         reminder_min_amount: Math.max(0, Number(minAmount) || 0),
@@ -127,12 +109,8 @@ export default function StoreSettingsModal({ onClose }) {
           />
         </Field>
         <div>
-          <span className="block text-xs font-semibold mb-1.5" style={{ color: "var(--text-secondary)" }}>{t("Nightly summary and udhaar reminders")}</span>
+          <span className="block text-xs font-semibold mb-1.5" style={{ color: "var(--text-secondary)" }}>{t("Udhaar reminders")}</span>
           <div className="space-y-2.5">
-            <label className="flex items-center justify-between gap-3 text-sm">
-              <span>{t("Email me a summary every night (9:30 pm)")}</span>
-              <input type="checkbox" className="w-5 h-5" checked={summaryOn} onChange={(e) => setSummaryOn(e.target.checked)} />
-            </label>
             <label className="flex items-center justify-between gap-3 text-sm">
               <span>{t("Tell me which customers are due an udhaar reminder")}</span>
               <input type="checkbox" className="w-5 h-5" checked={remindersOn} onChange={(e) => setRemindersOn(e.target.checked)} />
@@ -147,13 +125,6 @@ export default function StoreSettingsModal({ onClose }) {
                 </Field>
               </div>
             )}
-            <Field label={t("Your WhatsApp number (for the summary, optional)")}>
-              <input className="ks-input ks-mono" inputMode="tel" value={notifyPhone} onChange={(e) => setNotifyPhone(e.target.value)} placeholder={t("e.g. 9876543210")} />
-            </Field>
-            <button type="button" onClick={sendSummaryNow} disabled={sendingNow} className="text-xs font-semibold px-3 py-2 rounded-full flex items-center gap-1.5" style={{ background: "var(--bg-surface-alt)", color: "var(--text-primary)" }}>
-              {sendingNow && <Loader2 size={13} className="animate-spin" />}
-              {t("Email me today's summary now")}
-            </button>
           </div>
         </div>
         <div>

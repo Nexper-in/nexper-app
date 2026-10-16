@@ -35,33 +35,16 @@ Nothing here contains secrets.
 ## Returns, reminders and nightly summary (031)
 
 - `sale_returns` and `reminder_log` carry `shop_id` and row-level security. Returns have no insert policy at all: they are written only by `process_return()`, which needs the billing permission, locks the bill, refuses more than was sold (counting earlier returns), caps the refund at what the customer paid after discount, and is not callable by anonymous users. `npm run test:db` checks all of that, including that another shop cannot read or write them.
-- `/api/cron/notify` refuses to run unless `CRON_SECRET` is set and sent as a Bearer token. It emails each owner only their own shop's summary, to the owner's own address. `/api/notify/summary-now` only ever emails the signed-in user's own address, never one from the request, and is rate limited. Like the report email, this is a documented exception to "no shop data to third parties": the email provider (Resend) sees the summary.
-- WhatsApp Cloud API sending is off unless `WHATSAPP_TOKEN` and `WHATSAPP_PHONE_ID` exist. Until then reminders are one-tap `wa.me` links the owner sends themselves.
+- The nightly summary email and the automatic WhatsApp sending were **removed** (decision, see "No automatic emails or deletion" below). Udhaar reminders are one-tap `wa.me` links the owner sends from the Udhaar screen; the optional in-app list of customers due a reminder uses the `reminders_enabled` setting.
 
-## Fingerprint / Face ID sign-in and app lock (034)
+## Account data (046, T18)
 
-- The device proves it holds a private key by signing a one-time challenge; the server checks the signature, the site address (so a look-alike site gets nothing), that the fingerprint/face check happened, and the replay counter, and only then asks Supabase for a one-time sign-in token. Challenges are single-use and expire in five minutes. Tested with real WebAuthn answers, including a wrong key, a phishing address, a replayed answer, a cloned device, a suspended account, and a challenge reused from registration (`tests/passkeys.test.mjs`), and in a real browser engine with a virtual fingerprint reader.
-- Only the public key is stored. The tables have no browser access at all (service role only).
-- Suspended accounts cannot get back in through a passkey. Platform admins can switch the feature off.
-- The app lock is a screen lock on the device (works offline); it does not protect the account on another device.
-- Rate limited per address (shared limit in the database, see below).
+- "My account data" shows the signed-in person what Nexper holds: sign-in, shops and roles, how many support sessions touched their shops, and a download of every shop they own. The "Close my account" button and its daily deletion job were **removed** (see below); the `account_closures` table (046) stays in the database, unused.
 
-## Companies / chains (035)
+## No automatic emails or deletion (decision, 2026-10)
 
-- A company (`organisations`) owns several shops. A company team member gets a `shop_members` row marked `via_org` per shop they cover, so every existing shop policy applies unchanged. Owners and staff cannot create, edit or delete those rows directly (the staff policies and the staff API routes require `via_org is null`); only the team functions can, and they check the caller is the company owner.
-- The shop limit (`max_shops`) is enforced by a database trigger and changed only by a platform admin (service role). A stranger cannot insert a shop for someone else's company (`tests/db/orgs.rls.mjs`, 48 checks).
-- Known trade-off: adding a team member by email tells the owner whether that email has an account.
-
-## Releases and database access (T01-T03)
-
-- Database updates are applied by `tools/migrate.mjs` from GitHub Actions, one transaction per update, with checksums (an edited applied update fails the run) and read-only checks afterwards (`ops/verify.sql`: row-level security on everywhere, definer functions safe, 028 still in place). Production waits for a required reviewer; the app is released only after the database step is green.
-- The database connection strings live only in GitHub environment secrets (`staging`, `production`, `production-readonly`). The weekly drift check uses a login that can read structure and the update list only (`ops/readonly-role.sql`), never shop data.
-- Until `DATABASE_CA_PEM` is set, the connection is encrypted but the server certificate is not verified (the run prints a warning). Set it (docs/RELEASE.md).
-- Staging holds synthetic data only. The seed refuses a database that has any shop owned by a non-`@staging.nexper.in` account, and never runs unless `NEXPER_ENV=staging`.
-
-## Closing an account (046, T18)
-
-- "My account data" shows the signed-in person what Nexper holds: sign-in, shops and roles, how many support sessions touched their shops, and a download of every shop they own. "Close my account" (owner; the email must be typed) closes every open shop of their companies (read-only, 90 days to download or reopen), records the closure, and the daily job deletes the sign-in and the helpers' staff-code sign-ins 91 days later, once no shop is left; an owner who reopened a shop in the meantime keeps the account. Cancelling removes the closure. `tests/account.test.mjs`.
+- No scheduled job runs. `vercel.json` has no `crons`. The nightly summary email (and its settings, `/api/cron/notify`, `/api/notify/summary-now`, `lib/notify.js`, `lib/whatsappCloud.js`) and the daily purge (`/api/cron/purge`) were removed from the app, so the Vercel Hobby plan is enough and nothing needs `CRON_SECRET`.
+- A closed shop stays closed (read-only) until the owner reopens it; it is never deleted automatically and the app no longer promises a deletion date. The database still has `purge_after`, the purge functions and `shop_day_stats.summary_sent_on`-style columns from 031/037/043; they are unused. Open point for the lawyer: if the privacy policy promises erasure on request, it has to be done by hand (support tool "remove an empty shop" only works for shops that never had a bill).
 
 ## Trash (044, T16)
 
@@ -85,8 +68,8 @@ Nothing here contains secrets.
 
 ## Closing instead of deleting (037, T07)
 
-- Before, an owner could delete a shop and everything under it with one call from the browser. The delete rule is gone; `close_shop` makes the shop read-only (every write is refused, including by the server, unless a closing/reopening/purging function says so for that transaction), removes staff and company roles from it, revokes its API keys, and sets a purge date 90 days out. Only the owner (or the company owner) can close or reopen. `tests/db/closure.rls.mjs` checks all of it, and the new-table checklist fails the build if a shop table lacks the closed-shop guard.
-- The daily purge and the "remove an empty shop now" tool are service-role only, write an audit row per shop, and the second refuses any shop that has bills.
+- Before, an owner could delete a shop and everything under it with one call from the browser. The delete rule is gone; `close_shop` makes the shop read-only (every write is refused, including by the server, unless a closing/reopening/purging function says so for that transaction), removes staff and company roles from it, revokes its API keys, and records a purge date that nothing uses any more. Only the owner (or the company owner) can close or reopen. `tests/db/closure.rls.mjs` checks all of it, and the new-table checklist fails the build if a shop table lacks the closed-shop guard.
+- The "remove an empty shop now" tool is service-role only, writes an audit row, and refuses any shop that has bills. The daily purge job was removed.
 
 ## Multi-tenant isolation and scale (033)
 

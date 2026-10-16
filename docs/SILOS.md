@@ -30,7 +30,7 @@ Rules that make it work (checked by `tests/guardrails.test.mjs`): no Supabase UR
    `bom1`, its own domain (`<client>.nexper.in` or the client's own). Env vars (all
    different from the shared project): `NEXT_PUBLIC_SUPABASE_URL`,
    `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_APP_URL` (the
-   silo's address), `HEALTH_TOKEN`, `CRON_SECRET`, `NEXT_PUBLIC_NEXPER_ENV=production`,
+   silo's address), `HEALTH_TOKEN`, `NEXT_PUBLIC_NEXPER_ENV=production`,
    plus the AI and mail keys the plan needs.
    `NEXT_PUBLIC_*` values and the page's security policy (`connect-src` in `next.config.js`)
    are fixed **at build time**, so set them before the first deploy and redeploy after a change.
@@ -62,8 +62,8 @@ Sign-in accounts live in each database's own `auth.users`, so a move has two par
    without `--dry-run`. The dry run does everything and rolls it back. The file holds
    customer names and phones: keep it private and delete it afterwards.
 3. Check bills, balances and stock in the silo with the owner, point the owner to the new
-   address, then **close** the shop in the shared system (it becomes read-only for 90 days
-   and is then purged). Do not delete it by hand.
+   address, then **close** the shop in the shared system (it becomes read-only and stays
+   that way until someone reopens it). Do not delete it by hand.
 4. Mark the company in the shared console (`org_controls.deployment = '<name>'`) so nobody
    bills it twice.
 
