@@ -1,5 +1,7 @@
 # Backups and restores
 
+> **Status: offsite backups are postponed.** The weekly `backup` workflow has its schedule switched off (see the comment in `.github/workflows/backup.yml`) until Part 6 of `MAQBOOL_TASKS.md` is done. Until then only Supabase's own backups exist.
+
 What we have, how to get data back, and the test that proves it works. Read this once
 before you need it.
 

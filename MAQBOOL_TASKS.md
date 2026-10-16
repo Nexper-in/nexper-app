@@ -4,11 +4,12 @@ How to use: open Chrome where you are signed in to **Supabase, Vercel, GitHub an
 **Claude in Chrome** (or Claude Cowork), and paste everything from the line "START" to the line
 "END" as ONE message. Claude works through it step by step in your tabs and asks you when it needs
 a decision. You can stop after any Part and continue another day: tell Claude which Part to start
-at. Parts 1 to 4 take about 45 minutes; Parts 5 to 8 about 2 hours more, once.
+at. Parts 1 to 4 take about 45 minutes; Parts 5, 7 and 8 about 1 hour more, once.
+**Part 6 (Backups) is postponed for now: skip it.** AWS is not needed yet.
 
 What this sets up: the database updates, safe releases (a practice copy called staging and an
 "Approve" button for production), backups, two-step sign-in for admins, and the checks that
-prove it all works. Read `docs/RELEASE.md` and `docs/RUNBOOK_RESTORE.md` in the repo when asked.
+prove it all works. (Offsite backups are postponed, see Part 6.) Read `docs/RELEASE.md` and `docs/RUNBOOK_RESTORE.md` in the repo when asked.
 
 ---
 
@@ -29,6 +30,8 @@ The code is in the private GitHub repo `Nexper-in/nexper-app` (branch `main`).
    or running any SQL that is not written in this list or in one of the listed GitHub files.
 4. If a step fails, copy the exact error text, tell me, and stop that step. Do not edit the SQL.
 5. After each step say one line: done, skipped (why), or failed (error).
+   **Part 6 (Backups, Steps 24 to 28) is POSTPONED by decision: do not do it, do not create any AWS
+   bucket, user or key, and do not run the `backup` workflow. Mark those steps "postponed".**
 6. At the end give me a short table of every step and its result, in plain words I can send to
    Abdul, and a list of anything "pending" with what I need to supply.
 
@@ -275,7 +278,13 @@ test password and make a bill.
 
 After this, every release is the 5 steps in `docs/RELEASE.md`.
 
-### Part 6: Backups (one time, about 40 minutes)
+### Part 6: Backups (one time, about 40 minutes): POSTPONED, SKIP STEPS 24 TO 28 FOR NOW
+
+**Decision: offsite backups are postponed. Do not do this Part today.** The steps below are kept so
+they can be done later (tell Claude "do Part 6"). Until then the only copies of the data are the ones
+Supabase keeps itself (Pro plan: daily, kept 7 days; the free plan keeps none), and the weekly
+`backup` job in GitHub is switched off. Do Step 9's report about plan and backups as usual so we
+know what exists.
 
 Read `docs/RUNBOOK_RESTORE.md` in the repo first. It explains what each piece is.
 
@@ -335,8 +344,8 @@ browser, skip it and tell me. It should show the app version, `db: 046`, `dbUpTo
 
 After this, every release is the five steps in `docs/RELEASE.md` (GitHub email, check staging for
 3 minutes, Approve, wait for green, open `/admin` Platform tab). Every Monday the **drift** check
-runs by itself; if it opens an issue "Database drift found", send the link to Abdul. Every three
-months we do a restore test (Step 28 again) and record it in the runbook.
+runs by itself; if it opens an issue "Database drift found", send the link to Abdul. (Once backups
+are set up, every three months we do a restore test, Step 28, and record it in the runbook.)
 
 ### Do NOT do these today
 Google sign-in, payments (Razorpay), WhatsApp Business API, changing the website, buying
@@ -344,6 +353,6 @@ anything without my yes, deleting any Supabase project or bucket, changing DNS w
 
 **Final step.** Show me the table of all steps with results, plus the list of anything "pending"
 and what I need to supply (SMTP details, support email/WhatsApp, Anthropic key, HEALTH_TOKEN,
-decisions on Pro plans and point-in-time recovery).
+decisions on Pro plans). Backups (Part 6) and point-in-time recovery are postponed.
 
 ## END (paste until here)
