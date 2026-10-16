@@ -191,7 +191,7 @@ and a closed-shop guard trigger (migration 037 shows how).
 ## Rules from the multi-tenant work (docs/MULTITENANT_DESIGN.md)
 
 - **Closed shops are read-only in the database** (`<table>_closed_guard`). Never delete a
-  shop from app code: use `close_shop`. A closed shop is kept until the owner reopens it; there is no purge job and no cron at all (Vercel Hobby).
+  shop from app code: use `close_shop`; the purge job removes it after 90 days.
 - **Support access** is only through the `support_*` database functions and
   `/api/admin/support/*`: a reason, a time limit, every read logged before it is returned,
   phone numbers masked, audit logs append-only. Do not add another way to read a client's data.

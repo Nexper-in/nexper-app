@@ -26,7 +26,7 @@ export function ShopProvider({ children }) {
   // { org: { id, name, max_shops }, role }. undefined: not loaded yet;
   // null: no company (before database update 035).
   const [orgData, setOrgData] = useState(undefined); // { orgs, roles } or null before update 035
-  // Shops the owner closed (read-only, can be reopened any time; migration 037)
+  // Shops the owner closed (read-only, can be reopened for 90 days; migration 037)
   const [closedShops, setClosedShops] = useState([]);
   // Platform admin settings (prices, plans, switches, announcement) and this
   // shop's own admin controls (plan override, limits, feature overrides).
@@ -232,7 +232,7 @@ export function ShopProvider({ children }) {
   }
 
   // Closing is not deleting: the shop becomes read-only, staff and company roles lose access,
-  // and the owner can download everything or reopen it any time (migration 037).
+  // and the owner can download everything or reopen it for 90 days (migration 037).
   async function closeActiveShop(reason) {
     if (!activeShopId) return;
     const { error } = await supabase.rpc("close_shop", { p_shop: activeShopId, p_reason: reason || null });
