@@ -5,7 +5,7 @@ import { sendTemplate, whatsappReady } from "@/lib/whatsappCloud";
 import { creditReminderText } from "@/lib/messaging";
 import { istDateString } from "@/lib/periodReport";
 
-// Runs once a night (vercel.json, 21:30 India time). For every shop that
+// Runs once a night (vercel.json, 21:30 India time; once a day is all the Vercel Hobby plan allows). For every shop that
 // turned it on:
 //   - emails the owner the day's summary (and sends it on WhatsApp if the
 //     WhatsApp Cloud API is set up and a number is saved),
@@ -24,30 +24,18 @@ export async function GET(request) {
 
   const admin = createAdminClient();
   const today = istDateString();
-  // A batch of shops that still need today's summary, not all of them in one 60-second run: the job
-  // runs every 10 minutes through the evening (vercel.json) and each shop is marked when done.
+  // Shops that still need today's summary are taken in batches of 100, one after another, until all
+  // are done or the time budget is used (the function may run for 60 seconds). Each shop is marked
+  // when done, so a run cut short by the budget is finished by the next night's run. Paging is by
+  // shop id, so a shop that fails is skipped (and retried next night) instead of blocking the rest.
   // Closed shops are skipped. Before database update 043 this falls back to the old single pass.
   const BATCH = 100;
-  let { data: shops, error } = await admin
-    .from("shops")
-    .select("id, name, owner_id, notify_phone, summary_enabled, reminders_enabled, reminder_every_days, reminder_min_amount")
-    .or("summary_enabled.eq.true,reminders_enabled.eq.true")
-    .or(`summary_sent_on.is.null,summary_sent_on.neq.${today}`)
-    .neq("status", "closed")
-    .order("id")
-    .limit(BATCH);
-  let batched = !error;
-  if (error) {
-    ({ data: shops, error } = await admin
-      .from("shops")
-      .select("id, name, owner_id, notify_phone, summary_enabled, reminders_enabled, reminder_every_days, reminder_min_amount")
-      .or("summary_enabled.eq.true,reminders_enabled.eq.true")
-      .limit(500));
-  }
-  if (error) return NextResponse.json({ error: "Could not load shops." }, { status: 500 });
+  const BUDGET_MS = 45000;
+  const started = Date.now();
+  const COLS = "id, name, owner_id, notify_phone, summary_enabled, reminders_enabled, reminder_every_days, reminder_min_amount";
+  const out = { shops: 0, batched: true, summaries: 0, reminders: 0, failed: 0, complete: true };
 
-  const out = { shops: shops.length, batched, summaries: 0, reminders: 0, failed: 0 };
-  for (const shop of shops) {
+  async function sendFor(shop, batched) {
     try {
       const night = await buildNightly(admin, shop);
       const { data: owner } = await admin.auth.admin.getUserById(shop.owner_id);
@@ -72,6 +60,43 @@ export async function GET(request) {
       if (batched) await admin.from("shops").update({ summary_sent_on: today }).eq("id", shop.id);
     } catch {
       out.failed += 1;
+    }
+  }
+
+  let cursor = null;
+  for (;;) {
+    let q = admin
+      .from("shops")
+      .select(COLS)
+      .or("summary_enabled.eq.true,reminders_enabled.eq.true")
+      .or(`summary_sent_on.is.null,summary_sent_on.neq.${today}`)
+      .neq("status", "closed")
+      .order("id")
+      .limit(BATCH);
+    if (cursor) q = q.gt("id", cursor);
+    const { data: shops, error } = await q;
+    if (error) {
+      if (cursor) return NextResponse.json({ error: "Could not load shops." }, { status: 500 });
+      // Database update 043 is not applied yet: the old single pass over (at most) 500 shops.
+      out.batched = false;
+      const old = await admin.from("shops").select(COLS).or("summary_enabled.eq.true,reminders_enabled.eq.true").limit(500);
+      if (old.error) return NextResponse.json({ error: "Could not load shops." }, { status: 500 });
+      for (const shop of old.data) {
+        out.shops += 1;
+        await sendFor(shop, false);
+      }
+      break;
+    }
+    if (shops.length === 0) break;
+    for (const shop of shops) {
+      out.shops += 1;
+      await sendFor(shop, true);
+    }
+    cursor = shops[shops.length - 1].id;
+    if (shops.length < BATCH) break;
+    if (Date.now() - started > BUDGET_MS) {
+      out.complete = false; // more shops are waiting: tomorrow night's run continues
+      break;
     }
   }
   return NextResponse.json(out);

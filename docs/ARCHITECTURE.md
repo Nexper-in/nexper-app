@@ -70,7 +70,7 @@ What changed (migration 033 and the screens):
 - Indexes on `(shop_id, date)` for the large tables and a partial index for expiries.
 - Platform totals (admin page) are summed in the database.
 
-**Per-day summary** (migration 043): `shop_day_stats` has one row per shop per Indian day (bills, sales by payment method, returns, udhaar received, expenses, GST, cost), kept current by triggers and rebuilt by `refresh_shop_day_stats`. The nightly summary uses it and runs in batches of 100 shops every 10 minutes through the evening (`shops.summary_sent_on`), so it no longer has to finish every shop in one 60-second run. Chain-wide analytics (CHAINS.md phase 2) read it too.
+**Per-day summary** (migration 043): `shop_day_stats` has one row per shop per Indian day (bills, sales by payment method, returns, udhaar received, expenses, GST, cost), kept current by triggers and rebuilt by `refresh_shop_day_stats`. The nightly summary uses it and runs once a night (the Vercel Hobby plan allows one run a day) and works through the shops in batches of 100 for up to 45 seconds, marking each in `shops.summary_sent_on`; shops it did not reach are done the next night. On the Pro plan the schedule can be every 10 minutes through the evening (`*/10 16-17 * * *`) to cover thousands of shops. Chain-wide analytics (CHAINS.md phase 2) read it too.
 
 Still reads all history on purpose, correct but not free: **Cashbook** (running balance),
 **Udhaar** and **Home** (balances need every credit entry). Fine to tens of thousands of

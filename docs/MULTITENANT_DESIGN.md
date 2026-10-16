@@ -890,7 +890,7 @@ where the task changes what they say; update the pending list in `PROJECT_ABDUL.
 - Files: `supabase/migrations/043_shop_day_stats.sql`, `app/api/cron/notify/route.js` (takes
   up to 100 shops where `summary_sent_on` is not today (IST), builds the summary from
   `shop_day_stats`, marks them; runs `refresh_shop_day_stats` for shops with activity),
-  `vercel.json` (every 10 minutes from 16:00 to 17:50 UTC = 21:30 to 23:20 IST),
+  `vercel.json` (as designed: every 10 minutes from 16:00 to 17:50 UTC = 21:30 to 23:20 IST, needs Vercel Pro; while on Hobby: once a day at 16:00 UTC, the route loops batches within 45 seconds),
   `lib/notify.js`, `tests/db/stats.rls.mjs` (S15, including a bill at 23:59 and 00:01 IST,
   returns netting), isolation entry.
 - Acceptance: stats equal recomputation on random data; summary text unchanged for a small

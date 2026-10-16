@@ -195,7 +195,7 @@ Variables):
 Then, in Vercel, Settings, **Functions**: confirm the function region is **Mumbai (bom1)**
 (the repo's `vercel.json` sets it; report what you see). Settings, **Cron Jobs**: after the
 next deployment it must list `/api/cron/notify` and `/api/cron/purge`. Tell me what is there.
-If the plan does not allow these schedules, tell me (it means Vercel Pro is needed).
+Both jobs run once a day, which the Hobby plan allows (we stay on Hobby until the business earns; Pro is not needed yet). If Vercel still refuses a schedule, copy the exact message and tell me.
 
 **Step 12b. Plans (report only).** Tell me which plan Supabase and Vercel are on. Vercel's Hobby
 plan is for non-commercial use, so for real customers we need **Vercel Pro**; Supabase **Pro** is
