@@ -38,11 +38,66 @@ Nothing here contains secrets.
 - `/api/cron/notify` refuses to run unless `CRON_SECRET` is set and sent as a Bearer token. It emails each owner only their own shop's summary, to the owner's own address. `/api/notify/summary-now` only ever emails the signed-in user's own address, never one from the request, and is rate limited. Like the report email, this is a documented exception to "no shop data to third parties": the email provider (Resend) sees the summary.
 - WhatsApp Cloud API sending is off unless `WHATSAPP_TOKEN` and `WHATSAPP_PHONE_ID` exist. Until then reminders are one-tap `wa.me` links the owner sends themselves.
 
+## Fingerprint / Face ID sign-in and app lock (034)
+
+- The device proves it holds a private key by signing a one-time challenge; the server checks the signature, the site address (so a look-alike site gets nothing), that the fingerprint/face check happened, and the replay counter, and only then asks Supabase for a one-time sign-in token. Challenges are single-use and expire in five minutes. Tested with real WebAuthn answers, including a wrong key, a phishing address, a replayed answer, a cloned device, a suspended account, and a challenge reused from registration (`tests/passkeys.test.mjs`), and in a real browser engine with a virtual fingerprint reader.
+- Only the public key is stored. The tables have no browser access at all (service role only).
+- Suspended accounts cannot get back in through a passkey. Platform admins can switch the feature off.
+- The app lock is a screen lock on the device (works offline); it does not protect the account on another device.
+- Rate limited per address (shared limit in the database, see below).
+
+## Companies / chains (035)
+
+- A company (`organisations`) owns several shops. A company team member gets a `shop_members` row marked `via_org` per shop they cover, so every existing shop policy applies unchanged. Owners and staff cannot create, edit or delete those rows directly (the staff policies and the staff API routes require `via_org is null`); only the team functions can, and they check the caller is the company owner.
+- The shop limit (`max_shops`) is enforced by a database trigger and changed only by a platform admin (service role). A stranger cannot insert a shop for someone else's company (`tests/db/orgs.rls.mjs`, 48 checks).
+- Known trade-off: adding a team member by email tells the owner whether that email has an account.
+
+## Releases and database access (T01-T03)
+
+- Database updates are applied by `tools/migrate.mjs` from GitHub Actions, one transaction per update, with checksums (an edited applied update fails the run) and read-only checks afterwards (`ops/verify.sql`: row-level security on everywhere, definer functions safe, 028 still in place). Production waits for a required reviewer; the app is released only after the database step is green.
+- The database connection strings live only in GitHub environment secrets (`staging`, `production`, `production-readonly`). The weekly drift check uses a login that can read structure and the update list only (`ops/readonly-role.sql`), never shop data.
+- Until `DATABASE_CA_PEM` is set, the connection is encrypted but the server certificate is not verified (the run prints a warning). Set it (docs/RELEASE.md).
+- Staging holds synthetic data only. The seed refuses a database that has any shop owned by a non-`@staging.nexper.in` account, and never runs unless `NEXPER_ENV=staging`.
+
+## Closing an account (046, T18)
+
+- "My account data" shows the signed-in person what Nexper holds: sign-in, shops and roles, how many support sessions touched their shops, and a download of every shop they own. "Close my account" (owner; the email must be typed) closes every open shop of their companies (read-only, 90 days to download or reopen), records the closure, and the daily job deletes the sign-in and the helpers' staff-code sign-ins 91 days later, once no shop is left; an owner who reopened a shop in the meantime keeps the account. Cancelling removes the closure. `tests/account.test.mjs`.
+
+## Trash (044, T16)
+
+- Deleting an item, a supplier, a payment entry, a staff member and the like keeps a copy for 30 days (`deleted_rows`, no access for owners or the browser). Support restores one record at a time from the Support tab, only inside an open session that covers the shop (or the owner's company for shared items and suppliers); the restore is written to the access log the owner can count. Closing and removing a shop keeps no trash. `tests/db/trash.rls.mjs`.
+
+## Saving a bill (042, T14)
+
+- `save_bill` takes stock, writes the bill and (for udhaar) the charge in one transaction, keyed by an id the device made, so a retry or an offline replay can never take stock or add an udhaar charge twice (`tests/db/save_bill.rls.mjs`, 31 checks). The caller must have the billing permission for that shop; a bill id that belongs to another shop is refused without revealing it. Offline writes the server keeps refusing are taken out of the queue after 5 tries and shown to the shopkeeper instead of being retried forever.
+
+## Our own error log (041, T13)
+
+- The app reports unexpected browser errors to `/api/log-error`, stored in `client_errors` for 30 days in our database, not a third-party tracker (page state and URLs would leave our systems). Long numbers and email addresses are removed before storing; a shop is attached only if the sign-in is valid and the person belongs to it. Only platform admins read it (Admin, Errors).
+
+## Support access policy (038, T08/T09)
+
+- Nexper staff read a client's shop data only inside a **support session** (Admin console, Support tab): a ticket reference, a reason, one shop, at most 2 hours. Without an open session of that admin, covering that shop, every read is refused by the database (`support_check`). Reads are from a fixed list of screens (shop settings, members without staff codes, items, a bill, bills in at most 31 days, udhaar balances, one customer's udhaar, day close, expenses, the shop's error reports). No free-form queries, no bulk download. Customers' phone numbers are masked unless the session was opened with "show full phone numbers".
+- The log row is written **before** anything is shown; if it cannot be written nothing is shown. `support_access_log`, `support_sessions` and `admin_audit_log` cannot be updated or deleted through the API, not even by the server; they are kept 2 years.
+- The owner sees every session on their company (Store settings, "Nexper support access").
+- Platform admins must sign in with an **authenticator app** (TOTP); admin API routes refuse a token that is not `aal2`. `ADMIN_MFA_REQUIRED=false` is allowed on staging only. The admin overview no longer returns staff codes.
+- **Break glass:** anyone with the Supabase dashboard can still run SQL. Rule: the production SQL editor is used only for an incident, and such use is first recorded as a `break_glass` support session. Supabase organisation members: Maqbool and one backup person, MFA on.
+
+## Closing instead of deleting (037, T07)
+
+- Before, an owner could delete a shop and everything under it with one call from the browser. The delete rule is gone; `close_shop` makes the shop read-only (every write is refused, including by the server, unless a closing/reopening/purging function says so for that transaction), removes staff and company roles from it, revokes its API keys, and sets a purge date 90 days out. Only the owner (or the company owner) can close or reopen. `tests/db/closure.rls.mjs` checks all of it, and the new-table checklist fails the build if a shop table lacks the closed-shop guard.
+- The daily purge and the "remove an empty shop now" tool are service-role only, write an audit row per shop, and the second refuses any shop that has bills.
+
+## Multi-tenant isolation and scale (033)
+
+- `tests/db/isolation.rls.mjs` checks every table (35): another shop, an anonymous visitor and a helper without the permission can read, change, delete or insert nothing of shop A's. A new table fails the build until it is added.
+- The API silently stops at 1000 rows. Screens that loaded everything were quietly wrong past that (Day close totals, bill numbers, balances, item lists, admin totals). Fixed with date windows, paging and database totals; `docs/ARCHITECTURE.md` has the rule and the measurements.
+
 ## Still open (not code)
 
-- Run migrations 024-030 in Supabase. After 028, check:
+- Run migrations 024-035 in Supabase. After 028, check:
   `select has_function_privilege('anon','admin_transfer_shop_ownership(uuid,uuid)','execute');` returns false.
-- The rate limiter is in memory (resets on cold starts). Add a shared one (Upstash/Vercel KV) before heavy public use.
+- Rate limits are counted in the database (`rate_hit`, update 041) so they hold across server instances; if that call fails they fall back to a per-instance in-memory count. The staff-code lookup is also limited per code (15 in 15 minutes) from any address, because every PIN guess starts with it (the PIN itself is checked by Supabase Auth). Add an edge limiter (Vercel Firewall) before heavy public use.
 - Supabase Auth settings to check by hand: email confirmation on, minimum password length 8+, leaked-password protection, redirect URLs limited to the real domains.
 - Before taking payments, turn off "Let owners switch plan themselves" in the console (Pricing & tax) so only you can change a plan.
 - Staff can read the staff codes of other staff in the same shop (a code alone is not enough to sign in, the PIN is also needed).

@@ -11,7 +11,7 @@ import { useShop } from "@/components/ShopContext";
 // One owner, one shop, chosen right here at signup — there's no "add
 // another shop" flow, so this only ever renders once, for a brand-new
 // account with zero shops (see app/(app)/layout.js).
-export function AddShopOnboarding({ onAdd }) {
+export function AddShopOnboarding({ onAdd, below = null }) {
   const t = useT();
   const { platform } = useShop();
   const [type, setType] = useState("kirana");
@@ -89,6 +89,7 @@ export function AddShopOnboarding({ onAdd }) {
             {t("Create shop")}
           </button>
         </div>
+        {below}
       </div>
     </main>
   );

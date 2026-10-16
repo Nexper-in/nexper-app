@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { fetchAll } from "@/lib/fetchAll";
 import { requireAdmin, logAdminAction } from "@/lib/supabaseAdmin";
 import { readJson, serverError } from "@/lib/apiSafe";
 import { normalizeControls } from "@/lib/platformDefaults";
@@ -12,23 +13,33 @@ export async function GET(request) {
   monthStart.setUTCDate(1);
   monthStart.setUTCHours(0, 0, 0, 0);
 
-  const [shops, controls, usage, keys] = await Promise.all([
-    admin.from("shops").select("id, name, type, plan, owner_id, created_at").order("created_at", { ascending: false }),
-    admin.from("tenant_controls").select("*"),
-    admin.from("ai_usage").select("shop_id").gte("created_at", monthStart.toISOString()),
-    admin.from("api_keys").select("shop_id").is("revoked_at", null),
+  const [shops, controls, usage, keys, orgs] = await Promise.all([
+    fetchAll(() => admin.from("shops").select("*").order("created_at", { ascending: false }).order("id")),
+    fetchAll(() => admin.from("tenant_controls").select("*").order("shop_id")),
+    fetchAll(() => admin.from("ai_usage").select("id, shop_id").gte("created_at", monthStart.toISOString()).order("id")),
+    fetchAll(() => admin.from("api_keys").select("id, shop_id").is("revoked_at", null).order("id")),
+    // Before migration 035 there are no companies: the error is ignored below.
+    fetchAll(() => admin.from("organisations").select("id, max_shops").order("id")),
   ]);
   if (shops.error) return serverError(shops.error, "admin/tenant-controls");
   // Missing tables (migration 029 not run) just mean no controls yet.
   const ctl = Object.fromEntries((controls.data || []).map((c) => [c.shop_id, c]));
   const scans = {};
   for (const u of usage.data || []) scans[u.shop_id] = (scans[u.shop_id] || 0) + 1;
+  const orgById = Object.fromEntries((orgs.data || []).map((o) => [o.id, o]));
+  const shopsInOrg = {};
+  for (const s of shops.data) if (s.org_id) shopsInOrg[s.org_id] = (shopsInOrg[s.org_id] || 0) + 1;
   const keyCount = {};
   for (const k of keys.data || []) keyCount[k.shop_id] = (keyCount[k.shop_id] || 0) + 1;
 
   return NextResponse.json({
     needsMigration: Boolean(controls.error),
-    tenants: shops.data.map((s) => ({ ...s, controls: ctl[s.id] || null, ai_scans_this_month: scans[s.id] || 0, api_keys: keyCount[s.id] || 0 })),
+    tenants: shops.data.map((s) => ({
+      ...s,
+      company: s.org_id && orgById[s.org_id] ? { id: s.org_id, max_shops: orgById[s.org_id].max_shops, shops: shopsInOrg[s.org_id] || 0 } : null,
+      controls: ctl[s.id] || null, ai_scans_this_month: scans[s.id] || 0,
+      api_keys: keyCount[s.id] || 0,
+    })),
   });
 }
 
@@ -43,8 +54,9 @@ export async function POST(request) {
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 400 });
   }
-  const { data: shop } = await admin.from("shops").select("id, name").eq("id", shopId).maybeSingle();
+  const { data: shop } = await admin.from("shops").select("*").eq("id", shopId).maybeSingle();
   if (!shop) return NextResponse.json({ error: "Shop not found" }, { status: 404 });
+
   const { error: e } = await admin
     .from("tenant_controls")
     .upsert({ shop_id: shopId, ...clean, updated_at: new Date().toISOString(), updated_by: caller.id });

@@ -69,10 +69,11 @@ test("always-on modules and per-shop toggles", () => {
   assert.equal(isModuleEnabled({ enabled_modules: ["billing", "reports"] }, "reports"), true);
 });
 
-test("rate limiter blocks after the limit and IP header preference", () => {
+test("rate limiter blocks after the limit and IP header preference", async () => {
   const key = "t:" + Math.random();
   let blocked = 0;
-  for (let i = 0; i < 12; i++) if (isRateLimited(key, { windowMs: 60000, max: 10 })) blocked++;
+  // no database here: the in-memory fallback answers
+  for (let i = 0; i < 12; i++) if (await isRateLimited(key, { windowMs: 60000, max: 10 })) blocked++;
   assert.equal(blocked, 2);
   const h = (o) => ({ headers: { get: (k) => o[k] || null } });
   assert.equal(requestIp(h({ "x-vercel-forwarded-for": "1.2.3.4", "x-forwarded-for": "9.9.9.9" })), "1.2.3.4");

@@ -77,7 +77,7 @@ screens, same app and same login.** Do not go back to one stretched layout.
 - Next.js 15 App Router (JavaScript), Tailwind plus `ks-*` classes and theme
   tokens in `app/globals.css`. Never hard-code colours.
 - Supabase: Postgres with row-level security, Auth (email + password for
-  owners; staff code + PIN), `supabase/schema.sql` plus migrations `001`-`030`.
+  owners; staff code + PIN), `supabase/schema.sql` plus migrations `001`-`036`.
 - Server routes under `app/api/` use the service-role key and an Anthropic call
   (`/api/scan-supplier-bill`).
 - Env vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
@@ -119,7 +119,7 @@ screens, same app and same login.** Do not go back to one stretched layout.
 `024_write_off_batch.sql`, `025_offers_whatsapp_group.sql`,
 `026_receive_po_with_quantities.sql`, `027_default_modules_include_reports.sql`,
 `028_lock_down_function_access.sql` (security, run soon), `029_platform_console.sql`,
-`030_supplies.sql`.
+`030_supplies.sql`, `031_returns_reminders_summary.sql`, `033_scale_and_tracking.sql`, `034_passkeys.sql`, `035_companies.sql`, then `036` to `046` (migration tracking, shop closing, support access, company plans, identity guards, ops tables, save_bill, day stats, trash, usage, account closing). From 036 on they are run by `tools/migrate.mjs` / the release workflow, not by hand; the full ordered list and steps are in `MAQBOOL_TASKS.md`.
 The app works without 024-027 and 029 but removing expired stock, saving the group
 link, receiving with expiry, Reports for new shops and the whole console need them.
 
@@ -139,6 +139,22 @@ customers placing orders themselves, signed slips, per-department rates, stock
 deduction, working offline. Tables `supply_points`, `supply_entries`, `supply_payments`
 (shared by all shops, `shop_id` + row-level security); entries are written only by
 `save_supply_round()`. `npm run test:db` runs the access rules against a real Postgres.
+
+### Multi-tenant hardening, data export, fingerprint sign-in (branch work, 2026-10-04)
+
+- **Big shops:** load-tested a 150,000-bill shop. Found that many screens loaded every
+  row and the API silently stops at 1000, so totals, bill numbers and balances went
+  wrong past that. Fixed (windows, paging, database totals, indexes, purchase orders now
+  in a migration). `docs/ARCHITECTURE.md` explains the model, guarantees and limits.
+- **Isolation test over every table** runs on every push (`npm run test:db`).
+- **Backup** (Store settings): a zip of spreadsheets, paged so it is complete for big shops.
+- **Fingerprint / Face ID / passkey sign-in** and an optional **app lock** (account menu,
+  "Fingerprint / Face ID"; sign-in page button). Owners and staff. Needs migration 034.
+- **Release pipeline** (`docs/RELEASE.md`): merge to main updates staging; production needs Maqbool's approval; database first, then the app. Needs the one-time setup in MAQBOOL_TASKS part 5. Multi-tenant plan: `docs/MULTITENANT_DESIGN.md` (T01-T03 built; T04 onwards next).
+- **Chains** (`docs/CHAINS.md`): a company can have several shops, each with its own data,
+  and a team (owner, manager, area manager, analyst). Company screen + shop switcher; the
+  shops limit per company is set in `/admin` (Tenants, Manage). Needs migration 035.
+  Combined analytics, stock comparison and stock transfers are the next phases.
 
 ### Platform console (branch work, 2026-10-01)
 
@@ -183,8 +199,7 @@ Then "Continue with Google" shows first and email becomes a fallback link.
 - The GitHub Pages copy of the site is unused.
 
 **Security:**
-- Scan APIs are signed-in only now. The rate limit is in memory (best effort);
-  add a shared limiter (Upstash/Vercel KV) before heavy public use.
+- Scan APIs are signed-in only now. The rate limit is shared in Postgres since 041 (memory fallback).
 - Support contact and legal pages still need real details (see above).
 
 **Backlog (agreed, build feature by feature):** fast first bill and onboarding

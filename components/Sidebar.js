@@ -1,5 +1,6 @@
 "use client";
 
+import { fetchAll } from "@/lib/fetchAll";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -24,12 +25,12 @@ import {
   Megaphone,
   Coffee,
   TrendingDown,
+  Building2,
 } from "lucide-react";
 import { useShop } from "@/components/ShopContext";
 import { T, useT } from "@/lib/i18n";
-import ShopTypeIcon from "@/components/ShopTypeIcon";
+import ShopSwitcher from "@/components/ShopSwitcher";
 import SyncStatusBadge from "@/components/SyncStatusBadge";
-import { shopTypeInfo } from "@/lib/shopTypes";
 import { isPro } from "@/lib/pricing";
 import { hasFeature } from "@/lib/platformConfig";
 import { isModuleEnabled } from "@/lib/modules";
@@ -69,14 +70,17 @@ const GROUPS = [
   },
   {
     title: T("Shop"),
-    items: [{ href: "/staff", key: "staff", label: T("Staff"), icon: Users, ownerOnly: true }],
+    items: [
+      { href: "/company", key: "company", label: T("Company"), icon: Building2, company: true },
+      { href: "/staff", key: "staff", label: T("Staff"), icon: Users, ownerOnly: true },
+    ],
   },
 ];
 
 const todayStr = () => new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 
 export default function Sidebar({ onOpenSettings, onNavigate }) {
-  const { supabase, activeShop, activeShopId, isOwner, hasPermission, pendingCount } = useShop();
+  const { supabase, shops, activeShop, activeShopId, isOwner, hasPermission, pendingCount, canSeeCompany, orgInfo } = useShop();
   const pathname = usePathname();
   const t = useT();
   const [lowStockCount, setLowStockCount] = useState(0);
@@ -84,10 +88,7 @@ export default function Sidebar({ onOpenSettings, onNavigate }) {
   useEffect(() => {
     if (!activeShopId) return;
     let active = true;
-    supabase
-      .from("shop_products")
-      .select("stock, low_at")
-      .eq("shop_id", activeShopId)
+    fetchAll(() => supabase.from("shop_products").select("id, stock, low_at").eq("shop_id", activeShopId).order("id"))
       .then(({ data }) => {
         if (!active || !data) return;
         setLowStockCount(data.filter((i) => i.stock <= i.low_at).length);
@@ -99,9 +100,12 @@ export default function Sidebar({ onOpenSettings, onNavigate }) {
 
   if (!activeShop) return null;
 
+  // The Company screen is for the owner and managers of a chain (or a company that may grow into one).
   const allowed = (item) =>
-    (!item.feature || hasFeature(activeShop, item.feature)) &&
-    (item.ownerOnly ? isOwner && isModuleEnabled(activeShop, item.key) : isModuleEnabled(activeShop, item.key) && hasPermission(item.key));
+    item.company
+      ? canSeeCompany && (shops.filter((x) => x.org_id === orgInfo?.org?.id).length > 1 || (orgInfo?.org?.max_shops || 1) > 1)
+      : (!item.feature || hasFeature(activeShop, item.feature)) &&
+        (item.ownerOnly ? isOwner && isModuleEnabled(activeShop, item.key) : isModuleEnabled(activeShop, item.key) && hasPermission(item.key));
   const mainNav = MAIN_NAV.filter(allowed);
   const groups = GROUPS.map((g) => ({ ...g, items: g.items.filter(allowed) })).filter((g) => g.items.length);
 
@@ -140,17 +144,7 @@ export default function Sidebar({ onOpenSettings, onNavigate }) {
         <Link href="/dashboard" onClick={() => onNavigate?.()} className="block px-1 pt-1 pb-1 text-[26px] ks-wordmark ks-sidebar-text-strong">
           Ne<span className="ks-grad-text">x</span>per
         </Link>
-        <div className="ks-sidebar-chip rounded-2xl p-3 backdrop-blur-sm">
-          <div className="flex items-center gap-2">
-            <div className="ks-sidebar-chip w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ks-sidebar-text-strong">
-              <ShopTypeIcon type={activeShop.type} size={17} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold truncate ks-sidebar-text-strong">{activeShop.name}</p>
-              <p className="text-[10px] font-medium ks-sidebar-text">{t(shopTypeInfo(activeShop.type).label)}</p>
-            </div>
-          </div>
-        </div>
+        <ShopSwitcher onNavigate={onNavigate} />
         <div className="ks-sidebar-gold-rule" />
       </div>
 

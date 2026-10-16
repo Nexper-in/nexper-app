@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, Fragment } from "react";
+import { useCallback, useEffect, useMemo, useState, Fragment } from "react";
 import { Printer, MessageCircle, Loader2, Undo2 } from "lucide-react";
 import { useShop } from "@/components/ShopContext";
 import { rupee } from "@/lib/format";
@@ -23,23 +23,55 @@ function HistoryPageInner() {
   const { supabase, activeShopId, activeShop, hasPermission, showToast } = useShop();
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
   const [open, setOpen] = useState(null);
   const [printing, setPrinting] = useState(null);
   const [returns, setReturns] = useState([]);
   const [returning, setReturning] = useState(null);
 
+  // Newest bills first, 100 at a time: a shop with years of bills should not
+  // download all of them just to look at today's.
+  const PAGE = 100;
+  const loadPage = useCallback(
+    async (from) => {
+      const { data } = await supabase
+        .from("bills")
+        .select("*")
+        .eq("shop_id", activeShopId)
+        .order("date", { ascending: false })
+        .order("id")
+        .range(from, from + PAGE - 1);
+      const rows = data || [];
+      // Returns are looked up for just these bills (before database update 031
+      // the table does not exist; that just means no returns).
+      const { data: rets } = rows.length
+        ? await supabase.from("sale_returns").select("*").eq("shop_id", activeShopId).in("bill_id", rows.map((b) => b.id)).order("date", { ascending: false })
+        : { data: [] };
+      return { bills: rows, returns: rets || [] };
+    },
+    [supabase, activeShopId]
+  );
+
   useEffect(() => {
     if (!activeShopId) return;
     setLoading(true);
-    Promise.all([
-      supabase.from("bills").select("*").eq("shop_id", activeShopId).order("date", { ascending: false }),
-      supabase.from("sale_returns").select("*").eq("shop_id", activeShopId).order("date", { ascending: false }),
-    ]).then(([{ data }, { data: rets }]) => {
-      setBills(data || []);
-      setReturns(rets || []);
+    loadPage(0).then((rows) => {
+      setBills(rows.bills);
+      setReturns(rows.returns);
+      setHasMore(rows.bills.length === PAGE);
       setLoading(false);
     });
-  }, [supabase, activeShopId]);
+  }, [activeShopId, loadPage]);
+
+  async function showOlder() {
+    setLoadingMore(true);
+    const rows = await loadPage(bills.length);
+    setBills((prev) => [...prev, ...rows.bills]);
+    setReturns((prev) => [...prev, ...rows.returns]);
+    setHasMore(rows.bills.length === PAGE);
+    setLoadingMore(false);
+  }
 
   const returnsByBill = useMemo(() => {
     const m = new Map();
@@ -182,6 +214,14 @@ function HistoryPageInner() {
           </tbody>
         </table>
       </div>
+      {hasMore && (
+        <div className="mt-4 text-center">
+          <button type="button" onClick={showOlder} disabled={loadingMore} className="ks-btn-outline inline-flex items-center gap-2">
+            {loadingMore && <Loader2 size={14} className="animate-spin" />}
+            {t("Show older bills")}
+          </button>
+        </div>
+      )}
       {returning && (
         <ReturnModal bill={returning} returnsForBill={returnsByBill.get(returning.id) || []} supabase={supabase} shopId={activeShopId} onClose={() => setReturning(null)} onDone={returnDone} />
       )}

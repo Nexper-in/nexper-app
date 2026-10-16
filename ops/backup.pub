@@ -1,0 +1,3 @@
+# REPLACE THIS FILE'S CONTENT with the age PUBLIC key (one line starting with age1...).
+# Generate the key pair on your own computer with the commands in docs/RUNBOOK_RESTORE.md
+# (section "Set up the backup key"). The PRIVATE key never goes into GitHub.

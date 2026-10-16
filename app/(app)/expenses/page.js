@@ -1,5 +1,6 @@
 "use client";
 
+import { fetchAll, daysAgo } from "@/lib/fetchAll";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { useShop } from "@/components/ShopContext";
@@ -35,7 +36,7 @@ function ExpensesPageInner() {
     if (!activeShopId) return;
     setLoading(true);
     const [{ data: expData }, { data: fixedData }] = await Promise.all([
-      supabase.from("expenses").select("*").eq("shop_id", activeShopId).order("date", { ascending: false }),
+      fetchAll(() => supabase.from("expenses").select("*").eq("shop_id", activeShopId).gte("date", daysAgo(366)).order("date", { ascending: false }).order("id")),
       supabase.from("fixed_expenses").select("*").eq("shop_id", activeShopId).order("due_day"),
     ]);
     setExpenses(expData || []);

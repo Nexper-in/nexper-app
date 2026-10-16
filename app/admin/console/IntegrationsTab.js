@@ -54,7 +54,7 @@ export default function IntegrationsTab({ supabase }) {
 
   if (error) return <p className="text-sm" style={{ color: DANGER_TEXT }}>{error}</p>;
   if (!settings || !integrations) return <Loading />;
-  const base = typeof window !== "undefined" ? window.location.origin : "https://app.nexper.in";
+  const base = typeof window !== "undefined" ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || "https://app.nexper.in";
   const tenant = tenants.find((t) => t.id === shopId);
 
   return (

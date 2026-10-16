@@ -7,6 +7,8 @@ import { defaultPermissions, defaultModulesForType } from "@/lib/modules";
 import { useOfflineQueue } from "@/lib/offlineQueue";
 import { callApi } from "@/lib/apiClient";
 import { setPlatformConfig } from "@/lib/platformConfig";
+import { copyCatalog } from "@/lib/branch";
+import { pickOrgInfo } from "@/lib/orgInfo";
 
 const ShopContext = createContext(null);
 
@@ -20,10 +22,18 @@ export function ShopProvider({ children }) {
   const [toast, setToast] = useState(null);
   const [user, setUser] = useState(null);
   const [currentMember, setCurrentMember] = useState(null);
+  // The company (chain) the signed-in user belongs to and their role in it:
+  // { org: { id, name, max_shops }, role }. undefined: not loaded yet;
+  // null: no company (before database update 035).
+  const [orgData, setOrgData] = useState(undefined); // { orgs, roles } or null before update 035
+  // Shops the owner closed (read-only, can be reopened for 90 days; migration 037)
+  const [closedShops, setClosedShops] = useState([]);
   // Platform admin settings (prices, plans, switches, announcement) and this
   // shop's own admin controls (plan override, limits, feature overrides).
   const [platform, setPlatform] = useState(() => setPlatformConfig([]));
   const [controls, setControls] = useState({});
+  // The active shop's company controls (plan, limits, overrides; migration 039), by company
+  const [orgControls, setOrgControls] = useState({});
   const { run: runQueued, pendingCount } = useOfflineQueue(supabase);
 
   const showToast = useCallback((msg, tone = "ok") => {
@@ -36,12 +46,15 @@ export function ShopProvider({ children }) {
     // owner or staff — not just shops they own.
     const { data, error } = await supabase.from("shops").select("*").order("created_at", { ascending: true });
     if (!error) {
-      setShops(data || []);
+      const all = data || [];
+      const open = all.filter((s) => s.status !== "closed");
+      setShops(open);
+      setClosedShops(all.filter((s) => s.status === "closed"));
       setActiveShopIdState((prev) => {
-        if (prev && data.some((s) => s.id === prev)) return prev;
+        if (prev && all.some((s) => s.id === prev)) return prev;
         const stored = typeof window !== "undefined" ? localStorage.getItem(ACTIVE_SHOP_KEY) : null;
-        if (stored && data.some((s) => s.id === stored)) return stored;
-        return data[0]?.id ?? null;
+        if (stored && all.some((s) => s.id === stored)) return stored;
+        return open[0]?.id ?? all[0]?.id ?? null;
       });
     }
     setLoading(false);
@@ -75,6 +88,21 @@ export function ShopProvider({ children }) {
     };
   }, [supabase, activeShopId]);
 
+  const activeOrgId = (shops.find((x) => x.id === activeShopId) || closedShops.find((x) => x.id === activeShopId))?.org_id || null;
+  useEffect(() => {
+    if (!activeOrgId) return;
+    let live = true;
+    supabase
+      .from("org_controls")
+      .select("*")
+      .eq("org_id", activeOrgId)
+      .maybeSingle()
+      .then(({ data, error }) => live && !error && setOrgControls((c) => ({ ...c, [activeOrgId]: data || null })));
+    return () => {
+      live = false;
+    };
+  }, [supabase, activeOrgId]);
+
   // Which shop_members row (role + permissions) the signed-in user holds
   // for the active shop — drives nav filtering and action gating.
   useEffect(() => {
@@ -97,6 +125,23 @@ export function ShopProvider({ children }) {
     };
   }, [supabase, activeShopId, user]);
 
+  // Every company the person belongs to, and their role in each. Quietly nothing before update 035.
+  const loadOrg = useCallback(async () => {
+    if (!user) return setOrgData(undefined);
+    const { data: orgs, error } = await supabase.from("organisations").select("*").order("created_at").limit(50);
+    if (error || !orgs?.length) return setOrgData(null);
+    const { data: mine } = await supabase.from("org_members").select("org_id, role, shop_ids").eq("user_id", user.id);
+    setOrgData({ orgs, roles: Object.fromEntries((mine || []).map((m) => [m.org_id, { role: m.role, shopIds: m.shop_ids || [] }])) });
+  }, [supabase, user]);
+
+  useEffect(() => {
+    loadOrg();
+  }, [loadOrg, shops.length]);
+
+  // The company of the shop that is open now, and the person's role in IT (not in some other
+  // company they also belong to).
+  const orgInfo = useMemo(() => pickOrgInfo(orgData, shops, closedShops, activeShopId), [orgData, shops, closedShops, activeShopId]);
+
   async function updateProfile(fields) {
     const { data, error } = await supabase.auth.updateUser({ data: fields });
     if (error) throw error;
@@ -118,7 +163,7 @@ export function ShopProvider({ children }) {
   // A new shop starts empty by default — the owner adds their own items via
   // Inventory. seedTemplate opts into pre-filling a generic starter catalog
   // for the business type instead of typing everything in by hand.
-  async function addShop(name, type, { seedTemplate = false } = {}) {
+  async function addShop(name, type, { seedTemplate = false, copyFromShopId = null } = {}) {
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -169,6 +214,9 @@ export function ShopProvider({ children }) {
       }
     }
 
+    // A branch of a chain can start with another shop's item list.
+    if (copyFromShopId) await copyCatalog(supabase, copyFromShopId, shop.id);
+
     setShops((prev) => [...prev, shop]);
     setActiveShopId(shop.id);
     showToast(`${name} created`);
@@ -183,22 +231,34 @@ export function ShopProvider({ children }) {
     return data;
   }
 
-  // Permanently deletes the shop and everything under it (items, bills,
-  // movements, credits, day-close history, expenses, supplier links,
-  // staff) — schema.sql cascades all of that from the shops row. Leaves
-  // the owner with zero shops, which sends them back to onboarding to
-  // set up a new one (app/(app)/layout.js checks shops.length === 0).
-  async function deleteActiveShop() {
+  // Closing is not deleting: the shop becomes read-only, staff and company roles lose access,
+  // and the owner can download everything or reopen it for 90 days (migration 037).
+  async function closeActiveShop(reason) {
     if (!activeShopId) return;
-    const { error } = await supabase.from("shops").delete().eq("id", activeShopId);
-    if (error) throw error;
-    setShops([]);
-    setActiveShopId(null);
+    const { error } = await supabase.rpc("close_shop", { p_shop: activeShopId, p_reason: reason || null });
+    if (error) throw new Error(/function|schema cache/i.test(error.message) ? "This needs the latest database update." : error.message);
+    const remaining = shops.filter((s) => s.id !== activeShopId);
+    setActiveShopId(remaining[0]?.id ?? null);
+    await loadShops();
   }
 
-  const baseShop = shops.find((s) => s.id === activeShopId) || null;
-  const activeShop = useMemo(() => (baseShop ? { ...baseShop, controls: controls[baseShop.id] || null } : null), [baseShop, controls]);
+  async function reopenShop(shopId) {
+    const { error } = await supabase.rpc("reopen_shop", { p_shop: shopId });
+    if (error) throw new Error(/function|schema cache/i.test(error.message) ? "This needs the latest database update." : error.message);
+    await loadShops();
+    setActiveShopId(shopId);
+  }
+
+  const baseShop = shops.find((s) => s.id === activeShopId) || closedShops.find((s) => s.id === activeShopId) || null;
+  const activeShop = useMemo(
+    () => (baseShop ? { ...baseShop, controls: controls[baseShop.id] || null, orgControls: orgControls[baseShop.org_id] || null } : null),
+    [baseShop, controls, orgControls]
+  );
   const isOwner = currentMember?.role === "owner";
+  // Company-level roles: the owner and managers see the Company screen.
+  const orgRole = orgInfo?.role || null;
+  const isOrgOwner = orgRole === "owner";
+  const canSeeCompany = orgRole === "owner" || orgRole === "manager";
   function hasPermission(moduleKey) {
     if (!currentMember) return false;
     if (currentMember.role === "owner") return true;
@@ -210,13 +270,15 @@ export function ShopProvider({ children }) {
       value={{
         supabase,
         shops,
+        closedShops,
         activeShop,
         platform,
         activeShopId,
         setActiveShopId,
         addShop,
         updateActiveShop,
-        deleteActiveShop,
+        closeActiveShop,
+        reopenShop,
         loading,
         reload: loadShops,
         toast,
@@ -225,6 +287,12 @@ export function ShopProvider({ children }) {
         updateProfile,
         currentMember,
         isOwner,
+        orgInfo,
+        orgs: orgData?.orgs || [],
+        orgRole,
+        isOrgOwner,
+        canSeeCompany,
+        reloadOrg: loadOrg,
         hasPermission,
         callStaffApi,
         runQueued,

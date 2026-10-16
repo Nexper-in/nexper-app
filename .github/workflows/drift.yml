@@ -1,0 +1,81 @@
+# Weekly, read-only: do staging and production still match the repository and each other?
+# Opens (or updates) an issue when they do not. Production is read through a limited
+# login (ops/readonly-role.sql) in its own environment, so no approval is needed.
+name: drift
+on:
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    strategy:
+      matrix:
+        include:
+          - { name: staging, environment: staging }
+          - { name: production, environment: production-readonly }
+    runs-on: ubuntu-latest
+    environment: ${{ matrix.environment }}
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - name: Snapshot
+        env:
+          DATABASE_CA_PEM: ${{ secrets.DATABASE_CA_PEM }}
+        run: |
+          flags=""
+          if [ -n "$DATABASE_CA_PEM" ]; then
+            printf '%s\n' "$DATABASE_CA_PEM" > "$RUNNER_TEMP/db-ca.crt"
+            export DATABASE_CA="$RUNNER_TEMP/db-ca.crt"
+          else
+            echo "::warning::DATABASE_CA_PEM is not set: server certificate not verified."
+            flags="--no-verify-ssl"
+          fi
+          node tools/db-snapshot.mjs $flags > "${{ matrix.name }}.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: snapshot-${{ matrix.name }}
+          path: ${{ matrix.name }}.json
+
+  compare:
+    needs: snapshot
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: snapshot-*
+          merge-multiple: true
+      - name: Compare
+        id: cmp
+        run: |
+          set +e
+          node tools/db-drift.mjs staging.json production.json | tee drift.txt
+          echo "code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+      - name: Open an issue if they differ
+        if: steps.cmp.outputs.code != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          existing="$(gh issue list --label drift --state open --json number --jq '.[0].number')"
+          if [ -n "$existing" ]; then
+            { echo "Still drifting ($(date -u +%F)):"; echo; cat drift.txt; } > comment.txt
+            gh issue comment "$existing" --body-file comment.txt
+          else
+            gh label create drift --color B60205 --description "database differs from the repository" 2>/dev/null || true
+            gh issue create --title "Database drift found" --label drift --body-file drift.txt
+          fi
+          exit 1

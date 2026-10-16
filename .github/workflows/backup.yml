@@ -1,0 +1,87 @@
+# Weekly encrypted copy of the production database, kept outside Supabase (S3, Mumbai).
+# Needs the "production-backup" environment (no reviewers: it must run unattended) with
+# secrets DATABASE_URL, DATABASE_CA_PEM (optional), BACKUP_S3_BUCKET, BACKUP_S3_KEY_ID,
+# BACKUP_S3_SECRET, and the repository variable PG_MAJOR (the Postgres major version of the
+# Supabase project, for example 17). The age PUBLIC key is in ops/backup.pub; the private
+# key is kept offline by Maqbool. See docs/RUNBOOK_RESTORE.md.
+name: backup
+# NOT IN USE: the decision is to rely on Supabase's own backups. The weekly schedule is OFF (there is
+# no S3 bucket or secrets, so a scheduled run would fail every Sunday). To use this later, do Part 6 of
+# MAQBOOL_TASKS.md and remove the "#" in front of the two lines under "schedule:".
+on:
+  # schedule:
+  #   - cron: "43 20 * * 0"   # Sunday 20:43 UTC = Monday 02:13 IST
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "production-backup (weekly) or staging (practice run)"
+        default: production-backup
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.target || 'production-backup' }}
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      PG_MAJOR: ${{ vars.PG_MAJOR || '17' }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.BACKUP_S3_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_S3_SECRET }}
+      AWS_DEFAULT_REGION: ap-south-1
+      BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Public key is in place
+        run: |
+          grep -q '^age1' ops/backup.pub || { echo "::error::ops/backup.pub does not hold an age public key yet (docs/RUNBOOK_RESTORE.md)"; exit 1; }
+
+      - name: Install tools (Postgres client matching the server, age)
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq "postgresql-client-${PG_MAJOR}" age
+
+      - name: Dump (shop data, and the sign-in accounts)
+        run: |
+          BIN="/usr/lib/postgresql/${PG_MAJOR}/bin"
+          stamp="$(date -u +%Y-%m-%d)"
+          echo "STAMP=$stamp" >> "$GITHUB_ENV"
+          # 1. every table of the app (custom format: compressed, pg_restore can pick parts).
+          "$BIN/pg_dump" "$DATABASE_URL" --format=custom --no-owner --no-privileges \
+            --schema=public --file="nexper-$stamp.dump"
+          # 2. who can sign in. pg_dump ignores --schema when --table is given, so this is a
+          #    separate dump: only users and identities, data only (Supabase owns the rest of auth).
+          "$BIN/pg_dump" "$DATABASE_URL" --format=custom --no-owner --no-privileges --data-only \
+            --table=auth.users --table=auth.identities --file="nexper-$stamp-auth.dump"
+          # The archives must be readable and must really contain the data.
+          "$BIN/pg_restore" --list "nexper-$stamp.dump" | grep -q "TABLE DATA public bills" || { echo "::error::the dump has no bills table data"; exit 1; }
+          "$BIN/pg_restore" --list "nexper-$stamp-auth.dump" | grep -q "TABLE DATA auth users" || { echo "::error::the auth dump has no users"; exit 1; }
+          ls -l nexper-*.dump
+
+      - name: Encrypt (only the holder of the private key can open it)
+        run: |
+          for f in "nexper-$STAMP.dump" "nexper-$STAMP-auth.dump"; do
+            age -R ops/backup.pub -o "$f.age" "$f"
+            rm "$f"
+          done
+          ls -l nexper-*.age
+
+      - name: Upload
+        run: |
+          for f in nexper-"$STAMP".dump.age nexper-"$STAMP"-auth.dump.age; do
+            aws s3 cp "$f" "s3://$BUCKET/weekly/$f" --only-show-errors
+          done
+
+      - name: Summary
+        run: |
+          {
+            echo "## Backup uploaded"
+            echo "- Files: weekly/nexper-$STAMP.dump.age ($(stat -c %s "nexper-$STAMP.dump.age") bytes) and weekly/nexper-$STAMP-auth.dump.age"
+            echo "- Next step for a human: once a quarter, restore-test it (docs/RUNBOOK_RESTORE.md)"
+          } >> "$GITHUB_STEP_SUMMARY"

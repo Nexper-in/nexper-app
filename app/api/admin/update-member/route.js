@@ -14,7 +14,7 @@ export async function POST(request) {
   const { caller, admin, error, status } = await requireAdmin(request);
   if (error) return NextResponse.json({ error }, { status });
 
-  if (isRateLimited(`admin-update-member:${caller.id}`, { windowMs: 60_000, max: 10 })) {
+  if (await isRateLimited(`admin-update-member:${caller.id}`, { windowMs: 60_000, max: 10 })) {
     return NextResponse.json({ error: "Too many attempts — wait a minute and try again" }, { status: 429 });
   }
 

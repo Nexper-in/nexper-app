@@ -106,6 +106,7 @@ function fakeDb(tables) {
       is: (c, v) => ((rows = rows.filter((r) => r[c] === v)), b),
       order: () => b,
       limit: (n) => ((rows = rows.slice(0, n)), b),
+      range: (lo, hi) => ((rows = rows.slice(lo, hi + 1)), b),
       maybeSingle: async () => ({ data: rows[0] || null, error: null }),
       single: async () => ({ data: rows[0] || null, error: null }),
       then: (res) => Promise.resolve({ data: rows, error: null }).then(res),
@@ -188,4 +189,110 @@ test("MCP: calls work, respect scopes, mask phone numbers, never cross shops", a
   const denied = await call(ctx(["read:stock"]), "tools/call", { name: "recent_bills", arguments: {} });
   assert.equal(denied.result.isError, true);
   assert.equal((await call(c, "tools/call", { name: "drop_database", arguments: {} })).error.code, -32602);
+});
+
+// ---------- admin two-step sign-in (S12) ----------
+const A = await import("../lib/adminMfa.js");
+const fakeJwt = (claims) => ["e30", Buffer.from(JSON.stringify(claims)).toString("base64url"), "sig"].join(".");
+test("the aal claim is read from the token; garbage is not aal2", () => {
+  assert.equal(A.jwtAal(fakeJwt({ aal: "aal2" })), "aal2");
+  assert.equal(A.jwtAal(fakeJwt({ aal: "aal1" })), "aal1");
+  assert.equal(A.jwtAal("not-a-token"), null);
+  assert.equal(A.jwtAal(""), null);
+});
+test("admin MFA is required unless explicitly switched off", () => {
+  assert.equal(A.adminMfaRequired({}), true);
+  assert.equal(A.adminMfaRequired({ ADMIN_MFA_REQUIRED: "true" }), true);
+  assert.equal(A.adminMfaRequired({ ADMIN_MFA_REQUIRED: "false" }), false);
+  assert.equal(A.adminMfaProblem({ aal: "aal1", required: true }).status, 403);
+  assert.equal(A.adminMfaProblem({ aal: null, required: true }).status, 403);
+  assert.equal(A.adminMfaProblem({ aal: "aal2", required: true }), null);
+  assert.equal(A.adminMfaProblem({ aal: "aal1", required: false }), null);
+});
+test("requireAdmin refuses a platform admin whose token is not aal2, and accepts aal2", async () => {
+  process.env.NEXT_PUBLIC_SUPABASE_URL = "http://supabase.test";
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "anon";
+  process.env.SUPABASE_SERVICE_ROLE_KEY = "service";
+  delete process.env.ADMIN_MFA_REQUIRED;
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    const u = String(url);
+    const json = (body) => new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
+    if (u.includes("/auth/v1/user")) return json({ id: "admin-1", email: "a@x", aud: "authenticated" });
+    if (u.includes("/rest/v1/platform_admins")) return json([{ user_id: "admin-1" }]);
+    return json([]);
+  };
+  try {
+    const { requireAdmin } = await import("../lib/supabaseAdmin.js");
+    const req = (aal) => new Request("http://x/api/admin/x", { headers: { authorization: "Bearer " + fakeJwt({ aal, sub: "admin-1" }) } });
+    const weak = await requireAdmin(req("aal1"));
+    assert.equal(weak.status, 403);
+    assert.match(weak.error, /Two-step sign-in/);
+    assert.equal(weak.caller, undefined, "no caller handed back, so no admin data can be read");
+    const strong = await requireAdmin(req("aal2"));
+    assert.equal(strong.error, undefined);
+    assert.equal(strong.caller.id, "admin-1");
+    process.env.ADMIN_MFA_REQUIRED = "false";
+    assert.equal((await requireAdmin(req("aal1"))).error, undefined, "switched off (staging only)");
+  } finally {
+    globalThis.fetch = realFetch;
+    delete process.env.ADMIN_MFA_REQUIRED;
+  }
+});
+
+// ---------- company plans (S17): shop override, company, legacy plan, free ----------
+const enforcing = D.mergeSettings([{ key: "gating", value: { enforce: true, allowSelfPlanSwitch: true } }]);
+const open_ = D.mergeSettings([]);
+const future = new Date(Date.now() + 86400000 * 30).toISOString();
+const past = new Date(Date.now() - 86400000).toISOString();
+test("plan order: the shop's override beats the company's, which beats the shop's own plan", () => {
+  assert.equal(C.planOf({ plan: "free" }), "free");
+  assert.equal(C.planOf({ plan: "pro" }), "pro", "no controls anywhere: the legacy plan, exactly as before");
+  assert.equal(C.planOf({ plan: "free", orgControls: { plan: "pro" } }), "pro", "a company plan applies to its shops");
+  assert.equal(C.planOf({ plan: "pro", orgControls: { plan: "free" } }), "free", "and beats the shop's old self-switched plan");
+  assert.equal(C.planOf({ plan: "free", orgControls: { plan: "pro" }, controls: { plan: "free" } }), "free", "a shop override beats the company");
+  assert.equal(C.planOf({ plan: "pro", orgControls: { plan: null }, controls: null }), "pro", "an empty company row changes nothing");
+});
+test("plan expiry applies at both levels and falls to free, not through", () => {
+  assert.equal(C.planOf({ plan: "free", orgControls: { plan: "pro", plan_expires_at: future } }), "pro");
+  assert.equal(C.planOf({ plan: "free", orgControls: { plan: "pro", plan_expires_at: past } }), "free", "an expired company plan is free");
+  assert.equal(C.planOf({ plan: "pro", orgControls: { plan: "pro", plan_expires_at: past } }), "free", "and does not fall back to the shop's old plan");
+  assert.equal(C.planOf({ plan: "free", controls: { plan: "pro", plan_expires_at: past }, orgControls: { plan: "pro" } }), "free", "an expired shop override is free too");
+  assert.equal(C.planOf({ plan: "free", controls: { plan: "pro", plan_expires_at: future } }), "pro");
+});
+test("features: kill switch, shop override, company override, then the plan", () => {
+  const killed = D.mergeSettings([{ key: "gating", value: { enforce: true } }, { key: "flags", value: { ocr_scan: false } }]);
+  assert.equal(C.evalFeature(killed, { orgControls: { feature_overrides: { ocr_scan: true } } }, "ocr_scan"), false, "the global switch beats everything");
+  assert.equal(C.evalFeature(enforcing, { plan: "free" }, "gstr1_json"), false, "pro-only feature is off on free");
+  assert.equal(C.evalFeature(enforcing, { plan: "free", orgControls: { feature_overrides: { gstr1_json: true } } }, "gstr1_json"), true, "a company override turns it on for every shop");
+  assert.equal(C.evalFeature(enforcing, { plan: "free", orgControls: { feature_overrides: { gstr1_json: true } }, controls: { feature_overrides: { gstr1_json: false } } }, "gstr1_json"), false, "a shop override beats the company's");
+  assert.equal(C.evalFeature(enforcing, { plan: "free", orgControls: { plan: "pro" } }, "gstr1_json"), true, "the company plan's list applies");
+  assert.equal(C.evalFeature(open_, { plan: "free" }, "gstr1_json"), true, "plans not enforced: everything on");
+  assert.equal(C.evalFeature(open_, { plan: "free", orgControls: { feature_overrides: { api_access: true } } }, "api_access"), true, "a company can switch the API on");
+  assert.equal(C.evalFeature(open_, { plan: "free" }, "api_access"), false);
+});
+test("limits: shop override, company override, then the plan; pooled scans are the company's", () => {
+  assert.equal(C.evalLimit(open_, { plan: "free" }, "aiScansPerMonth"), null, "not enforced, nothing set: no limit");
+  assert.equal(C.evalLimit(open_, { orgControls: { limits: { aiScansPerMonth: 300 } } }, "aiScansPerMonth"), 300, "a company limit bites even when plans are not enforced");
+  assert.equal(C.evalLimit(open_, { orgControls: { limits: { aiScansPerMonth: 300 } }, controls: { limits: { aiScansPerMonth: 5 } } }, "aiScansPerMonth"), 5, "a shop limit beats the company's");
+  assert.equal(C.evalLimit(enforcing, { plan: "free" }, "aiScansPerMonth"), 20);
+  assert.equal(C.evalLimit(enforcing, { plan: "free", orgControls: { plan: "pro" } }, "aiScansPerMonth"), 500);
+  assert.equal(C.limitScope({ controls: { limits: { aiScansPerMonth: 5 } } }, "aiScansPerMonth"), "shop");
+  assert.equal(C.limitScope({ orgControls: { limits: { aiScansPerMonth: 5 } } }, "aiScansPerMonth"), "company");
+  assert.equal(C.limitScope({}, "aiScansPerMonth"), "company");
+});
+test("company controls are validated", () => {
+  const ok = D.normalizeOrgControls({ plan: "pro", plan_expires_at: "2027-03-31", limits: { aiScansPerMonth: "300", evil: 1 }, feature_overrides: { gstr1_json: true, nope: true }, billing_name: " Sri Stores Pvt Ltd ", billing_gstin: "07aaaaa0000a1z5", billing_email: "accounts@sri.in", deployment: "Shared", notes: "x" });
+  assert.equal(ok.plan, "pro");
+  assert.deepEqual(ok.limits, { aiScansPerMonth: 300 });
+  assert.deepEqual(ok.feature_overrides, { gstr1_json: true });
+  assert.equal(ok.billing_gstin, "07AAAAA0000A1Z5");
+  assert.equal(ok.billing_name, "Sri Stores Pvt Ltd");
+  assert.equal(ok.deployment, "shared");
+  assert.throws(() => D.normalizeOrgControls({ billing_gstin: "BAD" }));
+  assert.throws(() => D.normalizeOrgControls({ billing_email: "not-an-email" }));
+  assert.throws(() => D.normalizeOrgControls({ deployment: "Not Allowed!" }));
+  assert.throws(() => D.normalizeOrgControls({ plan_expires_at: "never" }));
+  assert.equal(D.normalizeOrgControls({}).plan, null);
+  assert.equal(D.normalizeOrgControls({}).deployment, "shared");
 });

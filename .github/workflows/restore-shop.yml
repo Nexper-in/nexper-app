@@ -1,0 +1,56 @@
+# Put ONE shop back from a restored copy (docs/RUNBOOK_RESTORE.md, "Restore one shop").
+# 1. Restore the backup into a scratch Supabase project and put its connection string in the
+#    `production` environment as RESTORE_SOURCE_DATABASE_URL (remove it afterwards).
+# 2. Run this workflow with dry_run ticked, read the counts, approve, then run it again
+#    with dry_run off. Needs approval (the `production` environment's reviewer).
+name: Restore shop
+on:
+  workflow_dispatch:
+    inputs:
+      shop_id:
+        description: "Shop id (uuid) to restore"
+        required: true
+      mode:
+        description: "missing-only (adds what is gone) or replace (puts the shop back exactly as in the copy)"
+        type: choice
+        options: [missing-only, replace]
+        default: missing-only
+      dry_run:
+        description: "Dry run: show what would change, change nothing"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      SOURCE_URL: ${{ secrets.RESTORE_SOURCE_DATABASE_URL }}
+      TARGET_URL: ${{ secrets.DATABASE_URL }}
+      DATABASE_CA_PEM: ${{ secrets.DATABASE_CA_PEM }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - name: Check the inputs
+        run: |
+          [[ "${{ inputs.shop_id }}" =~ ^[0-9a-f-]{36}$ ]] || { echo "::error::shop_id must be a uuid"; exit 1; }
+          [ -n "$SOURCE_URL" ] || { echo "::error::RESTORE_SOURCE_DATABASE_URL is not set in the production environment"; exit 1; }
+      - name: Export the shop from the restored copy
+        run: |
+          flags=""
+          if [ -n "$DATABASE_CA_PEM" ]; then printf '%s\n' "$DATABASE_CA_PEM" > "$RUNNER_TEMP/ca.crt"; export DATABASE_CA="$RUNNER_TEMP/ca.crt"; else flags="--no-verify-ssl"; fi
+          node tools/shop-export.mjs --from "$SOURCE_URL" --shop "${{ inputs.shop_id }}" --out "$RUNNER_TEMP/shop.json" $flags
+      - name: Import into production
+        run: |
+          flags=""
+          if [ -n "$DATABASE_CA_PEM" ]; then export DATABASE_CA="$RUNNER_TEMP/ca.crt"; else flags="--no-verify-ssl"; fi
+          if [ "${{ inputs.dry_run }}" = "true" ]; then flags="$flags --dry-run"; fi
+          node tools/shop-import.mjs --to "$TARGET_URL" --file "$RUNNER_TEMP/shop.json" --mode "${{ inputs.mode }}" $flags
+      - name: Remove the file
+        if: always()
+        run: rm -f "$RUNNER_TEMP/shop.json"

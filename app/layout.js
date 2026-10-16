@@ -2,6 +2,7 @@ import "./globals.css";
 import { SITE } from "@/lib/site";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme";
 import { LanguageProvider } from "@/lib/i18n";
+import EnvRibbon from "@/components/EnvRibbon";
 
 export const metadata = {
   metadataBase: new URL(SITE.url),
@@ -65,6 +66,7 @@ export default function RootLayout({ children }) {
       </head>
       <body>
         <LanguageProvider>{children}</LanguageProvider>
+        <EnvRibbon />
       </body>
     </html>
   );

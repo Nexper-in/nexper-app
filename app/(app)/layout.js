@@ -8,9 +8,12 @@ import { ShopProvider, useShop } from "@/components/ShopContext";
 import Sidebar from "@/components/Sidebar";
 import BottomNav from "@/components/BottomNav";
 import { AddShopOnboarding } from "@/components/ShopOnboarding";
+import { ClosedShopScreen, ClosedShopsList } from "@/components/ClosedShops";
+import ErrorReporter from "@/components/ErrorReporter";
 import StoreSettingsModal from "@/components/StoreSettingsModal";
 import Toast from "@/components/ui/Toast";
 import AccountMenu from "@/components/AccountMenu";
+import AppLock from "@/components/AppLock";
 import StackTables from "@/components/StackTables";
 import { T, useT } from "@/lib/i18n";
 
@@ -91,10 +94,17 @@ const SCREEN_TITLES = {
 function AppShell({ children }) {
   const pathname = usePathname();
   const t = useT();
-  const { shops, activeShop, addShop, loading, toast, platform } = useShop();
+  const { shops, closedShops, activeShop, addShop, loading, toast, platform, showToast } = useShop();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const router = useRouter();
   const [showStoreSettings, setShowStoreSettings] = useState(false);
+  // A bill or entry saved while offline that the server keeps refusing is taken out of the queue
+  // (lib/offlineQueueCore.js): say so, with the reason, instead of retrying silently forever.
+  useEffect(() => {
+    const failed = (e) => showToast(t("Something saved offline could not be saved: {reason}", { reason: String(e.detail?.[0] || "").slice(0, 120) }), "err");
+    window.addEventListener("nexper:queue-failed", failed);
+    return () => window.removeEventListener("nexper:queue-failed", failed);
+  }, [showToast, t]);
   useEffect(() => {
     const open = () => setShowStoreSettings(true);
     window.addEventListener("nexper:open-settings", open);
@@ -109,10 +119,13 @@ function AppShell({ children }) {
     );
   }
 
+  if (activeShop?.status === "closed") return <ClosedShopScreen />;
+
   if (shops.length === 0) {
     // A new owner lands straight on New bill (starter items are ready).
     return (
       <AddShopOnboarding
+        below={closedShops.length > 0 ? <ClosedShopsList /> : null}
         onAdd={async (name, type, opts) => {
           await addShop(name, type, opts);
           router.replace("/billing");
@@ -135,8 +148,10 @@ function AppShell({ children }) {
   }
 
   return (
+    <AppLock>
     <div className="min-h-screen flex">
       <OfflineBanner />
+      <ErrorReporter />
       <StackTables />
       <div className="ks-no-print ks-mobile-bar ks-topbar fixed top-0 left-0 right-0 z-30 items-center justify-between gap-2 px-3 py-2">
         <button
@@ -185,6 +200,7 @@ function AppShell({ children }) {
 
       {toast && <Toast msg={toast.msg} tone={toast.tone} />}
     </div>
+    </AppLock>
   );
 }
 

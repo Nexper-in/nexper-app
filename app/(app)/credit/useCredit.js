@@ -6,6 +6,7 @@ import { customerBalance } from "@/lib/dashboardHelpers";
 import { dueReminders } from "@/lib/reminders";
 import { whatsappLink, creditReminderText } from "@/lib/messaging";
 import { useT } from "@/lib/i18n";
+import { fetchAll } from "@/lib/fetchAll";
 
 // Everything the Udhaar screen knows and does. The phone and laptop views
 // (CreditMobile, CreditDesktop) only draw it; change behaviour here, and
@@ -24,7 +25,8 @@ export default function useCredit() {
     if (!activeShopId) return;
     setLoading(true);
     const [{ data }, { data: logData }] = await Promise.all([
-      supabase.from("credits").select("*").eq("shop_id", activeShopId).order("date"),
+      // Balances need every entry, so read them all, page by page.
+      fetchAll(() => supabase.from("credits").select("*").eq("shop_id", activeShopId).order("date").order("id")),
       // Before migration 031 the table does not exist; that just means "nobody reminded yet".
       supabase.from("reminder_log").select("phone, sent_at").eq("shop_id", activeShopId),
     ]);

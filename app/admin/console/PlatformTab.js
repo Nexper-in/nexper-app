@@ -1,12 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { callApi } from "@/lib/apiClient";
 import { Page, Card, Field, Toggle, SaveButton, Loading, MigrationNotice, useSettings } from "./shared";
 
 export default function PlatformTab({ supabase }) {
   const { settings, save, needsMigration, error } = useSettings(supabase);
   const [announcement, setAnnouncement] = useState(null);
   const [maintenance, setMaintenance] = useState(null);
+  const [db, setDb] = useState(null);
+
+  useEffect(() => {
+    callApi(supabase, "/api/admin/db-version", null, "GET").then(setDb).catch(() => setDb({ version: null, expected: "?", upToDate: false, failed: true }));
+  }, [supabase]);
 
   useEffect(() => {
     if (settings) {
@@ -21,6 +27,22 @@ export default function PlatformTab({ supabase }) {
   return (
     <Page title="Platform" subtitle="Messages and the emergency stop for the whole app.">
       <MigrationNotice show={needsMigration} />
+
+      <Card title="Database version" hint="The newest database update this database has, against the one this version of the app expects.">
+        {!db ? (
+          <Loading />
+        ) : (
+          <p className="text-sm" style={{ color: db.upToDate ? "#7FE0B8" : "#F29C9C" }}>
+            {db.failed
+              ? "Could not read the database version."
+              : db.upToDate
+              ? `Database: up to date (${db.version})`
+              : db.version
+              ? `Database: needs update ${db.expected} (has ${db.version}). Approve the release, or run the update from MAQBOOL_TASKS.`
+              : `Database: needs update 036 (version tracking is not installed yet).`}
+          </p>
+        )}
+      </Card>
 
       <Card title="Announcement banner" hint="A line shown at the top of every shop's screen, for example a planned downtime or a new feature.">
         <Toggle on={announcement.enabled} onChange={(v) => setAnnouncement((a) => ({ ...a, enabled: v }))} label="Show the banner" />

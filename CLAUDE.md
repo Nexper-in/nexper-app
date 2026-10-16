@@ -82,6 +82,15 @@ tap away (folded sections, a "⋯" menu, or the side menu).
 
 - Owners register and sign in with **email and password** (with "Forgot
   password"). Staff use staff code + PIN.
+- **Fingerprint / Face ID** (`lib/passkeys.js`, `app/api/passkeys/*`, migration 034):
+  a signed-in person adds a device (account menu, "Fingerprint / Face ID") and can
+  then sign in with it. The server verifies the WebAuthn proof and only then asks
+  Supabase for a one-time token (`generateLink`), which the browser trades for a
+  normal session. Owners and staff both can. A platform admin can switch it off
+  (`passkey_login`). Never create a session from anything but a verified proof.
+- **App lock** (`lib/appLock.js`, `components/AppLock.js`): optional, per device,
+  works offline; covers the app until the fingerprint / face / screen lock check
+  passes. It is a screen lock, not an account lock.
 - **Google sign-in is built but switched off:** the button shows with a
   "Soon" label and does nothing when tapped. It turns on when
   `NEXT_PUBLIC_GOOGLE_SIGNIN=true` is set in Vercel (then redeploy); then "Continue with
@@ -92,6 +101,17 @@ tap away (folded sections, a "⋯" menu, or the side menu).
   Cloud OAuth client ID and secret, and add
   `https://<project>.supabase.co/auth/v1/callback` as a redirect URI in
   Google Cloud.
+
+## Companies and chains
+
+- An owner has a company (`organisations`); a chain is a company with `max_shops > 1`
+  (set in `/admin`). Company team (owner, manager, area manager, analyst) lives in
+  `org_members` and is copied into `shop_members` rows with `via_org` set. Never treat a
+  `via_org` row as staff: staff screens and APIs skip it. Plan: `docs/CHAINS.md`.
+- Shop data stays per shop (`shop_id`); a combined view must go through the company
+  roles and read a summary table, never scan every bill of every shop.
+- Code that needs migration 035 must fail politely when it is missing (`orgInfo` is
+  `null` then, `undefined` while loading).
 
 ## Languages (English, Hindi, Telugu, Kannada, Tamil, Malayalam)
 
@@ -130,11 +150,23 @@ phone's language.
 
 ## Database changes (migrations)
 
-New tables and functions go in `supabase/migrations/NNN_*.sql`, run by hand in
-the Supabase SQL editor in order. Code that depends on a new migration must fail
-politely when it is missing (show "needs the latest database update"), because
-the app can be deployed before the SQL is run. Current pending list is in
-`PROJECT_ABDUL.md`.
+New tables and functions go in `supabase/migrations/NNN_*.sql` (next number after the
+highest). Since 036 every update is recorded in `app_migrations` and applied by
+`tools/migrate.mjs` (`DATABASE_URL=... npm run db:migrate [-- --dry-run]`), the same
+function (`tools/migrate-core.mjs`) the database tests use. Rules for a file from 036 on:
+- it runs in one transaction and must not fail (no "already exists" tolerance);
+- it ends with `select record_migration('NNN', 'NNN_name.sql');` (so a file pasted by hand
+  into the Supabase SQL editor, the emergency fallback, records itself too);
+- never edit a file after it has been applied (the runner checks its checksum): add a new one;
+- release order is database first, then app, so every update must work with the app version
+  that is already live (add now, drop in a later release, marked `-- nexper:contract`).
+Code that depends on a new update must fail politely when it is missing (show "needs the
+latest database update"): check `lib/dbVersion.js` / `useDbVersion().atLeast("NNN")`.
+Current pending list is in `PROJECT_ABDUL.md`. After adding a file, raise
+`EXPECTED_DB_VERSION` in `lib/dbVersion.js` (a unit test keeps it equal to the newest file).
+A new table also follows the checklist in `tests/db/catalog.mjs` (row-level security,
+`shop_id` cascade, index, isolation entry) and, if it holds shop books, `lib/shopTables.js`
+and a closed-shop guard trigger (migration 037 shows how).
 
 ## Security rules
 
@@ -154,7 +186,29 @@ the app can be deployed before the SQL is run. Current pending list is in
   owner's own address through Resend, only on their click.
 - Headers and CSP are in `next.config.js` (login also allows `accounts.google.com/gsi/` for Google's button). A new outside host (script, font,
   API) must be added there on purpose.
-- `npm test` and `node tools/audit.mjs` (npm audit with a short, dated allow-list) must pass.
+- `npm test`, `npm run test:db` and `node tools/audit.mjs` (npm audit with a short, dated allow-list) must pass.
+
+## Rules from the multi-tenant work (docs/MULTITENANT_DESIGN.md)
+
+- **Closed shops are read-only in the database** (`<table>_closed_guard`). Never delete a
+  shop from app code: use `close_shop`; the purge job removes it after 90 days.
+- **Support access** is only through the `support_*` database functions and
+  `/api/admin/support/*`: a reason, a time limit, every read logged before it is returned,
+  phone numbers masked, audit logs append-only. Do not add another way to read a client's data.
+- **Admin routes need MFA**: `requireAdmin` checks the `aal2` claim. Keep it first.
+- **Saving a bill** goes through `save_bill` with an id made on the device (so a retry or
+  the offline queue cannot double-save). Keep `legacySave` only until all shops have 042.
+- **Rate limits** use `isRateLimited` (async, shared in Postgres, falls back to memory):
+  always `await` it.
+- **Deleting rows people may want back** (items, customers, bills...) goes through the
+  30-day trash (`deleted_rows`, migration 044), not a bare delete.
+- **Totals for a day** come from `shop_day_stats` (IST day); don't re-add all bills on a screen.
+- **Plans and limits** are evaluated shop override, then company, then legacy shop plan
+  (`lib/platformConfig.js`). Never read a plan column directly.
+- **No hard-coded Supabase URL, key or app address**: use the env vars
+  (`NEXT_PUBLIC_APP_URL`); `tests/guardrails.test.mjs` fails otherwise. Silos: `docs/SILOS.md`.
+- Errors from the app go to our own log (`/api/log-error`); scrub with `lib/errorScrub.js`.
+  Releases, backups and restore: `docs/RELEASE.md`, `docs/RUNBOOK_RESTORE.md`.
 
 ## Before you push
 
@@ -186,6 +240,14 @@ the app can be deployed before the SQL is run. Current pending list is in
   takes the price from the shop's own item). Do not add direct insert policies on
   `supply_entries`.
 - Departments are never deleted (history stays correct); they are hidden instead.
-- Any new table that holds shop data needs `shop_id`, row-level security and a case in
-  `tests/db/supplies.rls.mjs` style: two shops, one must never see the other.
+- **New-table checklist (the build fails until all of it is true):** row-level security on;
+  a line in `tests/db/tables.mjs` (kind and lifecycle: what the data is and when it goes
+  away); if it holds shop data, `shop_id uuid references shops(id) on delete cascade` and an
+  index that starts with `shop_id`; an entry in `tests/db/isolation.rls.mjs`. A
+  `security definer` function sets `search_path` and revokes `anon`/`public`. An update
+  from 036 on ends with `record_migration(...)` and never drops a table or column unless
+  marked `-- nexper:contract`. `tests/db/catalog.mjs` checks all of it. See
+  `docs/ARCHITECTURE.md`.
+- **Never read a growing table without a window or `fetchAll`** (`lib/fetchAll.js`): the
+  API silently stops at 1000 rows.
 
