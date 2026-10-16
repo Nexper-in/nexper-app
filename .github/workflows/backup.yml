@@ -1,16 +1,16 @@
-# Weekly encrypted copy of the production database, kept outside Supabase (S3, Mumbai).
+# Weekly encrypted copy of the production database, stored as a GitHub Actions artifact —
+# no AWS account needed, free on a private repo at this database size (under 1 GB).
 # Needs the "production-backup" environment (no reviewers: it must run unattended) with
-# secrets DATABASE_URL, DATABASE_CA_PEM (optional), BACKUP_S3_BUCKET, BACKUP_S3_KEY_ID,
-# BACKUP_S3_SECRET, and the repository variable PG_MAJOR (the Postgres major version of the
-# Supabase project, for example 17). The age PUBLIC key is in ops/backup.pub; the private
-# key is kept offline by Maqbool. See docs/RUNBOOK_RESTORE.md.
+# secrets DATABASE_URL, DATABASE_CA_PEM (optional), and the repository variable PG_MAJOR
+# (the Postgres major version of the Supabase project, for example 17). The age PUBLIC key
+# is in ops/backup.pub; the private key is kept offline by Maqbool. See docs/RUNBOOK_RESTORE.md.
+#
+# Artifacts are kept for RETENTION_DAYS (below) and then deleted automatically by GitHub —
+# download the one you need before it expires if you're keeping it longer term.
 name: backup
-# NOT IN USE: the decision is to rely on Supabase's own backups. The weekly schedule is OFF (there is
-# no S3 bucket or secrets, so a scheduled run would fail every Sunday). To use this later, do Part 6 of
-# MAQBOOL_TASKS.md and remove the "#" in front of the two lines under "schedule:".
 on:
-  # schedule:
-  #   - cron: "43 20 * * 0"   # Sunday 20:43 UTC = Monday 02:13 IST
+  schedule:
+    - cron: "43 20 * * 0"   # Sunday 20:43 UTC = Monday 02:13 IST
   workflow_dispatch:
     inputs:
       target:
@@ -21,6 +21,9 @@ on:
 permissions:
   contents: read
 
+env:
+  RETENTION_DAYS: 90   # GitHub's own maximum for a free/private repo.
+
 jobs:
   dump:
     runs-on: ubuntu-latest
@@ -28,10 +31,6 @@ jobs:
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       PG_MAJOR: ${{ vars.PG_MAJOR || '17' }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.BACKUP_S3_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_S3_SECRET }}
-      AWS_DEFAULT_REGION: ap-south-1
-      BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
     steps:
       - uses: actions/checkout@v4
 
@@ -72,16 +71,20 @@ jobs:
           done
           ls -l nexper-*.age
 
-      - name: Upload
-        run: |
-          for f in nexper-"$STAMP".dump.age nexper-"$STAMP"-auth.dump.age; do
-            aws s3 cp "$f" "s3://$BUCKET/weekly/$f" --only-show-errors
-          done
+      - name: Upload as a GitHub Actions artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexper-backup-${{ env.STAMP }}
+          path: nexper-*.dump.age
+          retention-days: ${{ env.RETENTION_DAYS }}
+          if-no-files-found: error
 
       - name: Summary
         run: |
           {
             echo "## Backup uploaded"
-            echo "- Files: weekly/nexper-$STAMP.dump.age ($(stat -c %s "nexper-$STAMP.dump.age") bytes) and weekly/nexper-$STAMP-auth.dump.age"
+            echo "- Artifact: nexper-backup-$STAMP (kept $RETENTION_DAYS days, then GitHub deletes it)"
+            echo "- Files inside: nexper-$STAMP.dump.age ($(stat -c %s "nexper-$STAMP.dump.age") bytes) and nexper-$STAMP-auth.dump.age"
+            echo "- Download it from this run's page (Actions → this workflow run → Artifacts) before it expires if you want a longer-term copy."
             echo "- Next step for a human: once a quarter, restore-test it (docs/RUNBOOK_RESTORE.md)"
           } >> "$GITHUB_STEP_SUMMARY"
