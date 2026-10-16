@@ -79,7 +79,7 @@ function; nothing else needs to change.
 
 ## 5. Safety of the data
 
-- **Backups**: our own nightly encrypted dump to S3 Mumbai (`backup.yml`), plus Supabase's. Supabase's free plan has no point-in-time recovery. Real clients need the
+- **Backups**: Supabase's own backups only (decision; an offsite S3 copy exists as an unused workflow, `backup.yml`). Supabase's free plan has no point-in-time recovery. Real clients need the
   Pro plan (or better) and one test restore. Check the project **region is Mumbai
   (ap-south-1)**: it cannot be changed later without moving the data.
 - **Owner backup**: Store settings, "Download backup": a zip of spreadsheets built from the owner's own session (`lib/exportData.js`), so it can only contain their shop.

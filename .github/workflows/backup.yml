@@ -5,9 +5,9 @@
 # Supabase project, for example 17). The age PUBLIC key is in ops/backup.pub; the private
 # key is kept offline by Maqbool. See docs/RUNBOOK_RESTORE.md.
 name: backup
-# The weekly schedule is OFF while offsite backups are postponed (no S3 bucket or secrets yet:
-# a scheduled run would fail every Sunday). To switch it on when Part 6 of MAQBOOL_TASKS.md is
-# done, remove the "#" in front of the two lines under "schedule:".
+# NOT IN USE: the decision is to rely on Supabase's own backups. The weekly schedule is OFF (there is
+# no S3 bucket or secrets, so a scheduled run would fail every Sunday). To use this later, do Part 6 of
+# MAQBOOL_TASKS.md and remove the "#" in front of the two lines under "schedule:".
 on:
   # schedule:
   #   - cron: "43 20 * * 0"   # Sunday 20:43 UTC = Monday 02:13 IST
