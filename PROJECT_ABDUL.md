@@ -181,9 +181,6 @@ Then "Continue with Google" shows first and email becomes a fallback link.
 
 ## 8. Open items
 
-**Decision (2026-10):** no scheduled jobs. The nightly summary email and the 90-day purge of closed shops were removed; `vercel.json` has no crons; "Close my account" was removed. See SECURITY.md, "No automatic emails or deletion".
-
-
 **For maqbool (Vercel / Supabase / domain):**
 - Point `app.nexper.in` at the `nexper-app` Vercel project; set Supabase Auth
   Site URL and redirect URLs to it (otherwise password-reset emails point at
