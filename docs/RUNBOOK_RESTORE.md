@@ -1,6 +1,6 @@
 # Backups and restores
 
-> **Status: we rely on Supabase's own backups only (decision).** The weekly offsite `backup` workflow described below is **not in use**: its schedule is off (see `.github/workflows/backup.yml`) and no S3 bucket exists. To restore, use Supabase's dashboard (Database, Backups; the Free plan keeps none, Pro keeps daily backups for 7 days). Everything below about S3 and age keys applies only if offsite backups are set up later.
+> **Status: on Supabase's Free plan (no plan backups), so the weekly `backup` workflow is the only copy of the data outside the live database.** It stores an encrypted dump as a GitHub Actions artifact (not S3 — no AWS account used), kept 90 days. Set it up once: generate the age key (below), add the two secrets to the `production-backup` environment, then run it once manually to confirm it works. Move to Supabase Pro's daily backups when the business can justify the cost; this workflow can keep running alongside that too.
 
 What we have, how to get data back, and the test that proves it works. Read this once
 before you need it.
@@ -9,8 +9,8 @@ before you need it.
 
 | Layer | What | Kept | Restores |
 | --- | --- | --- | --- |
-| Supabase daily backup | automatic, Pro plan | 7 days | the whole project (dashboard, Database, Backups) |
-| Weekly offsite dump | `.github/workflows/backup.yml`: encrypted `pg_dump` in S3 Mumbai | 8 weeks (bucket rule) | a whole database, or one shop (below) |
+| Supabase daily backup | automatic, Pro plan only — not active while on Free | 7 days | the whole project (dashboard, Database, Backups) |
+| Weekly GitHub-stored dump | `.github/workflows/backup.yml`: encrypted `pg_dump`, stored as a GitHub Actions artifact | 90 days (GitHub's own limit) | a whole database, or one shop (below) |
 | Owner's own backup | Store settings, "Download backup" (spreadsheets + `data.json`) | the owner's computer | one shop, with `tools/shop-import.mjs` |
 | Trash for deleted rows | 30 days (task T16) | in the database | a deleted item, supplier, staff member... |
 | Point-in-time recovery | not bought yet (stage B, about 450 paying shops or the first chain contract) | | |
@@ -35,23 +35,23 @@ home and a printed copy in a locked drawer; a second copy with Abdul). If the ke
 every backup is unreadable, so check both copies each quarter. (Install: `sudo apt install
 age`, or `brew install age`, or download from https://github.com/FiloSottile/age.)
 
-## One-time bucket setup (S3, region ap-south-1 Mumbai)
+## One-time setup (no AWS account — the dump is stored as a GitHub Actions artifact)
 
-1. Create a private bucket, block all public access, turn on **versioning** and **default
-   encryption**.
-2. Lifecycle rule: expire objects under `weekly/` after 56 days.
-3. Create an IAM user for the backup job with only `s3:PutObject` on `arn:aws:s3:::BUCKET/weekly/*`.
-   Create a **separate** IAM user for yourself (restore) with `s3:GetObject`/`s3:ListBucket`.
-4. GitHub, Settings, Environments: create `production-backup` (no reviewers). Secrets:
-   `DATABASE_URL` (the real project's **session pooler** string; the backup needs to read every
-   row, so it uses the main `postgres` login), `DATABASE_CA_PEM` (optional), `BACKUP_S3_BUCKET`,
-   `BACKUP_S3_KEY_ID`, `BACKUP_S3_SECRET`. Repository variable `PG_MAJOR`: the Postgres major
-   version of the project (Supabase, Project Settings, Infrastructure; for example 17).
-5. Keep `main` protected (pull request required) so nobody can change the backup workflow
+1. GitHub, Settings, Environments: create `production-backup` (no reviewers — the job must
+   run unattended on its Sunday schedule). Secrets: `DATABASE_URL` (the real project's
+   **session pooler** connection string; the backup needs to read every row, so it uses the
+   main `postgres` login), `DATABASE_CA_PEM` (optional, the project's SSL certificate text).
+   Repository variable `PG_MAJOR`: the Postgres major version of the project (Supabase,
+   Project Settings, Infrastructure; for example 17).
+2. Keep `main` protected (pull request required) so nobody can change the backup workflow
    without a review: it can read everything.
-6. Practice run: Actions, `backup`, Run workflow, target `staging` (needs the same secrets in a
-   `staging` environment: add `BACKUP_S3_*` there for the practice, remove them afterwards).
-   Then run it for real (target `production-backup`).
+3. Practice run: Actions, `backup`, Run workflow, target `staging` (needs the same two
+   secrets in a `staging` environment, pointed at `nexper-staging` instead). Then run it for
+   real (target `production-backup`).
+4. The encrypted dump lands as a downloadable artifact on that run's page (Actions → the
+   `backup` workflow → the run → Artifacts, near the bottom). GitHub deletes it automatically
+   after 90 days — download a copy somewhere else if you want to keep one longer, or raise
+   `RETENTION_DAYS` in `.github/workflows/backup.yml` (up to what the GitHub plan allows).
 
 ## Whole-database restore (disaster, or the quarterly test)
 
@@ -59,10 +59,10 @@ Target: a **new, empty** Supabase project in Mumbai (for a disaster: a new proje
 become production; for the test: a scratch project, or `nexper-staging` if you wipe it first).
 This procedure was tried on a real Postgres 16 with the real schema.
 
-1. Download both files for the date you want and decrypt them with the private key:
+1. Download both files for the date you want and decrypt them with the private key. GitHub,
+   Actions → `backup` → the run for that date → scroll to **Artifacts** → download
+   `nexper-backup-DATE` (a zip holding both `.dump.age` files) and unzip it. Then:
    ```
-   aws s3 cp s3://BUCKET/weekly/nexper-DATE.dump.age .
-   aws s3 cp s3://BUCKET/weekly/nexper-DATE-auth.dump.age .
    age -d -i nexper-backup-key.txt -o nexper.dump nexper-DATE.dump.age
    age -d -i nexper-backup-key.txt -o nexper-auth.dump nexper-DATE-auth.dump.age
    ```
@@ -127,5 +127,4 @@ that week (see section 3.8 of `docs/MULTITENANT_DESIGN.md`).
 | Item | Held by |
 | --- | --- |
 | age private key | Maqbool (two offline copies) and Abdul (one copy) |
-| S3 restore login | Maqbool |
 | Supabase and GitHub owner accounts | Maqbool and Abdul, MFA on |
