@@ -30,6 +30,12 @@ await b.exec(`create or replace function is_shop_owner(target_shop_id uuid) retu
 const d2 = compareSnapshots(sa, await snap(b), "A", "B");
 t.ok(d2.diffs.some((x) => x.includes("is_shop_owner")), "a function changed by hand is reported");
 
+// the same function body, but with the line-ending and trailing-whitespace noise that
+// pasting into the Supabase SQL editor can introduce: not real drift
+await b.exec(`create or replace function record_migration(p_version text, p_name text) returns void language sql set search_path = public as $$\r\n  insert into app_migrations (version, name) values (p_version, p_name)   \r\n  on conflict (version) do nothing;  \r\n$$;`);
+const d3 = compareSnapshots(sa, await snap(b), "A", "B");
+t.ok(!d3.diffs.some((x) => x.includes("record_migration")), "whitespace-only differences in a function body are not reported");
+
 // different update versions: not compared, said plainly
 const old = await buildDb({ upTo: "035" });
 await old.exec(`create table app_migrations (version text primary key, name text, checksum text)`);
