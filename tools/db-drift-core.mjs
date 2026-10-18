@@ -5,7 +5,19 @@ import crypto from "node:crypto";
 import path from "node:path";
 import { listMigrations } from "./migrate-core.mjs";
 
-const md5 = (s) => crypto.createHash("md5").update(String(s ?? "")).digest("hex");
+// Functions applied by hand through the Supabase SQL editor can pick up line-ending or
+// trailing-whitespace differences from copy-pasting that a byte-for-byte replay from the
+// repository's files never introduces. None of that changes what the function does, so it
+// is normalized away before hashing -- the hash should only move when the SQL itself did.
+const normalizeBody = (s) =>
+  String(s ?? "")
+    .replace(/\r\n?/g, "\n")
+    .split("\n")
+    .map((line) => line.replace(/[ \t]+$/, ""))
+    .join("\n")
+    .trim();
+
+const md5 = (s) => crypto.createHash("md5").update(normalizeBody(s)).digest("hex");
 
 // client: { rows(sql) }
 export async function snapshot(client) {
