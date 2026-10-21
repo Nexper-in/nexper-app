@@ -9,7 +9,7 @@ import { rupee } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import usePlayArea from "./usePlayArea";
 
-// Play area: carom, snooker, chess, video game consoles — anything a tea shop
+// Play area: carrom, snooker, chess, video game consoles — anything a tea shop
 // or canteen rents out by the hour. One grid of stations, each either idle or
 // running with a live ticking amount. One layout for phone and laptop.
 export default function PlayAreaPage() {
@@ -73,7 +73,7 @@ function PlayAreaScreen() {
       {vm.cards.length === 0 ? (
         <div className="ks-card p-6 text-center text-sm" style={{ color: "var(--text-secondary)" }}>
           <Gamepad2 size={28} className="mx-auto mb-2 opacity-60" />
-          {t("No stations yet — add a carom table, chess set, snooker table or game console to get started.")}
+          {t("No stations yet — add a carrom table, chess set, snooker table or game console to get started.")}
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -155,7 +155,7 @@ function PlayAreaScreen() {
 function StationModal({ station, types, onSave, onClose }) {
   const t = useT();
   const [name, setName] = useState(station?.name || "");
-  const [type, setType] = useState(station?.type || "carom");
+  const [type, setType] = useState(station?.type || "carrom");
   const [rate, setRate] = useState(station ? String(station.hourly_rate) : "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -179,7 +179,7 @@ function StationModal({ station, types, onSave, onClose }) {
     <Modal title={station ? t("Edit station") : t("Add station")} onClose={onClose}>
       <div className="space-y-3.5">
         <Field label={t("Station name")}>
-          <input autoFocus className="ks-input" maxLength={60} value={name} onChange={(e) => setName(e.target.value)} placeholder={t("e.g. Carom Table 1")} />
+          <input autoFocus className="ks-input" maxLength={60} value={name} onChange={(e) => setName(e.target.value)} placeholder={t("e.g. Carrom Table 1")} />
         </Field>
         <Field label={t("Station type")}>
           <select className="ks-input" value={type} onChange={(e) => setType(e.target.value)}>
