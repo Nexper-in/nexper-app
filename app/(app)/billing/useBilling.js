@@ -230,6 +230,39 @@ export function useBilling() {
     lines.forEach(({ item, qty }) => addToCart(item, qty));
   }
 
+  // A finished Play area session (see app/(app)/play-area), added as its own
+  // line — no shop_product_id, so no stock is touched when the bill is saved
+  // (see migration 047's _deduct_stock). Keyed by session_id instead, since
+  // several game charges can be on one bill and none of them is a shop_product.
+  function addGameCharge(session) {
+    if (cart.some((c) => c.session_id === session.id)) return;
+    const minutes = Math.max(1, Math.round((new Date(session.stopped_at) - new Date(session.started_at)) / 60000));
+    setCart((prev) => [
+      ...prev,
+      {
+        shop_product_id: null,
+        session_id: session.id,
+        name: `${session.station_name} (${minutes} ${t("min")})`,
+        price: Number(session.amount),
+        mrp: null,
+        originalPrice: null,
+        clearancePct: null,
+        unit: "session",
+        gst: 0,
+        qty: 1,
+        stock: Infinity,
+      },
+    ]);
+  }
+  function removeGameCharge(sessionId) {
+    setCart((prev) => prev.filter((c) => c.session_id !== sessionId));
+  }
+  async function fetchUnbilledGameSessions() {
+    const { data, error: err } = await supabase.rpc("unbilled_game_sessions", { p_shop: activeShopId });
+    if (err) throw new Error(err.message);
+    return data || [];
+  }
+
   function updateQty(id, qty) {
     const line = cart.find((c) => c.shop_product_id === id);
     if (!line) return;
@@ -287,8 +320,9 @@ export function useBilling() {
       const billNo = `KS-${1000 + totalBills + 1}`;
       const billItems = cart.map(({ shop_product_id, code, name, price, mrp, unit, gst, qty }) => {
         const inv = items.find((i) => i.id === shop_product_id);
-        return { shop_product_id, code, name, price, mrp: mrp || null, unit, gst, qty, cost_price: inv?.cost_price ?? null };
+        return { shop_product_id: shop_product_id || null, code, name, price, mrp: mrp || null, unit, gst, qty, cost_price: inv?.cost_price ?? null };
       });
+      const gameLines = cart.filter((c) => c.session_id);
       // Built client-side (including the id) so a queued/offline bill can
       // be shown, printed, and sent immediately — it reconciles with the
       // real row once runQueued's background flush actually writes it.
@@ -328,6 +362,19 @@ export function useBilling() {
         if (saved.data?.bill_no) bill.bill_no = saved.data.bill_no;
       } else {
         offline = await legacySave(bill, billItems, billNo);
+      }
+
+      // Mark each game session as billed so it can't be added to another bill.
+      // Best-effort: the bill itself is already saved either way, so a failed
+      // attach here just leaves that session findable as unbilled again.
+      if (!offline && gameLines.length) {
+        await Promise.all(
+          gameLines.map((l) =>
+            supabase
+              .rpc("attach_game_session_to_bill", { p_session: l.session_id, p_bill: bill.id })
+              .then(({ error: attachErr }) => attachErr && console.error("attach_game_session_to_bill", attachErr))
+          )
+        );
       }
 
       if (offline) {
@@ -480,5 +527,6 @@ export function useBilling() {
     cartGst, nextBillNo, clearCart, quickItems, cartQty, pay, choosePay, displayItems, browsing,
     generateBill, handleVoiceBillingConfirm, startBarcodeScanner, printBill, addToCart,
     showHandwritten, setShowHandwritten, addMatched,
+    addGameCharge, removeGameCharge, fetchUnbilledGameSessions,
   };
 }
