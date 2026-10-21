@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import {
-  Search, FileText, Plus, Minus, X, Mic, Printer, MessageCircle, CheckCircle2, Loader2, ScanLine, Banknote, QrCode, CreditCard, Landmark, BookOpen, ChevronDown, Gamepad2,
+  Search, FileText, Plus, Minus, X, Mic, Printer, MessageCircle, CheckCircle2, Loader2, ScanLine, Banknote, QrCode, CreditCard, Landmark, BookOpen, ChevronDown, Gamepad2, Play, Square,
 } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import QtyPickerModal from "@/components/QtyPickerModal";
@@ -13,6 +13,8 @@ import HandwrittenBillModal from "@/components/HandwrittenBillModal";
 import { rupee } from "@/lib/format";
 import { hasFeature } from "@/lib/platformConfig";
 import { whatsappLink, billMessageText } from "@/lib/messaging";
+import usePlayArea from "../play-area/usePlayArea";
+import { clock, StationModal } from "../play-area/PlayAreaParts";
 
 // Pieces of New bill shared by the phone and laptop screens.
 
@@ -215,7 +217,7 @@ export function BillPanel({ vm, wide, alwaysDetails }) {
               className="w-full mb-3 text-xs font-semibold py-2 rounded-xl flex items-center justify-center gap-1.5"
               style={{ background: "var(--bg-surface-alt)", color: "var(--text-secondary)" }}
             >
-              <Gamepad2 size={13} /> {t("Add game charge")}
+              <Gamepad2 size={13} /> {t("Play area")}
             </button>
           )}
           {gamePicker && <GameChargeModal vm={vm} onClose={() => setGamePicker(false)} />}
@@ -400,53 +402,131 @@ export function BillPanel({ vm, wide, alwaysDetails }) {
   );
 }
 
-// Finished Play area sessions (see app/(app)/play-area) not yet on a bill.
-// Fetched on open rather than kept live on the billing screen, since it's
-// only needed the moment someone taps "Add game charge".
+// Play area, right from New bill: add a station, see what's running and for
+// how much, start an idle one, or stop one and put its charge straight on the
+// bill in one tap. A session stopped on the Play area screen itself (see
+// app/(app)/play-area) instead of from here still shows up below, ready to bill.
 function GameChargeModal({ vm, onClose }) {
   const { t, addGameCharge, fetchUnbilledGameSessions } = vm;
-  const [sessions, setSessions] = useState(null); // null while loading
+  const playArea = usePlayArea();
+  const [stationModal, setStationModal] = useState(false);
+  const [unbilled, setUnbilled] = useState(null); // null while loading
   const [error, setError] = useState("");
 
   useEffect(() => {
     fetchUnbilledGameSessions()
-      .then(setSessions)
+      .then(setUnbilled)
       .catch((e) => setError(e.message));
     // Runs once, when the modal opens.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  async function onStop(stationId) {
+    const stopped = await playArea.stopStation(stationId);
+    if (stopped) addGameCharge(stopped);
+  }
+
+  const loading = playArea.loading || unbilled === null;
+
   return (
-    <Modal title={t("Add game charge")} onClose={onClose}>
+    <Modal title={t("Play area")} onClose={onClose}>
+      <button
+        type="button"
+        onClick={() => setStationModal(true)}
+        className="ks-btn-outline w-full text-sm flex items-center justify-center gap-1.5 py-2.5 mb-3"
+      >
+        <Plus size={15} /> {t("Add station")}
+      </button>
+
       {error ? (
         <p className="text-sm text-[var(--danger)]">{error}</p>
-      ) : sessions === null ? (
+      ) : playArea.error ? (
+        <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+          {playArea.error === "setup"
+            ? t("Play area needs a database update first. Ask whoever looks after your setup to run update 047.")
+            : t("Something went wrong. Try again.")}
+        </p>
+      ) : loading ? (
         <div className="flex items-center gap-2 text-sm py-4 justify-center" style={{ color: "var(--text-secondary)" }}>
           <Loader2 size={16} className="animate-spin" /> {t("Loading…")}
         </div>
-      ) : sessions.length === 0 ? (
-        <p className="text-sm py-4 text-center" style={{ color: "var(--text-secondary)" }}>
-          {t("No finished games waiting to be billed. Stop a station on the Play area screen first.")}
-        </p>
       ) : (
-        <div className="space-y-2">
-          {sessions.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => {
-                addGameCharge(s);
-                onClose();
-              }}
-              className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold"
-              style={{ background: "var(--bg-surface-alt)" }}
-            >
-              <span className="flex items-center gap-2">
-                <Gamepad2 size={14} /> {s.station_name}
-              </span>
-              <span className="ks-mono">{rupee(s.amount)}</span>
-            </button>
-          ))}
-        </div>
+        <>
+          {playArea.cards.length === 0 ? (
+            <p className="text-sm py-2 text-center" style={{ color: "var(--text-secondary)" }}>
+              {t("No stations yet — add a carrom table, chess set, snooker table or game console to get started.")}
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {playArea.cards.map(({ station, session, elapsedSeconds, estimate }) => (
+                <div
+                  key={station.id}
+                  className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl"
+                  style={{ background: "var(--bg-surface-alt)" }}
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold truncate">{station.name}</p>
+                    <p className="text-xs ks-mono" style={{ color: "var(--text-secondary)" }}>
+                      {session ? `${clock(elapsedSeconds)} · ${rupee(estimate)} ${t("so far")}` : `${rupee(station.hourly_rate)}/${t("hr")}`}
+                    </p>
+                  </div>
+                  {session ? (
+                    <button
+                      disabled={playArea.busy === station.id}
+                      onClick={() => onStop(station.id)}
+                      className="text-xs font-semibold px-3 py-2 rounded-lg flex items-center gap-1.5 shrink-0"
+                      style={{ background: "var(--danger-soft)", color: "var(--danger)" }}
+                    >
+                      {playArea.busy === station.id ? <Loader2 size={13} className="animate-spin" /> : <Square size={13} />} {t("Stop & bill")}
+                    </button>
+                  ) : (
+                    <button
+                      disabled={playArea.busy === station.id}
+                      onClick={() => playArea.startStation(station.id)}
+                      className="ks-btn-primary text-xs px-3 py-2 flex items-center gap-1.5 shrink-0"
+                    >
+                      {playArea.busy === station.id ? <Loader2 size={13} className="animate-spin" /> : <Play size={13} />} {t("Start")}
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {unbilled.length > 0 && (
+            <>
+              <p className="text-xs font-semibold mt-4 mb-2" style={{ color: "var(--text-secondary)" }}>
+                {t("Ready to bill")}
+              </p>
+              <div className="space-y-2">
+                {unbilled.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => {
+                      addGameCharge(s);
+                      onClose();
+                    }}
+                    className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold"
+                    style={{ background: "var(--bg-surface-alt)" }}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Gamepad2 size={14} /> {s.station_name}
+                    </span>
+                    <span className="ks-mono">{rupee(s.amount)}</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </>
+      )}
+
+      {stationModal && (
+        <StationModal
+          types={playArea.TYPES}
+          onClose={() => setStationModal(false)}
+          onSave={(fields) => playArea.addStation(fields)}
+        />
       )}
     </Modal>
   );
