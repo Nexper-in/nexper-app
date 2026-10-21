@@ -136,9 +136,8 @@ export function BillPanel({ vm, wide, alwaysDetails }) {
     t, activeShop, cart, customer, setCustomer, billType, paymentMethod, loyaltyDiscount, setLoyaltyDiscount,
     manualDiscount, setManualDiscount, lastBill, showDetails, setShowDetails, generating, cleanPhone, previousVisits,
     isLoyal, updateQty, total, discountAmount, clearanceSavings, cartGst, clearCart, cartQty, pay, choosePay,
-    generateBill, printBill, removeGameCharge,
+    generateBill, printBill, removeGameCharge, gamePicker, setGamePicker,
   } = vm;
-  const [gamePicker, setGamePicker] = useState(false);
   const detailsOpen = showDetails || alwaysDetails;
   return (
     <div id="bill-panel" className={`ks-card p-4 sm:p-5 sticky top-20 scroll-mt-20 ${wide ? "max-h-[calc(100vh-6.5rem)] overflow-y-auto ks-scroll" : ""}`}>
