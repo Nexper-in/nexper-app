@@ -37,7 +37,7 @@ export default function BillingDesktop({ vm }) {
               })}
               {hasFeature(activeShop, "play_area") && (
                 // Not an item category -- there's nothing to filter the grid by. Tapping it
-                // opens the same "Add game charge" picker as the button below the cart, so a
+                // opens the same Play area picker as the button below the cart, so a
                 // cashier browsing items doesn't have to scroll down to find it.
                 <button
                   type="button"

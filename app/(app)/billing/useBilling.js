@@ -42,8 +42,8 @@ export function useBilling() {
   const [showVoiceBilling, setShowVoiceBilling] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [showHandwritten, setShowHandwritten] = useState(false);
-  // Shared so both the "Add game charge" button and the Play area category
-  // chip (desktop) can open the same picker.
+  // Shared so both the "Play area" button and the Play area category chip
+  // (desktop) can open the same picker.
   const [gamePicker, setGamePicker] = useState(false);
   // Phones: hide the floating checkout bar while the Save bill button is on screen.
   const [billInView, setBillInView] = useState(false);

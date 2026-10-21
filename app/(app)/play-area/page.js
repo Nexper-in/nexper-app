@@ -4,10 +4,10 @@ import { useState } from "react";
 import { Loader2, Play, Square, Pencil, Plus, Gamepad2 } from "lucide-react";
 import ModuleGuard from "@/components/ModuleGuard";
 import Modal from "@/components/ui/Modal";
-import Field from "@/components/ui/Field";
 import { rupee } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import usePlayArea from "./usePlayArea";
+import { clock, StationModal } from "./PlayAreaParts";
 
 // Play area: carrom, snooker, chess, video game consoles — anything a tea shop
 // or canteen rents out by the hour. One grid of stations, each either idle or
@@ -18,16 +18,6 @@ export default function PlayAreaPage() {
       <PlayAreaScreen />
     </ModuleGuard>
   );
-}
-
-function clock(totalSeconds) {
-  const s = Math.max(0, totalSeconds);
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const sec = s % 60;
-  const mm = String(m).padStart(2, "0");
-  const ss = String(sec).padStart(2, "0");
-  return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
 }
 
 function PlayAreaScreen() {
@@ -142,70 +132,12 @@ function PlayAreaScreen() {
             <p className="text-sm" style={{ color: "var(--text-secondary)" }}>{justStopped.name}</p>
             <p className="ks-display text-3xl font-extrabold ks-mono my-2">{rupee(justStopped.amount)}</p>
             <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-              {t("Add it to the customer's bill from the New bill screen — look for \"Add game charge\".")}
+              {t("Add it to the customer's bill from the New bill screen — look for \"Play area\".")}
             </p>
             <button onClick={() => setJustStopped(null)} className="ks-btn-primary w-full mt-4">{t("Done")}</button>
           </div>
         </Modal>
       )}
     </div>
-  );
-}
-
-function StationModal({ station, types, onSave, onClose }) {
-  const t = useT();
-  const [name, setName] = useState(station?.name || "");
-  const [type, setType] = useState(station?.type || "carrom");
-  const [rate, setRate] = useState(station ? String(station.hourly_rate) : "");
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-
-  async function submit(fields) {
-    setSaving(true);
-    setError("");
-    try {
-      await onSave(fields);
-      onClose();
-    } catch (e) {
-      setError(e.message);
-      setSaving(false);
-    }
-  }
-
-  const rateNum = parseFloat(rate);
-  const valid = name.trim().length > 0 && rateNum >= 0 && rateNum <= 100000;
-
-  return (
-    <Modal title={station ? t("Edit station") : t("Add station")} onClose={onClose}>
-      <div className="space-y-3.5">
-        <Field label={t("Station name")}>
-          <input autoFocus className="ks-input" maxLength={60} value={name} onChange={(e) => setName(e.target.value)} placeholder={t("e.g. Carrom Table 1")} />
-        </Field>
-        <Field label={t("Station type")}>
-          <select className="ks-input" value={type} onChange={(e) => setType(e.target.value)}>
-            {types.map((ty) => (
-              <option key={ty.id} value={ty.id}>{t(ty.label)}</option>
-            ))}
-          </select>
-        </Field>
-        <Field label={t("Rate per hour (₹)")}>
-          <input className="ks-input" inputMode="decimal" value={rate} onChange={(e) => setRate(e.target.value)} placeholder="50" />
-        </Field>
-        {error && <p className="text-sm text-[var(--danger)] bg-[var(--danger-soft)] border border-[var(--danger-line)] rounded-lg px-3 py-2">{error}</p>}
-        <button
-          disabled={!valid || saving}
-          onClick={() => submit({ name: name.trim(), type, hourly_rate: Math.round(rateNum * 100) / 100 })}
-          className="ks-btn-primary w-full flex items-center justify-center gap-2"
-        >
-          {saving && <Loader2 size={16} className="animate-spin" />}
-          {t("Save")}
-        </button>
-        {station && (
-          <button disabled={saving} onClick={() => submit({ active: !station.active })} className="ks-btn-outline w-full text-sm">
-            {station.active ? t("Hide this station") : t("Show this station again")}
-          </button>
-        )}
-      </div>
-    </Modal>
   );
 }
