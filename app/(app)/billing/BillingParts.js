@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
-  Search, FileText, Plus, Minus, Mic, Printer, MessageCircle, CheckCircle2, Loader2, ScanLine, Banknote, QrCode, CreditCard, Landmark, BookOpen, ChevronDown,
+  Search, FileText, Plus, Minus, X, Mic, Printer, MessageCircle, CheckCircle2, Loader2, ScanLine, Banknote, QrCode, CreditCard, Landmark, BookOpen, ChevronDown, Gamepad2,
 } from "lucide-react";
+import Modal from "@/components/ui/Modal";
 import QtyPickerModal from "@/components/QtyPickerModal";
 import UpiQrCard from "@/components/UpiQrCard";
 import PrintBillContent from "@/components/PrintBillContent";
@@ -134,8 +136,9 @@ export function BillPanel({ vm, wide, alwaysDetails }) {
     t, activeShop, cart, customer, setCustomer, billType, paymentMethod, loyaltyDiscount, setLoyaltyDiscount,
     manualDiscount, setManualDiscount, lastBill, showDetails, setShowDetails, generating, cleanPhone, previousVisits,
     isLoyal, updateQty, total, discountAmount, clearanceSavings, cartGst, clearCart, cartQty, pay, choosePay,
-    generateBill, printBill,
+    generateBill, printBill, removeGameCharge,
   } = vm;
+  const [gamePicker, setGamePicker] = useState(false);
   const detailsOpen = showDetails || alwaysDetails;
   return (
     <div id="bill-panel" className={`ks-card p-4 sm:p-5 sticky top-20 scroll-mt-20 ${wide ? "max-h-[calc(100vh-6.5rem)] overflow-y-auto ks-scroll" : ""}`}>
@@ -178,23 +181,45 @@ export function BillPanel({ vm, wide, alwaysDetails }) {
             </div>
           ) : (
             <div className={`space-y-2.5 mb-3 ${wide ? "max-h-[42vh]" : "max-h-60"} overflow-y-auto ks-scroll`}>
-              {cart.map((c) => (
-                <div key={c.shop_product_id} className="flex items-center gap-2">
-                  <span className="text-sm flex-1 font-medium truncate">{c.name}</span>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <button onClick={() => updateQty(c.shop_product_id, c.qty - 1)} className="ks-qtybtn" aria-label={t("One less {name}", { name: c.name })} style={{ width: 30, height: 30 }}>
-                      <Minus size={13} />
-                    </button>
-                    <span className="ks-mono w-6 text-center text-sm font-bold">{c.qty}</span>
-                    <button onClick={() => updateQty(c.shop_product_id, c.qty + 1)} className="ks-qtybtn" aria-label={t("One more {name}", { name: c.name })} style={{ width: 30, height: 30 }}>
-                      <Plus size={13} />
+              {cart.map((c) =>
+                c.session_id ? (
+                  <div key={c.session_id} className="flex items-center gap-2">
+                    <Gamepad2 size={14} className="shrink-0" style={{ color: "var(--text-secondary)" }} />
+                    <span className="text-sm flex-1 font-medium truncate">{c.name}</span>
+                    <span className="ks-mono text-sm font-semibold w-16 text-right shrink-0">{rupee(c.price)}</span>
+                    <button onClick={() => removeGameCharge(c.session_id)} className="ks-qtybtn" aria-label={t("Remove {name}", { name: c.name })} style={{ width: 30, height: 30 }}>
+                      <X size={13} />
                     </button>
                   </div>
-                  <span className="ks-mono text-sm font-semibold w-16 text-right shrink-0">{rupee(c.qty * c.price)}</span>
-                </div>
-              ))}
+                ) : (
+                  <div key={c.shop_product_id} className="flex items-center gap-2">
+                    <span className="text-sm flex-1 font-medium truncate">{c.name}</span>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button onClick={() => updateQty(c.shop_product_id, c.qty - 1)} className="ks-qtybtn" aria-label={t("One less {name}", { name: c.name })} style={{ width: 30, height: 30 }}>
+                        <Minus size={13} />
+                      </button>
+                      <span className="ks-mono w-6 text-center text-sm font-bold">{c.qty}</span>
+                      <button onClick={() => updateQty(c.shop_product_id, c.qty + 1)} className="ks-qtybtn" aria-label={t("One more {name}", { name: c.name })} style={{ width: 30, height: 30 }}>
+                        <Plus size={13} />
+                      </button>
+                    </div>
+                    <span className="ks-mono text-sm font-semibold w-16 text-right shrink-0">{rupee(c.qty * c.price)}</span>
+                  </div>
+                )
+              )}
             </div>
           )}
+          {hasFeature(activeShop, "play_area") && (
+            <button
+              type="button"
+              onClick={() => setGamePicker(true)}
+              className="w-full mb-3 text-xs font-semibold py-2 rounded-xl flex items-center justify-center gap-1.5"
+              style={{ background: "var(--bg-surface-alt)", color: "var(--text-secondary)" }}
+            >
+              <Gamepad2 size={13} /> {t("Add game charge")}
+            </button>
+          )}
+          {gamePicker && <GameChargeModal vm={vm} onClose={() => setGamePicker(false)} />}
 
           {/* Total */}
           <div className="flex items-end justify-between py-3 border-t" style={{ borderColor: "var(--border)" }}>
@@ -373,6 +398,58 @@ export function BillPanel({ vm, wide, alwaysDetails }) {
         </>
       )}
     </div>
+  );
+}
+
+// Finished Play area sessions (see app/(app)/play-area) not yet on a bill.
+// Fetched on open rather than kept live on the billing screen, since it's
+// only needed the moment someone taps "Add game charge".
+function GameChargeModal({ vm, onClose }) {
+  const { t, addGameCharge, fetchUnbilledGameSessions } = vm;
+  const [sessions, setSessions] = useState(null); // null while loading
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetchUnbilledGameSessions()
+      .then(setSessions)
+      .catch((e) => setError(e.message));
+    // Runs once, when the modal opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <Modal title={t("Add game charge")} onClose={onClose}>
+      {error ? (
+        <p className="text-sm text-[var(--danger)]">{error}</p>
+      ) : sessions === null ? (
+        <div className="flex items-center gap-2 text-sm py-4 justify-center" style={{ color: "var(--text-secondary)" }}>
+          <Loader2 size={16} className="animate-spin" /> {t("Loading…")}
+        </div>
+      ) : sessions.length === 0 ? (
+        <p className="text-sm py-4 text-center" style={{ color: "var(--text-secondary)" }}>
+          {t("No finished games waiting to be billed. Stop a station on the Play area screen first.")}
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {sessions.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => {
+                addGameCharge(s);
+                onClose();
+              }}
+              className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold"
+              style={{ background: "var(--bg-surface-alt)" }}
+            >
+              <span className="flex items-center gap-2">
+                <Gamepad2 size={14} /> {s.station_name}
+              </span>
+              <span className="ks-mono">{rupee(s.amount)}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </Modal>
   );
 }
 

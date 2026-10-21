@@ -26,6 +26,7 @@ import {
   Coffee,
   TrendingDown,
   Building2,
+  Gamepad2,
 } from "lucide-react";
 import { useShop } from "@/components/ShopContext";
 import { T, useT } from "@/lib/i18n";
@@ -41,6 +42,7 @@ const MAIN_NAV = [
   { href: "/dashboard", key: "dashboard", label: T("Home"), icon: LayoutDashboard },
   { href: "/billing", key: "billing", label: T("New bill"), icon: Receipt },
   { href: "/supplies", key: "supplies", label: T("Supplies"), icon: Coffee, feature: "supplies" },
+  { href: "/play-area", key: "play_area", label: T("Play area"), icon: Gamepad2, feature: "play_area" },
   { href: "/inventory", key: "inventory", label: T("Stock"), icon: Package },
   { href: "/credit", key: "credit", label: T("Udhaar"), icon: Wallet },
   { href: "/history", key: "history", label: T("Bills"), icon: Clock },
