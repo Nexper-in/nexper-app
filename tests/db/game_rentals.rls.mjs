@@ -63,9 +63,10 @@ await db.exec(`update game_sessions set started_at = now() - interval '25 minute
 await as(db, ownerA);
 const stopped = (await q(`select * from stop_game_session('${started.id}')`))[0];
 // Backdated 25 minutes, but a little real time also passes running the test itself, and the
-// amount is rounded UP to the next full minute -- so the true answer is 25 or 26 minutes at
-// ₹50/hr (₹20.83 or ₹21.67), never less (that would mean time ran backwards).
-t.ok(Number(stopped.amount) >= 20.83 && Number(stopped.amount) <= 21.67, `25ish minutes at ₹50/hr should be ₹20.83-21.67 (got ${stopped.amount})`);
+// amount is rounded UP to the next full minute, then to the nearest rupee (049) -- so the
+// true answer is 25 or 26 minutes at ₹50/hr (₹20.83 -> ₹21, or ₹21.67 -> ₹22), never less
+// (that would mean time ran backwards).
+t.ok(Number(stopped.amount) >= 21 && Number(stopped.amount) <= 22, `25ish minutes at ₹50/hr should round to ₹21-22 (got ${stopped.amount})`);
 const again = (await q(`select * from stop_game_session('${started.id}')`))[0];
 t.ok(Number(again.amount) === Number(stopped.amount), "stopping an already-stopped session is harmless and returns the same amount");
 
@@ -74,7 +75,7 @@ await asService(db);
 await db.exec(`update game_sessions set started_at = now() - interval '40 seconds' where id = '${started2.id}'`);
 await as(db, ownerA);
 const quick = (await q(`select * from stop_game_session('${started2.id}')`))[0];
-t.ok(Number(quick.amount) === Math.round((1 * 50) / 60 * 100) / 100, "a part-minute session is rounded up to a full minute, never free");
+t.ok(Number(quick.amount) === Math.round((1 * 50) / 60), "a part-minute session is rounded up to a full minute, then to the nearest rupee, never free");
 
 await as(db, ownerB);
 t.ok(await fails(`select stop_game_session('${started.id}')`), "another shop's owner cannot stop A's session");

@@ -12,11 +12,13 @@ const TYPES = [
   { id: "other", label: T("Other") },
 ];
 
-// Rounded up to the minute, same rule as the database (stop_game_session),
-// so what a staff member sees ticking up matches what gets charged.
+// Rounded up to the minute, then to the nearest whole rupee -- same rules as the
+// database (stop_game_session), so what a staff member sees ticking up matches
+// what gets charged. Math.round is round-half-up for a positive number, same as
+// Postgres's round(numeric): .5 and above goes up, below .5 stays down.
 function estimateAmount(startedAt, hourlyRate) {
   const minutes = Math.max(1, Math.ceil((Date.now() - new Date(startedAt).getTime()) / 60000));
-  return Math.round(((minutes * hourlyRate) / 60) * 100) / 100;
+  return Math.round((minutes * hourlyRate) / 60);
 }
 
 // Stations (carrom tables, chess sets, a snooker table, game consoles...), who's
