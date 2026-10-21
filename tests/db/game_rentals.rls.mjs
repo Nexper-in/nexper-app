@@ -36,26 +36,26 @@ await db.exec(`insert into shop_members (shop_id, user_id, role, name, permissio
 
 // --- stations: CRUD and isolation ---
 await as(db, ownerA);
-const caromId = (await q(`insert into game_stations (shop_id, name, type, hourly_rate) values ('${shopA}', 'Carom Table 1', 'carom', 50) returning id`))[0].id;
-await db.exec(`insert into game_stations (shop_id, name, type, hourly_rate) values ('${shopA}', 'Carom Table 2', 'carom', 70), ('${shopA}', 'Chess Set', 'chess', 30)`);
-t.ok(await fails(`insert into game_stations (shop_id, name, type, hourly_rate) values ('${shopA}', 'carom table 1', 'carom', 50)`), "station names are unique per shop, ignoring case");
+const carromId = (await q(`insert into game_stations (shop_id, name, type, hourly_rate) values ('${shopA}', 'Carrom Table 1', 'carrom', 50) returning id`))[0].id;
+await db.exec(`insert into game_stations (shop_id, name, type, hourly_rate) values ('${shopA}', 'Carrom Table 2', 'carrom', 70), ('${shopA}', 'Chess Set', 'chess', 30)`);
+t.ok(await fails(`insert into game_stations (shop_id, name, type, hourly_rate) values ('${shopA}', 'carrom table 1', 'carrom', 50)`), "station names are unique per shop, ignoring case");
 t.ok((await q(`select * from game_stations`)).length === 3, "owner sees all three of their stations");
 
 await as(db, ownerB);
 t.ok((await q(`select * from game_stations`)).length === 0, "another shop's owner sees no stations");
-t.ok(await fails(`insert into game_stations (shop_id, name, type, hourly_rate) values ('${shopA}', 'Sneaky', 'carom', 1)`), "another owner cannot add a station to shop A");
-const otherCarom = (await q(`insert into game_stations (shop_id, name, type, hourly_rate) values ('${shopB}', 'Carom Table 1', 'carom', 999) returning id`))[0].id;
-t.ok(otherCarom, "the same station name is fine in a different shop");
+t.ok(await fails(`insert into game_stations (shop_id, name, type, hourly_rate) values ('${shopA}', 'Sneaky', 'carrom', 1)`), "another owner cannot add a station to shop A");
+const otherCarrom = (await q(`insert into game_stations (shop_id, name, type, hourly_rate) values ('${shopB}', 'Carrom Table 1', 'carrom', 999) returning id`))[0].id;
+t.ok(otherCarrom, "the same station name is fine in a different shop");
 
 await as(db, biller);
 t.ok((await q(`select * from game_stations`)).length === 0, "billing-only staff cannot see stations");
-t.ok(await fails(`select start_game_session('${caromId}')`), "billing-only staff cannot start a session");
+t.ok(await fails(`select start_game_session('${carromId}')`), "billing-only staff cannot start a session");
 
 // --- start / stop ---
 await as(db, ownerA);
-const started = (await q(`select * from start_game_session('${caromId}')`))[0];
+const started = (await q(`select * from start_game_session('${carromId}')`))[0];
 t.ok(started.stopped_at === null && Number(started.rate_at_start) === 50, "starting records the station's current rate");
-t.ok(await fails(`select start_game_session('${caromId}')`), "a station already running cannot be started again");
+t.ok(await fails(`select start_game_session('${carromId}')`), "a station already running cannot be started again");
 
 // back-date started_at to simulate 25 minutes of play, as the superuser (no RLS update policy for users)
 await asService(db);
@@ -69,7 +69,7 @@ t.ok(Number(stopped.amount) >= 20.83 && Number(stopped.amount) <= 21.67, `25ish 
 const again = (await q(`select * from stop_game_session('${started.id}')`))[0];
 t.ok(Number(again.amount) === Number(stopped.amount), "stopping an already-stopped session is harmless and returns the same amount");
 
-const started2 = (await q(`select * from start_game_session('${caromId}')`))[0];
+const started2 = (await q(`select * from start_game_session('${carromId}')`))[0];
 await asService(db);
 await db.exec(`update game_sessions set started_at = now() - interval '40 seconds' where id = '${started2.id}'`);
 await as(db, ownerA);
@@ -83,14 +83,14 @@ t.ok((await q(`select * from unbilled_game_sessions('${shopA}')`)).length === 0,
 // --- attaching a finished session to a bill ---
 await as(db, ownerA);
 const unbilled = await q(`select * from unbilled_game_sessions('${shopA}')`);
-t.ok(unbilled.length === 2 && unbilled.some((s) => s.station_name === "Carom Table 1"), "both finished sessions are waiting to be billed");
+t.ok(unbilled.length === 2 && unbilled.some((s) => s.station_name === "Carrom Table 1"), "both finished sessions are waiting to be billed");
 
 const prod = (await q(`insert into products (owner_id, name) values ('${ownerA}', 'Tea') returning id`))[0].id;
 const sp = (await q(`insert into shop_products (shop_id, product_id, price, stock) values ('${shopA}', '${prod}', 10, 5) returning id`))[0].id;
 const billId = crypto.randomUUID();
 const billItems = JSON.stringify([
   { shop_product_id: sp, name: "Tea", qty: 2, price: 10, unit: "pcs", gst: 0 },
-  { shop_product_id: null, session_id: started.id, name: "Carom Table 1 (25 min)", qty: 1, price: Number(stopped.amount), unit: "session", gst: 0 },
+  { shop_product_id: null, session_id: started.id, name: "Carrom Table 1 (25 min)", qty: 1, price: Number(stopped.amount), unit: "session", gst: 0 },
 ]);
 const saved = (await q(`select save_bill('${JSON.stringify({
   id: billId, shop_id: shopA, bill_no: "KS-9001", items: JSON.parse(billItems),

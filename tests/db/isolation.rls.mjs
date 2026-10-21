@@ -60,7 +60,7 @@ async function seed(X, owner, tag) {
     insert into api_keys (shop_id, name, key_prefix, key_hash) values ('${X}', 'k', 'nxp_${tag}', 'hash${tag}');
     insert into ai_usage (shop_id, kind) values ('${X}', 'scan');
     insert into supply_points (shop_id, name) values ('${X}', 'Dept ${tag}');
-    insert into game_stations (shop_id, name, type, hourly_rate) values ('${X}', 'Carom ${tag}', 'carom', 50);
+    insert into game_stations (shop_id, name, type, hourly_rate) values ('${X}', 'Carrom ${tag}', 'carrom', 50);
     insert into sale_returns (shop_id, bill_no, items, refund_amount, refund_method) values ('${X}', 'KS-${tag}', '[]', 1, 'cash');
     insert into reminder_log (shop_id, phone) values ('${X}', '9${tag === "A" ? 1 : 2}');
     insert into passkeys (user_id, credential_id, public_key) values ('${owner}', 'cred${tag}', 'pk');
@@ -127,7 +127,7 @@ const T = {
   supply_points: { a: `shop_id = '${A}'`, insert: `insert into supply_points (shop_id, name) values ('${A}', 'sneak')`, touch: "name", ownerRead: true, staffBlind: true },
   supply_entries: { a: `shop_id = '${A}'`, insert: `insert into supply_entries (shop_id, point_id, item_name, unit_price, qty, entry_date) values ('${A}', '${a.point}', 'x', 1, 1, current_date)`, touch: "qty", ownerRead: true, staffBlind: true },
   supply_payments: { a: `shop_id = '${A}'`, insert: `insert into supply_payments (shop_id, point_id, amount) values ('${A}', '${a.point}', 1)`, touch: "amount", ownerRead: true, staffBlind: true },
-  game_stations: { a: `shop_id = '${A}'`, insert: `insert into game_stations (shop_id, name, type, hourly_rate) values ('${A}', 'sneak', 'carom', 1)`, touch: "hourly_rate", ownerRead: true, staffBlind: true },
+  game_stations: { a: `shop_id = '${A}'`, insert: `insert into game_stations (shop_id, name, type, hourly_rate) values ('${A}', 'sneak', 'carrom', 1)`, touch: "hourly_rate", ownerRead: true, staffBlind: true },
   game_sessions: { a: `shop_id = '${A}'`, insert: `insert into game_sessions (shop_id, station_id, rate_at_start) values ('${A}', '${a.station}', 1)`, touch: "amount", ownerRead: true, staffBlind: true },
   // Platform tables: no shop can read or write them (the server uses the service role).
   tenant_controls: { a: `shop_id = '${A}'`, insert: `insert into tenant_controls (shop_id) values ('${A}')`, touch: "notes", ownerRead: true },

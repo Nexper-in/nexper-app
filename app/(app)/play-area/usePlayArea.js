@@ -5,7 +5,7 @@ import { useShop } from "@/components/ShopContext";
 import { useT, T } from "@/lib/i18n";
 
 const TYPES = [
-  { id: "carom", label: T("Carom") },
+  { id: "carrom", label: T("Carrom") },
   { id: "snooker", label: T("Snooker") },
   { id: "chess", label: T("Chess") },
   { id: "video_game", label: T("Video game") },
@@ -19,7 +19,7 @@ function estimateAmount(startedAt, hourlyRate) {
   return Math.round(((minutes * hourlyRate) / 60) * 100) / 100;
 }
 
-// Stations (carom tables, chess sets, a snooker table, game consoles...), who's
+// Stations (carrom tables, chess sets, a snooker table, game consoles...), who's
 // playing right now, and starting/stopping a session. One layout for phone and
 // laptop; the live amounts here are an estimate -- stop_game_session computes
 // the number that's actually charged, server-side, the same way.
