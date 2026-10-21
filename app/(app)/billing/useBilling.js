@@ -42,6 +42,9 @@ export function useBilling() {
   const [showVoiceBilling, setShowVoiceBilling] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [showHandwritten, setShowHandwritten] = useState(false);
+  // Shared so both the "Add game charge" button and the Play area category
+  // chip (desktop) can open the same picker.
+  const [gamePicker, setGamePicker] = useState(false);
   // Phones: hide the floating checkout bar while the Save bill button is on screen.
   const [billInView, setBillInView] = useState(false);
   useEffect(() => {
@@ -527,6 +530,6 @@ export function useBilling() {
     cartGst, nextBillNo, clearCart, quickItems, cartQty, pay, choosePay, displayItems, browsing,
     generateBill, handleVoiceBillingConfirm, startBarcodeScanner, printBill, addToCart,
     showHandwritten, setShowHandwritten, addMatched,
-    addGameCharge, removeGameCharge, fetchUnbilledGameSessions,
+    addGameCharge, removeGameCharge, fetchUnbilledGameSessions, gamePicker, setGamePicker,
   };
 }
