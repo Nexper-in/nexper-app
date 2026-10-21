@@ -421,9 +421,13 @@ function GameChargeModal({ vm, onClose }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function onStop(stationId) {
+  async function onStop(stationId, stationName) {
+    // stop_game_session (unlike unbilled_game_sessions) returns the bare
+    // game_sessions row with no station name joined in, so addGameCharge
+    // would otherwise show "undefined" on the bill line -- pass it along
+    // from the card we already have on screen.
     const stopped = await playArea.stopStation(stationId);
-    if (stopped) addGameCharge(stopped);
+    if (stopped) addGameCharge({ ...stopped, station_name: stationName });
   }
 
   const loading = playArea.loading || unbilled === null;
@@ -473,7 +477,7 @@ function GameChargeModal({ vm, onClose }) {
                   {session ? (
                     <button
                       disabled={playArea.busy === station.id}
-                      onClick={() => onStop(station.id)}
+                      onClick={() => onStop(station.id, station.name)}
                       className="text-xs font-semibold px-3 py-2 rounded-lg flex items-center gap-1.5 shrink-0"
                       style={{ background: "var(--danger-soft)", color: "var(--danger)" }}
                     >
