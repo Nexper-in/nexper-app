@@ -2,12 +2,15 @@
 
 import { Gamepad2 } from "lucide-react";
 import { hasFeature } from "@/lib/platformConfig";
+import { isModuleEnabled } from "@/lib/modules";
 import { SearchBox, FindItems, BillPanel } from "./BillingParts";
 
 // Laptop view: items on the left, the bill on the right, side by side.
 // Search is focused on arrival and categories are one click.
 export default function BillingDesktop({ vm }) {
   const { t, activeShop, nextBillNo, categories, activeCategory, setActiveCategory, query, setGamePicker } = vm;
+  // Play area is a tea shop / canteen thing -- see lib/modules.js's isModuleEnabled.
+  const playArea = isModuleEnabled(activeShop, "play_area") && hasFeature(activeShop, "play_area");
   return (
     <div className="pt-6">
       <div className="flex items-baseline justify-between mb-4">
@@ -19,7 +22,7 @@ export default function BillingDesktop({ vm }) {
           <div className="relative mb-3">
             <SearchBox vm={vm} autoFocus />
           </div>
-          {(categories.length > 0 || hasFeature(activeShop, "play_area")) && (
+          {(categories.length > 0 || playArea) && (
             <div className="flex flex-wrap gap-1.5 mb-4">
               {categories.map((c) => {
                 const on = activeCategory === c && !query;
@@ -35,7 +38,7 @@ export default function BillingDesktop({ vm }) {
                   </button>
                 );
               })}
-              {hasFeature(activeShop, "play_area") && (
+              {playArea && (
                 // Not an item category -- there's nothing to filter the grid by. Tapping it
                 // opens the same Play area picker as the button below the cart, so a
                 // cashier browsing items doesn't have to scroll down to find it.

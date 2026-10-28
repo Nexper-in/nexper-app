@@ -69,6 +69,15 @@ test("always-on modules and per-shop toggles", () => {
   assert.equal(isModuleEnabled({ enabled_modules: ["billing", "reports"] }, "reports"), true);
 });
 
+test("Play area is a tea shop / canteen thing, whatever enabled_modules says", () => {
+  assert.equal(isModuleEnabled({ type: "canteen", enabled_modules: ["billing", "play_area"] }, "play_area"), true);
+  assert.equal(isModuleEnabled({ type: "canteen" }, "play_area"), true); // no enabled_modules set yet: on by default
+  assert.equal(isModuleEnabled({ type: "canteen", enabled_modules: ["billing"] }, "play_area"), false); // explicitly turned off
+  assert.equal(isModuleEnabled({ type: "kirana", enabled_modules: ["billing", "play_area"] }, "play_area"), false);
+  assert.equal(isModuleEnabled({ type: "kirana" }, "play_area"), false);
+  assert.equal(isModuleEnabled({}, "play_area"), false);
+});
+
 test("rate limiter blocks after the limit and IP header preference", async () => {
   const key = "t:" + Math.random();
   let blocked = 0;
