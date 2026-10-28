@@ -10,7 +10,7 @@ import { StockActions, InsightsPanel, ExpiryChip } from "./StockParts";
 export default function StockDesktop({ vm }) {
   const { t, items, query, setQuery, filtered, tools, setShowAdd } = vm;
   const lowCount = items.filter((i) => stockLevelOf(i) === "low").length;
-  const stockValue = items.reduce((s, i) => s + Number(i.stock) * Number(i.price), 0);
+  const stockValue = items.reduce((s, i) => (i.track_stock === false ? s : s + Number(i.stock) * Number(i.price)), 0);
   return (
     <div className="pt-6">
       <div className="ks-card p-5 mb-4 flex items-center justify-between flex-wrap gap-4">
@@ -89,10 +89,12 @@ export default function StockDesktop({ vm }) {
                     {rupee(i.price)}
                   </td>
                   <td className="px-5 py-3">
-                    <span className="ks-mono font-semibold" style={{ color: stockMeta.text }}>
-                      {i.stock} {i.unit}
-                    </span>
-                    <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: stockMeta.bg, color: stockMeta.text }}>
+                    {i.track_stock !== false && (
+                      <span className="ks-mono font-semibold" style={{ color: stockMeta.text }}>
+                        {i.stock} {i.unit}
+                      </span>
+                    )}
+                    <span className={`${i.track_stock !== false ? "ml-2 " : ""}text-[10px] px-1.5 py-0.5 rounded-full font-bold`} style={{ background: stockMeta.bg, color: stockMeta.text }}>
                       {t(stockMeta.label)}
                     </span>
                     <span className="ml-2"><ExpiryChip vm={vm} id={i.id} /></span>

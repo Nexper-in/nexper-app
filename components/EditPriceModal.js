@@ -11,6 +11,7 @@ export default function EditPriceModal({ item, onClose, onSave }) {
   const [price, setPrice] = useState(String(item.price ?? ""));
   const [mrp, setMrp] = useState(item.mrp != null ? String(item.mrp) : "");
   const [costPrice, setCostPrice] = useState(item.cost_price != null ? String(item.cost_price) : "");
+  const [trackStock, setTrackStock] = useState(item.track_stock !== false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const valid = Number(price) > 0 && (mrp === "" || Number(mrp) > Number(price));
@@ -23,6 +24,7 @@ export default function EditPriceModal({ item, onClose, onSave }) {
         price: Number(price),
         mrp: mrp !== "" ? Number(mrp) : null,
         cost_price: costPrice !== "" ? Number(costPrice) : null,
+        track_stock: trackStock,
       });
     } catch (err) {
       setError(err.message);
@@ -53,6 +55,15 @@ export default function EditPriceModal({ item, onClose, onSave }) {
         <Field label={t("Purchase price (₹, optional)")}>
           <input type="number" className="ks-input" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} />
         </Field>
+        <label className="flex items-start gap-2 text-xs text-[var(--text-secondary)] cursor-pointer">
+          <input
+            type="checkbox"
+            className="mt-0.5"
+            checked={!trackStock}
+            onChange={(e) => setTrackStock(!e.target.checked)}
+          />
+          {t("Made to order (tea, coffee, snacks made fresh when sold) — don't track stock for this item. It'll always be available to bill.")}
+        </label>
         {error && (
           <p className="text-sm text-[var(--danger)] bg-[var(--danger-soft)] border border-[var(--danger-line)] rounded-lg px-3 py-2">{error}</p>
         )}

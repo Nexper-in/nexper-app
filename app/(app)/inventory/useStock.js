@@ -95,7 +95,7 @@ export function useStock() {
   const topMargin = insightItems[0]?.marginPct || 1;
 
   async function addItem(newItem) {
-    const { code, price, mrp, cost_price, gst, stock, low_at, ...productFields } = newItem;
+    const { code, price, mrp, cost_price, gst, stock, low_at, track_stock, ...productFields } = newItem;
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -108,7 +108,7 @@ export function useStock() {
 
     const { data: shopProduct, error: spError } = await supabase
       .from("shop_products")
-      .insert({ shop_id: activeShopId, product_id: product.id, code, price, mrp, cost_price, gst, stock, low_at })
+      .insert({ shop_id: activeShopId, product_id: product.id, code, price, mrp, cost_price, gst, stock, low_at, track_stock: track_stock ?? true })
       .select()
       .single();
     if (spError) throw spError;
@@ -119,10 +119,10 @@ export function useStock() {
     showToast(t("{name} added to stock", { name: merged.name }));
   }
 
-  async function savePrice(item, { price, mrp, cost_price }) {
+  async function savePrice(item, { price, mrp, cost_price, track_stock }) {
     const { data, error } = await supabase
       .from("shop_products")
-      .update({ price, mrp, cost_price })
+      .update({ price, mrp, cost_price, track_stock })
       .eq("id", item.id)
       .select("*, product:products(*)")
       .single();

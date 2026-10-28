@@ -28,12 +28,16 @@ export function StockActions({ vm, i, wide }) {
       >
         <Pencil size={13} />
       </button>
-      <button onClick={() => setAdjustItem({ item: i, type: "in" })} className={pill} style={{ background: "var(--success-soft)", color: "var(--success)" }}>
-        <ArrowUpCircle size={13} /> {t("In")}
-      </button>
-      <button onClick={() => setAdjustItem({ item: i, type: "out" })} className={pill} style={{ background: "var(--danger-soft)", color: "var(--danger)" }}>
-        <ArrowDownCircle size={13} /> {t("Out")}
-      </button>
+      {i.track_stock !== false && (
+        <>
+          <button onClick={() => setAdjustItem({ item: i, type: "in" })} className={pill} style={{ background: "var(--success-soft)", color: "var(--success)" }}>
+            <ArrowUpCircle size={13} /> {t("In")}
+          </button>
+          <button onClick={() => setAdjustItem({ item: i, type: "out" })} className={pill} style={{ background: "var(--danger-soft)", color: "var(--danger)" }}>
+            <ArrowDownCircle size={13} /> {t("Out")}
+          </button>
+        </>
+      )}
     </div>
   );
 }

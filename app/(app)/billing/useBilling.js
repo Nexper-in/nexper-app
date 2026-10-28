@@ -12,6 +12,11 @@ import { cacheProducts, getCachedProducts, cacheBills, getCachedBills, cacheBill
 import { useT } from "@/lib/i18n";
 import { isMissingFunction } from "@/lib/offlineQueueCore";
 
+// An item made to order (tea, coffee, snacks cooked when sold — see
+// AddItemModal's "don't track stock" checkbox) has track_stock = false and
+// is never out of stock or capped by a quantity on hand.
+const effectiveStock = (item) => (item.track_stock === false ? Infinity : item.stock);
+
 // Everything New bill needs: items, the cart, totals, payment, voice, scan
 // and saving. The phone and laptop screens (BillingMobile / BillingDesktop)
 // both read from this and only differ in layout.
@@ -181,13 +186,14 @@ export function useBilling() {
   }
 
   function addToCart(item, qty = 1) {
-    if (item.stock <= 0) return showToast(t("{name} is out of stock", { name: item.name }), "err");
+    const stock = effectiveStock(item);
+    if (stock <= 0) return showToast(t("{name} is out of stock", { name: item.name }), "err");
     setCart((prev) => {
       const exists = prev.find((c) => c.shop_product_id === item.id);
       const wanted = (exists ? exists.qty : 0) + qty;
-      if (wanted > item.stock) {
-        showToast(t("Only {n} {unit} of {name} in stock", { n: item.stock, unit: item.unit, name: item.name }), "warn");
-        const capped = item.stock;
+      if (wanted > stock) {
+        showToast(t("Only {n} {unit} of {name} in stock", { n: stock, unit: item.unit, name: item.name }), "warn");
+        const capped = stock;
         return exists
           ? prev.map((c) => (c.shop_product_id === item.id ? { ...c, qty: capped } : c))
           : [
@@ -203,7 +209,8 @@ export function useBilling() {
                 unit: item.unit,
                 gst: item.gst,
                 qty: capped,
-                stock: item.stock,
+                stock,
+                track_stock: item.track_stock,
               },
             ];
       }
@@ -221,7 +228,8 @@ export function useBilling() {
           unit: item.unit,
           gst: item.gst,
           qty,
-          stock: item.stock,
+          stock,
+          track_stock: item.track_stock,
         },
       ];
     });
@@ -389,6 +397,7 @@ export function useBilling() {
 
       setItems((prev) =>
         prev.map((p) => {
+          if (p.track_stock === false) return p; // made to order — nothing on hand to take
           const line = cart.find((c) => c.shop_product_id === p.id);
           return line ? { ...p, stock: Math.max(0, p.stock - line.qty) } : p;
         })
@@ -421,7 +430,8 @@ export function useBilling() {
       unit: item.unit,
       gst: item.gst,
       qty,
-      stock: item.stock,
+      stock: effectiveStock(item),
+      track_stock: item.track_stock,
     })));
     setBillType(voiceBillType);
     setShowVoiceBilling(false);
@@ -505,7 +515,7 @@ export function useBilling() {
   const salesCount = new Map();
   bills.forEach((b) => (b.items || []).forEach((l) => salesCount.set(l.shop_product_id, (salesCount.get(l.shop_product_id) || 0) + l.qty)));
   const quickItems = [...pricedItems]
-    .filter((i) => i.stock > 0)
+    .filter((i) => i.track_stock === false || i.stock > 0)
     .sort((a, b) => (b.quick ? 1 : 0) - (a.quick ? 1 : 0) || (salesCount.get(b.id) || 0) - (salesCount.get(a.id) || 0))
     .slice(0, 12);
   const cartQty = cart.reduce((s, c) => s + c.qty, 0);

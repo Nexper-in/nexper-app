@@ -76,7 +76,7 @@ export default function StockMobile({ vm }) {
                   <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                     <CategoryChip category={i.category} />
                     <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: stockMeta.bg, color: stockMeta.text }}>
-                      {i.stock} {i.unit} · {t(stockMeta.label)}
+                      {i.track_stock === false ? t(stockMeta.label) : `${i.stock} ${i.unit} · ${t(stockMeta.label)}`}
                     </span>
                     <ExpiryChip vm={vm} id={i.id} />
                   </div>

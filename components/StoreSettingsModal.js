@@ -166,7 +166,9 @@ export default function StoreSettingsModal({ onClose }) {
         <SupportAccessList />
         <Field label={t("Enabled features for this shop")}>
           <div className="grid grid-cols-2 gap-2">
-            {MODULES.map((m) => (
+            {/* Play area only applies to a tea shop / canteen / hotel -- a toggle
+                that can never actually turn on would just confuse other shops. */}
+            {MODULES.filter((m) => m.key !== "play_area" || activeShop?.type === "canteen").map((m) => (
               <label
                 key={m.key}
                 className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold border-2 cursor-pointer transition-colors"
