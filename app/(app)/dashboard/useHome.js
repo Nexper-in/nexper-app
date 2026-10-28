@@ -66,9 +66,9 @@ export function useHome() {
     load();
   }, [load]);
 
-  const lowItems = items.filter((i) => i.stock <= i.low_at);
+  const lowItems = items.filter((i) => i.track_stock !== false && i.stock <= i.low_at);
   const lowStockCount = lowItems.length;
-  const stockValue = items.reduce((s, i) => s + i.stock * i.price, 0);
+  const stockValue = items.reduce((s, i) => (i.track_stock === false ? s : s + i.stock * i.price), 0);
 
   const todaysBills = useMemo(() => {
     const t = new Date().toDateString();

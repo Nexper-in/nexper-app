@@ -17,13 +17,16 @@ export default function QtyPickerModal({ item, onClose, onConfirm }) {
   const rawNum = Number(qty);
   // Convert whatever was typed into the item's actual stock unit
   const num = inputUnit === item.unit ? rawNum : rawNum / (UNIT_FACTOR[inputUnit] || 1);
-  const valid = rawNum > 0 && num <= item.stock;
+  const madeToOrder = item.track_stock === false;
+  const valid = rawNum > 0 && (madeToOrder || num <= item.stock);
 
   return (
     <Modal title={item.name} onClose={onClose}>
       <div className="space-y-3.5">
         <p className="text-xs text-[var(--text-secondary)]">
-          {t("Available:")} <span className="ks-mono font-semibold text-[var(--text-primary)]">{item.stock} {item.unit}</span> ·{" "}
+          {madeToOrder ? t("Made to order") : (
+            <>{t("Available:")} <span className="ks-mono font-semibold text-[var(--text-primary)]">{item.stock} {item.unit}</span></>
+          )} ·{" "}
           {item.mrp > item.price && !item.originalPrice && (
             <span className="line-through mr-1 opacity-60 ks-mono">{rupee(item.mrp)}</span>
           )}
@@ -69,7 +72,7 @@ export default function QtyPickerModal({ item, onClose, onConfirm }) {
             = <span className="ks-mono font-semibold text-[var(--text-primary)]">{num} {item.unit}</span>
           </p>
         )}
-        {num > item.stock && <p className="text-xs text-[var(--danger)] font-medium">{t("Only {n} {unit} in stock.", { n: item.stock, unit: item.unit })}</p>}
+        {!madeToOrder && num > item.stock && <p className="text-xs text-[var(--danger)] font-medium">{t("Only {n} {unit} in stock.", { n: item.stock, unit: item.unit })}</p>}
         <div className="flex items-center justify-between py-2 border-t border-[var(--border)]">
           <span className="text-sm font-semibold text-[var(--text-secondary)]">{t("Line total")}</span>
           <span className="ks-mono text-lg font-bold text-[var(--accent-soft-text)]">{rupee((num > 0 ? num : 0) * item.price)}</span>

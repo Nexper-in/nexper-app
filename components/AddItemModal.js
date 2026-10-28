@@ -28,6 +28,7 @@ export default function AddItemModal({ items, onClose, onAdd }) {
     code: nextCode(items),
     image_url: "",
     barcode: "",
+    madeToOrder: false,
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -38,7 +39,7 @@ export default function AddItemModal({ items, onClose, onAdd }) {
   const [quickMode, setQuickMode] = useState(false);
   const priceRef = useRef(null);
   const recogRef = useRef(null);
-  const valid = form.name.trim() && form.price !== "" && form.stock !== "" && /^\d{2}$/.test(form.code);
+  const valid = form.name.trim() && form.price !== "" && (form.madeToOrder || form.stock !== "") && /^\d{2}$/.test(form.code);
 
   // Auto-focus the price field when quick mode activates
   useEffect(() => {
@@ -142,8 +143,9 @@ export default function AddItemModal({ items, onClose, onAdd }) {
         cost_price: form.cost_price !== "" ? Number(form.cost_price) : null,
         gst: form.gst !== "" ? Number(form.gst) : null,
         hsn_code: form.hsn_code.trim() || null,
-        stock: Number(form.stock),
-        low_at: Number(form.low_at) || 5,
+        stock: form.madeToOrder ? 0 : Number(form.stock),
+        low_at: form.madeToOrder ? 0 : Number(form.low_at) || 5,
+        track_stock: !form.madeToOrder,
       });
     } catch (err) {
       setError(err.message);
@@ -415,14 +417,26 @@ export default function AddItemModal({ items, onClose, onAdd }) {
           </Field>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <Field label={t("Opening stock")}>
-            <input type="number" className="ks-input" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
-          </Field>
-          <Field label={t("Low stock alert at")}>
-            <input type="number" className="ks-input" value={form.low_at} onChange={(e) => setForm({ ...form, low_at: e.target.value })} />
-          </Field>
-        </div>
+        <label className="flex items-start gap-2 text-xs text-[var(--text-secondary)] cursor-pointer">
+          <input
+            type="checkbox"
+            className="mt-0.5"
+            checked={form.madeToOrder}
+            onChange={(e) => setForm({ ...form, madeToOrder: e.target.checked })}
+          />
+          {t("Made to order (tea, coffee, snacks made fresh when sold) — don't track stock for this item. It'll always be available to bill.")}
+        </label>
+
+        {!form.madeToOrder && (
+          <div className="grid grid-cols-2 gap-3">
+            <Field label={t("Opening stock")}>
+              <input type="number" className="ks-input" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
+            </Field>
+            <Field label={t("Low stock alert at")}>
+              <input type="number" className="ks-input" value={form.low_at} onChange={(e) => setForm({ ...form, low_at: e.target.value })} />
+            </Field>
+          </div>
+        )}
 
         {error && (
           <p className="text-sm text-[var(--danger)] bg-[var(--danger-soft)] border border-[var(--danger-line)] rounded-lg px-3 py-2">{error}</p>

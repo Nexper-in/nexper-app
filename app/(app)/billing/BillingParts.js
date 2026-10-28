@@ -70,8 +70,8 @@ export function FindItems({ vm, wide }) {
             {displayItems.map((item) => (
               <button
                 key={item.id}
-                onClick={() => item.stock > 0 && setPickerItem(item)}
-                disabled={item.stock <= 0}
+                onClick={() => (item.track_stock === false || item.stock > 0) && setPickerItem(item)}
+                disabled={item.track_stock !== false && item.stock <= 0}
                 className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--bg-surface-alt)] disabled:opacity-50"
               >
                 <div className="min-w-0">
@@ -84,7 +84,7 @@ export function FindItems({ vm, wide }) {
                     ) : null}
                   </div>
                   <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>
-                    {item.stock > 0 ? t("{n} {unit} in stock", { n: item.stock, unit: item.unit }) : t("Out of stock")}
+                    {item.track_stock === false ? t("Made to order") : item.stock > 0 ? t("{n} {unit} in stock", { n: item.stock, unit: item.unit }) : t("Out of stock")}
                   </p>
                 </div>
                 <p className="font-bold text-sm shrink-0 ks-mono">

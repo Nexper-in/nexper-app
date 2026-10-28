@@ -160,7 +160,7 @@ function POPageInner() {
   // Everything at or below its low-stock level, topped up to three times that.
   function suggestOrder() {
     const lines = items
-      .filter((i) => i.stock <= i.low_at)
+      .filter((i) => i.track_stock !== false && i.stock <= i.low_at)
       .map((i) => ({
         shop_product_id: i.id,
         item_name: i.name,

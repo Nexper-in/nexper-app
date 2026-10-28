@@ -1017,5 +1017,8 @@
   "e.g. Carrom Table 1": "जैसे कैरम टेबल 1",
   "hr": "घंटा",
   "min": "मिनट",
-  "so far": "अब तक"
+  "so far": "अब तक",
+  "Made to order": "ऑर्डर पर बनता है",
+  "MADE TO ORDER": "ऑर्डर पर बनता है",
+  "Made to order (tea, coffee, snacks made fresh when sold) — don't track stock for this item. It'll always be available to bill.": "ऑर्डर पर बनता है (चाय, कॉफ़ी, जो बनते ही बेचे जाते हैं) — इस आइटम का स्टॉक न रखें। यह बिल में हमेशा उपलब्ध रहेगा।"
 }
