@@ -68,6 +68,14 @@ function DayClosePageInner() {
     () => todaysNonCreditBills.filter((b) => (b.payment_method || "cash") !== "cash").reduce((s, b) => s + b.total, 0),
     [todaysNonCreditBills]
   );
+  // Udhaar bills never put cash in the drawer -- excluded from the math
+  // above like digital sales are -- but unlike digital sales they weren't
+  // shown anywhere on this page at all, so a day of only credit sales
+  // looked like a day of no sales. Shown here purely informationally.
+  const todaysUdhaarSales = useMemo(() => {
+    const today = new Date().toDateString();
+    return bills.filter((b) => new Date(b.date).toDateString() === today && b.payment_type === "credit").reduce((s, b) => s + b.total, 0);
+  }, [bills]);
 
   const todaysDrawList = useMemo(() => {
     const today = new Date().toDateString();
@@ -147,6 +155,14 @@ function DayClosePageInner() {
           <div className="flex items-center justify-between text-sm mb-2">
             <span className="text-[var(--text-secondary)] font-medium">{t("Cash sales today (app)")}</span>
             <span className="ks-mono font-bold">{rupee(todaysCashSales)}</span>
+          </div>
+          <div className="flex items-center justify-between text-sm mb-2">
+            <span className="font-medium" style={{ color: "var(--udhaar)" }}>
+              {t("Udhaar given today (not collected — not in drawer)")}
+            </span>
+            <span className="ks-mono font-bold" style={{ color: "var(--udhaar)" }}>
+              {rupee(todaysUdhaarSales)}
+            </span>
           </div>
           {todaysCashRefunds > 0 && (
             <div className="flex items-center justify-between text-sm mb-2">
