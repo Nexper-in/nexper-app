@@ -65,6 +65,18 @@ export function ShopProvider({ children }) {
     supabase.auth.getUser().then(({ data }) => setUser(data.user ?? null));
   }, [loadShops, supabase]);
 
+  // Lets every shop owner know whenever anyone -- staff or the owner
+  // themselves -- signs in, on whichever shop(s) they own. SIGNED_IN fires
+  // once per actual new sign-in (password, staff PIN, Google, passkey) --
+  // not on a page refresh that merely restores an existing session -- so
+  // this only runs on a real login. Best-effort: never blocks sign-in.
+  useEffect(() => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN") callApi(supabase, "/api/notify-login", {}).catch(() => {});
+    });
+    return () => listener.subscription.unsubscribe();
+  }, [supabase]);
+
   const loadPlatform = useCallback(async () => {
     const { data } = await supabase.from("platform_settings").select("key, value");
     setPlatform(setPlatformConfig(data || []));
