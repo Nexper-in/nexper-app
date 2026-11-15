@@ -139,7 +139,7 @@ export function BillPanel({ vm, wide, alwaysDetails }) {
     t, activeShop, cart, customer, setCustomer, billType, paymentMethod, loyaltyDiscount, setLoyaltyDiscount,
     manualDiscount, setManualDiscount, lastBill, showDetails, setShowDetails, generating, cleanPhone, previousVisits,
     isLoyal, updateQty, total, discountAmount, clearanceSavings, cartGst, clearCart, cartQty, pay, choosePay,
-    generateBill, printBill, removeGameCharge, gamePicker, setGamePicker,
+    generateBill, printBill, removeGameCharge, removeOrderLine, gamePicker, setGamePicker,
   } = vm;
   const detailsOpen = showDetails || alwaysDetails;
   return (
@@ -184,8 +184,18 @@ export function BillPanel({ vm, wide, alwaysDetails }) {
           ) : (
             <div className={`space-y-2.5 mb-3 ${wide ? "max-h-[42vh]" : "max-h-60"} overflow-y-auto ks-scroll`}>
               {cart.map((c) =>
-                c.session_id ? (
-                  <div key={c.session_id} className="flex items-center gap-2">
+                c.order_id ? (
+                  <div key={`order-${c.order_id}`} className="flex items-center gap-2 pl-5">
+                    <span className="text-sm flex-1 truncate" style={{ color: "var(--text-secondary)" }}>
+                      {c.player_name ? `${c.player_name} · ` : ""}{c.name}{c.qty > 1 ? ` ×${c.qty}` : ""}
+                    </span>
+                    <span className="ks-mono text-sm font-semibold w-16 text-right shrink-0">{rupee(c.qty * c.price)}</span>
+                    <button onClick={() => removeOrderLine(c.order_id)} className="ks-qtybtn" aria-label={t("Remove {name}", { name: c.name })} style={{ width: 30, height: 30 }}>
+                      <X size={13} />
+                    </button>
+                  </div>
+                ) : c.session_id ? (
+                  <div key={`session-${c.session_id}`} className="flex items-center gap-2">
                     <Gamepad2 size={14} className="shrink-0" style={{ color: "var(--text-secondary)" }} />
                     <span className="text-sm flex-1 font-medium truncate">{c.name}</span>
                     <span className="ks-mono text-sm font-semibold w-16 text-right shrink-0">{rupee(c.price)}</span>
@@ -428,7 +438,7 @@ function GameChargeModal({ vm, onClose }) {
     // would otherwise show "undefined" on the bill line -- pass it along
     // from the card we already have on screen.
     const stopped = await playArea.stopStation(stationId);
-    if (stopped) addGameCharge({ ...stopped, station_name: stationName });
+    if (stopped) await addGameCharge({ ...stopped, station_name: stationName });
   }
 
   const loading = playArea.loading || unbilled === null;
@@ -507,8 +517,8 @@ function GameChargeModal({ vm, onClose }) {
                 {unbilled.map((s) => (
                   <button
                     key={s.id}
-                    onClick={() => {
-                      addGameCharge(s);
+                    onClick={async () => {
+                      await addGameCharge(s);
                       onClose();
                     }}
                     className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold"

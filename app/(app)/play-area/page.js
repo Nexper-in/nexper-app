@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Play, Square, Pencil, Plus, Gamepad2 } from "lucide-react";
+import { Loader2, Play, Square, Pencil, Plus, Gamepad2, X, Users } from "lucide-react";
 import ModuleGuard from "@/components/ModuleGuard";
 import Modal from "@/components/ui/Modal";
 import { rupee } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import usePlayArea from "./usePlayArea";
-import { clock, StationModal } from "./PlayAreaParts";
+import { clock, StationModal, AddPlayerModal, OrderPickerModal } from "./PlayAreaParts";
 
 // Play area: carrom, snooker, chess, video game consoles — anything a tea shop
 // or canteen rents out by the hour. One grid of stations, each either idle or
@@ -25,6 +25,8 @@ function PlayAreaScreen() {
   const vm = usePlayArea();
   const [stationModal, setStationModal] = useState(null); // { station? }
   const [justStopped, setJustStopped] = useState(null); // { name, amount }
+  const [playerModal, setPlayerModal] = useState(null); // session id a player is being added to
+  const [orderModal, setOrderModal] = useState(null); // session id an order is being added to
 
   if (vm.loading) {
     return (
@@ -67,7 +69,7 @@ function PlayAreaScreen() {
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {vm.cards.map(({ station, session, elapsedSeconds, estimate }) => (
+          {vm.cards.map(({ station, session, players, orders, elapsedSeconds, estimate }) => (
             <div key={station.id} className="ks-card p-4">
               <div className="flex items-start justify-between mb-2">
                 <div>
@@ -94,6 +96,71 @@ function PlayAreaScreen() {
                   <p className="text-center text-sm mb-3" style={{ color: "var(--text-secondary)" }}>
                     {t("so far")} <span className="font-semibold">{rupee(estimate)}</span>
                   </p>
+
+                  <div className="mb-3 pt-3 border-t" style={{ borderColor: "var(--border)" }}>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-semibold flex items-center gap-1" style={{ color: "var(--text-secondary)" }}>
+                        <Users size={12} /> {t("Players")}
+                      </p>
+                      <div className="flex gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setPlayerModal(session.id)}
+                          className="text-xs font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1"
+                          style={{ background: "var(--bg-surface-alt)" }}
+                        >
+                          <Plus size={11} /> {t("Player")}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setOrderModal(session.id)}
+                          className="text-xs font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1"
+                          style={{ background: "var(--bg-surface-alt)" }}
+                        >
+                          <Plus size={11} /> {t("Order")}
+                        </button>
+                      </div>
+                    </div>
+                    {players.length === 0 && orders.length === 0 ? (
+                      <p className="text-xs" style={{ color: "var(--text-secondary)" }}>{t("No one tagged yet")}</p>
+                    ) : (
+                      <div className="space-y-1.5">
+                        {players.map((p) => {
+                          const lines = orders.filter((o) => o.player_id === p.id);
+                          const subtotal = lines.reduce((s, o) => s + Number(o.qty) * Number(o.price), 0);
+                          return (
+                            <div key={p.id} className="flex items-center justify-between gap-2 text-sm">
+                              <span className="truncate font-medium">{p.name}</span>
+                              <span className="flex items-center gap-1.5 shrink-0">
+                                <span className="ks-mono" style={{ color: "var(--text-secondary)" }}>{rupee(subtotal)}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => vm.removePlayer(p.id)}
+                                  aria-label={t("Remove {name}", { name: p.name })}
+                                  className="ks-qtybtn"
+                                  style={{ width: 24, height: 24 }}
+                                >
+                                  <X size={11} />
+                                </button>
+                              </span>
+                            </div>
+                          );
+                        })}
+                        {(() => {
+                          const shared = orders.filter((o) => !o.player_id);
+                          if (!shared.length) return null;
+                          const subtotal = shared.reduce((s, o) => s + Number(o.qty) * Number(o.price), 0);
+                          return (
+                            <div className="flex items-center justify-between gap-2 text-sm">
+                              <span className="truncate" style={{ color: "var(--text-secondary)" }}>{t("Shared")}</span>
+                              <span className="ks-mono" style={{ color: "var(--text-secondary)" }}>{rupee(subtotal)}</span>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
+                  </div>
+
                   <button
                     disabled={vm.busy === station.id}
                     onClick={() => onStop(station.id, station.name)}
@@ -125,6 +192,28 @@ function PlayAreaScreen() {
           onSave={(fields) => (stationModal.station ? vm.updateStation(stationModal.station.id, fields) : vm.addStation(fields))}
         />
       )}
+
+      {playerModal && (
+        <AddPlayerModal
+          onClose={() => setPlayerModal(null)}
+          onSave={(fields) => vm.addPlayer(playerModal, fields)}
+        />
+      )}
+
+      {orderModal && (() => {
+        const card = vm.cards.find((c) => c.session?.id === orderModal);
+        if (!card) return null;
+        return (
+          <OrderPickerModal
+            players={card.players}
+            orders={card.orders}
+            items={vm.items}
+            onAddOrder={(playerId, item) => vm.addOrder(orderModal, playerId, item)}
+            onRemoveOrder={vm.removeOrder}
+            onClose={() => setOrderModal(null)}
+          />
+        );
+      })()}
 
       {justStopped && (
         <Modal title={t("Session stopped")} onClose={() => setJustStopped(null)}>
