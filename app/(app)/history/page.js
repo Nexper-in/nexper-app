@@ -186,6 +186,7 @@ function HistoryPageInner() {
                             <span>
                               {it.name} × {it.qty}
                               {it.unit}
+                              {it.player_name ? ` — ${it.player_name}` : ""}
                             </span>
                             <span>{rupee(it.qty * it.price)}</span>
                           </div>

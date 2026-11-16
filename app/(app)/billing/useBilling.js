@@ -243,16 +243,20 @@ export function useBilling() {
 
   // A finished Play area session (see app/(app)/play-area), added as its own
   // line — no shop_product_id, so no stock is touched when the bill is saved
-  // (see migration 047's _deduct_stock). Keyed by session_id instead, since
-  // several game charges can be on one bill and none of them is a shop_product.
-  function addGameCharge(session) {
-    if (cart.some((c) => c.session_id === session.id)) return;
+  // (see migration 047's _deduct_stock) — plus, in the same step, whatever its
+  // players ordered through the game (migration 051): each becomes its own cart
+  // line too, tagged with the same session_id (so removing the table removes
+  // its orders with it) and its own order_id (two players' identical item, say
+  // two teas, must stay two separate lines, not merge into one).
+  async function addGameCharge(session) {
+    if (cart.some((c) => c.session_id === session.id && !c.order_id)) return;
     const minutes = Math.max(1, Math.round((new Date(session.stopped_at) - new Date(session.started_at)) / 60000));
-    setCart((prev) => [
-      ...prev,
+    const newLines = [
       {
         shop_product_id: null,
         session_id: session.id,
+        order_id: null,
+        player_name: null,
         name: `${session.station_name} (${minutes} ${t("min")})`,
         price: Number(session.amount),
         mrp: null,
@@ -263,13 +267,48 @@ export function useBilling() {
         qty: 1,
         stock: Infinity,
       },
-    ]);
+    ];
+    try {
+      const orders = await fetchUnbilledGameOrders(session.id);
+      for (const o of orders) {
+        const catalogItem = items.find((i) => i.id === o.shop_product_id);
+        newLines.push({
+          shop_product_id: o.shop_product_id,
+          session_id: session.id,
+          order_id: o.id,
+          player_name: o.player_name || null,
+          name: o.name,
+          price: Number(o.price),
+          mrp: null,
+          originalPrice: null,
+          clearancePct: null,
+          unit: catalogItem?.unit || "pcs",
+          gst: Number(o.gst) || 0,
+          qty: Number(o.qty),
+          stock: Infinity,
+        });
+      }
+    } catch (e) {
+      console.error("fetchUnbilledGameOrders", e); // the table's own time charge still goes through
+    }
+    setCart((prev) => [...prev, ...newLines]);
   }
+  // Removes a whole table (its time charge and whatever's left of its orders)
+  // from the bill — for picking the wrong table, not for removing one order.
   function removeGameCharge(sessionId) {
     setCart((prev) => prev.filter((c) => c.session_id !== sessionId));
   }
+  // Removes just one player's order line, leaving the table and its other orders on the bill.
+  function removeOrderLine(orderId) {
+    setCart((prev) => prev.filter((c) => c.order_id !== orderId));
+  }
   async function fetchUnbilledGameSessions() {
     const { data, error: err } = await supabase.rpc("unbilled_game_sessions", { p_shop: activeShopId });
+    if (err) throw new Error(err.message);
+    return data || [];
+  }
+  async function fetchUnbilledGameOrders(sessionId) {
+    const { data, error: err } = await supabase.rpc("unbilled_game_orders", { p_shop: activeShopId, p_session: sessionId });
     if (err) throw new Error(err.message);
     return data || [];
   }
@@ -329,11 +368,18 @@ export function useBilling() {
     setGenerating(true);
     try {
       const billNo = `KS-${1000 + totalBills + 1}`;
-      const billItems = cart.map(({ shop_product_id, code, name, price, mrp, unit, gst, qty }) => {
+      const billItems = cart.map(({ shop_product_id, code, name, price, mrp, unit, gst, qty, player_name }) => {
         const inv = items.find((i) => i.id === shop_product_id);
-        return { shop_product_id: shop_product_id || null, code, name, price, mrp: mrp || null, unit, gst, qty, cost_price: inv?.cost_price ?? null };
+        return {
+          shop_product_id: shop_product_id || null, code, name, price, mrp: mrp || null, unit, gst, qty,
+          cost_price: inv?.cost_price ?? null,
+          ...(player_name ? { player_name } : {}), // only play-area order lines carry this (see lib/gamePlayers.js)
+        };
       });
-      const gameLines = cart.filter((c) => c.session_id);
+      // Every running/finished table on this bill — its time charge and whatever
+      // its players ordered through migration 051's game_session_orders, both
+      // settled in one tap once the game ends.
+      const gameSessionIds = [...new Set(cart.filter((c) => c.session_id).map((c) => c.session_id))];
       // Built client-side (including the id) so a queued/offline bill can
       // be shown, printed, and sent immediately — it reconciles with the
       // real row once runQueued's background flush actually writes it.
@@ -375,16 +421,20 @@ export function useBilling() {
         offline = await legacySave(bill, billItems, billNo);
       }
 
-      // Mark each game session as billed so it can't be added to another bill.
-      // Best-effort: the bill itself is already saved either way, so a failed
-      // attach here just leaves that session findable as unbilled again.
-      if (!offline && gameLines.length) {
+      // Mark each game session (and whatever its players ordered) as billed, so
+      // none of it can be added to another bill. Best-effort: the bill itself is
+      // already saved either way, so a failed attach here just leaves that
+      // session (or its orders) findable as unbilled again.
+      if (!offline && gameSessionIds.length) {
         await Promise.all(
-          gameLines.map((l) =>
+          gameSessionIds.flatMap((sessionId) => [
             supabase
-              .rpc("attach_game_session_to_bill", { p_session: l.session_id, p_bill: bill.id })
-              .then(({ error: attachErr }) => attachErr && console.error("attach_game_session_to_bill", attachErr))
-          )
+              .rpc("attach_game_session_to_bill", { p_session: sessionId, p_bill: bill.id })
+              .then(({ error: attachErr }) => attachErr && console.error("attach_game_session_to_bill", attachErr)),
+            supabase
+              .rpc("attach_game_orders_to_bill", { p_session: sessionId, p_bill: bill.id })
+              .then(({ error: attachErr }) => attachErr && console.error("attach_game_orders_to_bill", attachErr)),
+          ])
         );
       }
 
@@ -540,6 +590,6 @@ export function useBilling() {
     cartGst, nextBillNo, clearCart, quickItems, cartQty, pay, choosePay, displayItems, browsing,
     generateBill, handleVoiceBillingConfirm, startBarcodeScanner, printBill, addToCart,
     showHandwritten, setShowHandwritten, addMatched,
-    addGameCharge, removeGameCharge, fetchUnbilledGameSessions, gamePicker, setGamePicker,
+    addGameCharge, removeGameCharge, removeOrderLine, fetchUnbilledGameSessions, fetchUnbilledGameOrders, gamePicker, setGamePicker,
   };
 }

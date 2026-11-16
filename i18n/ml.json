@@ -1021,5 +1021,20 @@
   "so far": "ഇതുവരെ",
   "Made to order": "ഓർഡർ ചെയ്യുമ്പോൾ ഉണ്ടാക്കുന്നത്",
   "MADE TO ORDER": "ഓർഡർ ചെയ്യുമ്പോൾ ഉണ്ടാക്കുന്നത്",
-  "Made to order (tea, coffee, snacks made fresh when sold) — don't track stock for this item. It'll always be available to bill.": "ഓർഡർ ചെയ്യുമ്പോൾ ഉണ്ടാക്കുന്നത് (ചായ, കാപ്പി, വിൽക്കുമ്പോൾ തന്നെ ഉണ്ടാക്കുന്ന സാധനങ്ങൾ) — ഈ ഇനത്തിന് സ്റ്റോക്ക് ട്രാക്ക് ചെയ്യേണ്ട. ഇത് ബില്ലിൽ എപ്പോഴും ലഭ്യമായിരിക്കും."
+  "Made to order (tea, coffee, snacks made fresh when sold) — don't track stock for this item. It'll always be available to bill.": "ഓർഡർ ചെയ്യുമ്പോൾ ഉണ്ടാക്കുന്നത് (ചായ, കാപ്പി, വിൽക്കുമ്പോൾ തന്നെ ഉണ്ടാക്കുന്ന സാധനങ്ങൾ) — ഈ ഇനത്തിന് സ്റ്റോക്ക് ട്രാക്ക് ചെയ്യേണ്ട. ഇത് ബില്ലിൽ എപ്പോഴും ലഭ്യമായിരിക്കും.",
+  "Add player": "കളിക്കാരനെ ചേർക്കൂ",
+  "Name": "പേര്",
+  "e.g. Rahul": "ഉദാ. രാഹുൽ",
+  "Phone number (optional)": "ഫോൺ നമ്പർ (നിർബന്ധമില്ല)",
+  "Add": "ചേർക്കൂ",
+  "Add order": "ഓർഡർ ചേർക്കൂ",
+  "Shared": "എല്ലാവരുടേതും",
+  "Search item": "ഇനം തിരയൂ",
+  "Shared so far": "ഇതുവരെ എല്ലാവരുടേതും",
+  "{name}'s order so far": "{name} ഇതുവരെ ഓർഡർ ചെയ്തത്",
+  "Players": "കളിക്കാർ",
+  "Player": "കളിക്കാരൻ",
+  "Order": "ഓർഡർ",
+  "No one tagged yet": "ഇതുവരെ ആരെയും ചേർത്തിട്ടില്ല",
+  "Couldn't remove — try again": "നീക്കം ചെയ്യാനായില്ല — വീണ്ടും ശ്രമിക്കൂ"
 }

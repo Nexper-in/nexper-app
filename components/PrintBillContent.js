@@ -1,5 +1,6 @@
 import { rupee } from "@/lib/format";
 import { taxBreakup } from "@/lib/messaging";
+import { groupLinesByPlayer } from "@/lib/gamePlayers";
 
 const ONES = [
   "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
@@ -86,20 +87,42 @@ export default function PrintBillContent({ bill, storeName, gstin, groupUrl }) {
           </tr>
         </thead>
         <tbody>
-          {(bill.items || []).map((it, idx) => (
-            <tr key={it.shop_product_id || idx} style={{ borderBottom: "1px solid #F1F2F5" }}>
-              <td style={{ padding: "8px 6px", color: "#9CA3AF" }}>{idx + 1}</td>
-              <td style={{ padding: "8px 6px", fontWeight: 500 }}>{it.name}</td>
-              <td style={{ padding: "8px 6px", textAlign: "center", fontFamily: "'IBM Plex Mono', monospace" }}>{it.qty}{it.unit}</td>
-              <td style={{ padding: "8px 6px", textAlign: "right", fontFamily: "'IBM Plex Mono', monospace" }}>
-                {it.mrp > it.price && (
-                  <span style={{ textDecoration: "line-through", opacity: 0.5, marginRight: 4 }}>{rupee(it.mrp)}</span>
-                )}
-                {rupee(it.price)}
-              </td>
-              <td style={{ padding: "8px 6px", textAlign: "right", fontFamily: "'IBM Plex Mono', monospace", fontWeight: 600 }}>{rupee(it.qty * it.price)}</td>
-            </tr>
-          ))}
+          {(() => {
+            // A normal bill groups into exactly one group with no player_name, so
+            // nothing here changes for it — a header row only appears for a
+            // play-area bill with per-player lines (see migration 051 / lib/gamePlayers.js).
+            let rowNum = 0;
+            return groupLinesByPlayer(bill.items).flatMap((g, gi) => {
+              const rows = [];
+              if (g.player_name) {
+                rows.push(
+                  <tr key={`h-${gi}`}>
+                    <td colSpan={5} style={{ padding: "10px 6px 2px", fontSize: 10, fontWeight: 700, letterSpacing: "0.05em", color: "#6B7280" }}>
+                      {g.player_name.toUpperCase()}
+                    </td>
+                  </tr>
+                );
+              }
+              g.lines.forEach((it, idx) => {
+                rowNum += 1;
+                rows.push(
+                  <tr key={it.shop_product_id ? `${it.shop_product_id}-${gi}-${idx}` : `${gi}-${idx}`} style={{ borderBottom: "1px solid #F1F2F5" }}>
+                    <td style={{ padding: "8px 6px", color: "#9CA3AF" }}>{rowNum}</td>
+                    <td style={{ padding: "8px 6px", fontWeight: 500 }}>{it.name}</td>
+                    <td style={{ padding: "8px 6px", textAlign: "center", fontFamily: "'IBM Plex Mono', monospace" }}>{it.qty}{it.unit}</td>
+                    <td style={{ padding: "8px 6px", textAlign: "right", fontFamily: "'IBM Plex Mono', monospace" }}>
+                      {it.mrp > it.price && (
+                        <span style={{ textDecoration: "line-through", opacity: 0.5, marginRight: 4 }}>{rupee(it.mrp)}</span>
+                      )}
+                      {rupee(it.price)}
+                    </td>
+                    <td style={{ padding: "8px 6px", textAlign: "right", fontFamily: "'IBM Plex Mono', monospace", fontWeight: 600 }}>{rupee(it.qty * it.price)}</td>
+                  </tr>
+                );
+              });
+              return rows;
+            });
+          })()}
         </tbody>
       </table>
 

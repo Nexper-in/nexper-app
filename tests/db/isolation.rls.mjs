@@ -77,8 +77,11 @@ async function seed(X, owner, tag) {
   `);
   const station = (await q(`select id from game_stations where shop_id = '${X}'`))[0].id;
   await db.exec(`insert into game_sessions (shop_id, station_id, rate_at_start, amount) values ('${X}', '${station}', 50, 20)`);
+  const session = (await q(`select id from game_sessions where shop_id = '${X}'`))[0].id;
+  const player = await one(`insert into game_session_players (shop_id, session_id, name) values ('${X}', '${session}', 'Player ${tag}')`);
+  await db.exec(`insert into game_session_orders (shop_id, session_id, player_id, shop_product_id, name, price, qty) values ('${X}', '${session}', '${player}', '${sp}', 'Tea', 10, 1)`);
   const org = (await q(`select org_id from shops where id = '${X}'`))[0].org_id;
-  ids[tag] = { X, owner, prod, sp, sup, offer, po, point, station, org };
+  ids[tag] = { X, owner, prod, sp, sup, offer, po, point, station, session, player, org };
 }
 await seed(A, ownerA, "A");
 await seed(B, ownerB, "B");
@@ -129,6 +132,8 @@ const T = {
   supply_payments: { a: `shop_id = '${A}'`, insert: `insert into supply_payments (shop_id, point_id, amount) values ('${A}', '${a.point}', 1)`, touch: "amount", ownerRead: true, staffBlind: true },
   game_stations: { a: `shop_id = '${A}'`, insert: `insert into game_stations (shop_id, name, type, hourly_rate) values ('${A}', 'sneak', 'carrom', 1)`, touch: "hourly_rate", ownerRead: true, staffBlind: true },
   game_sessions: { a: `shop_id = '${A}'`, insert: `insert into game_sessions (shop_id, station_id, rate_at_start) values ('${A}', '${a.station}', 1)`, touch: "amount", ownerRead: true, staffBlind: true },
+  game_session_players: { a: `shop_id = '${A}'`, insert: `insert into game_session_players (shop_id, session_id, name) values ('${A}', '${a.session}', 'sneak')`, touch: "name", ownerRead: true, staffBlind: true },
+  game_session_orders: { a: `shop_id = '${A}'`, insert: `insert into game_session_orders (shop_id, session_id, shop_product_id, name, price, qty) values ('${A}', '${a.session}', '${a.sp}', 'sneak', 1, 1)`, touch: "qty", ownerRead: true, staffBlind: true },
   // Platform tables: no shop can read or write them (the server uses the service role).
   tenant_controls: { a: `shop_id = '${A}'`, insert: `insert into tenant_controls (shop_id) values ('${A}')`, touch: "notes", ownerRead: true },
   api_keys: { a: `shop_id = '${A}'`, insert: `insert into api_keys (shop_id, name, key_prefix, key_hash) values ('${A}', 'k', 'p', 'h')`, touch: "name", ownerRead: false },
