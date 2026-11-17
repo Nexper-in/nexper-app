@@ -210,6 +210,7 @@ function PlayAreaScreen() {
             items={vm.items}
             onAddOrder={(playerId, item) => vm.addOrder(orderModal, playerId, item)}
             onRemoveOrder={vm.removeOrder}
+            onDecrementOrder={vm.decrementOrder}
             onClose={() => setOrderModal(null)}
           />
         );
