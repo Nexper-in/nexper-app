@@ -233,10 +233,30 @@ export default function usePlayArea() {
     }
   }
 
+  // The "-" on the order picker's stepper: one less of that item for that
+  // player, removing the line entirely once it reaches zero.
+  async function decrementOrder(orderId) {
+    const existing = orders.find((o) => o.id === orderId);
+    if (!existing) return;
+    if (Number(existing.qty) <= 1) return removeOrder(orderId);
+    try {
+      const { data, error: err } = await supabase
+        .from("game_session_orders")
+        .update({ qty: Number(existing.qty) - 1 })
+        .eq("id", orderId)
+        .select()
+        .single();
+      if (err) throw err;
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? data : o)));
+    } catch (e) {
+      showToast(e.message || t("Couldn't remove — try again"), "err");
+    }
+  }
+
   return {
     t, TYPES, loading, error, busy, cards, items,
     addStation, updateStation, startStation, stopStation,
-    addPlayer, removePlayer, addOrder, removeOrder,
+    addPlayer, removePlayer, addOrder, removeOrder, decrementOrder,
     reload: load,
   };
 }

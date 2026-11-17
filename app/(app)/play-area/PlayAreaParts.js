@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Search, X, Plus } from "lucide-react";
+import { Loader2, Search, X, Plus, Minus } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import Field from "@/components/ui/Field";
 import { useT } from "@/lib/i18n";
@@ -125,7 +125,7 @@ export function AddPlayerModal({ onSave, onClose }) {
 // of water the whole table drinks from) while the game is still running.
 // Tapping an item already on that player's tab just adds one more to it,
 // same as the quick tiles on New bill.
-export function OrderPickerModal({ players, orders, items, onAddOrder, onRemoveOrder, onClose }) {
+export function OrderPickerModal({ players, orders, items, onAddOrder, onRemoveOrder, onDecrementOrder, onClose }) {
   const t = useT();
   const [playerId, setPlayerId] = useState(null); // null = shared
   const [query, setQuery] = useState("");
@@ -136,6 +136,10 @@ export function OrderPickerModal({ players, orders, items, onAddOrder, onRemoveO
     : items.slice(0, 20);
   const tabLines = orders.filter((o) => (o.player_id || null) === playerId);
   const tabTotal = tabLines.reduce((s, o) => s + Number(o.qty) * Number(o.price), 0);
+  // One order per item, per player -- so the item list below can show each
+  // item's own running count and a +/- right on its row (how many cigarettes,
+  // teas and samosas Sam has, each adjusted on the spot, not by counting taps).
+  const lineFor = (itemId) => tabLines.find((o) => o.shop_product_id === itemId);
 
   async function add(item) {
     setBusy(true);
@@ -143,6 +147,16 @@ export function OrderPickerModal({ players, orders, items, onAddOrder, onRemoveO
       await onAddOrder(playerId, item);
     } catch (e) {
       // addOrder/removeOrder already surface their own toast on failure
+    }
+    setBusy(false);
+  }
+
+  async function dec(line) {
+    setBusy(true);
+    try {
+      await onDecrementOrder(line.id);
+    } catch (e) {
+      // decrementOrder already surfaces its own toast on failure
     }
     setBusy(false);
   }
@@ -180,20 +194,36 @@ export function OrderPickerModal({ players, orders, items, onAddOrder, onRemoveO
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto ks-scroll mb-3">
-        {results.map((item) => (
-          <button
-            key={item.id}
-            disabled={busy}
-            onClick={() => add(item)}
-            className="ks-card text-left px-3 py-2.5 transition-transform active:scale-[.97] disabled:opacity-60"
-          >
-            <p className="text-sm font-semibold leading-snug line-clamp-2">{item.name}</p>
-            <p className="ks-mono text-xs font-bold mt-0.5" style={{ color: "var(--accent-soft-text)" }}>{rupee(item.price)}</p>
-          </button>
-        ))}
+      <div className="space-y-1.5 max-h-56 overflow-y-auto ks-scroll mb-3">
+        {results.map((item) => {
+          const line = lineFor(item.id);
+          const qty = line ? Number(line.qty) : 0;
+          return (
+            <div key={item.id} className="ks-card flex items-center gap-2 px-3 py-2">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold leading-snug truncate">{item.name}</p>
+                <p className="ks-mono text-xs font-bold mt-0.5" style={{ color: "var(--accent-soft-text)" }}>{rupee(item.price)}</p>
+              </div>
+              {qty > 0 ? (
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button type="button" disabled={busy} onClick={() => dec(line)} className="ks-qtybtn" aria-label={t("One less {name}", { name: item.name })} style={{ width: 28, height: 28 }}>
+                    <Minus size={13} />
+                  </button>
+                  <span className="ks-mono text-sm font-semibold w-5 text-center">{qty}</span>
+                  <button type="button" disabled={busy} onClick={() => add(item)} className="ks-qtybtn" aria-label={t("One more {name}", { name: item.name })} style={{ width: 28, height: 28 }}>
+                    <Plus size={13} />
+                  </button>
+                </div>
+              ) : (
+                <button type="button" disabled={busy} onClick={() => add(item)} className="ks-qtybtn shrink-0" aria-label={t("One more {name}", { name: item.name })} style={{ width: 28, height: 28 }}>
+                  <Plus size={13} />
+                </button>
+              )}
+            </div>
+          );
+        })}
         {results.length === 0 && (
-          <p className="col-span-2 text-sm text-center py-6" style={{ color: "var(--text-secondary)" }}>{t("No item called \"{q}\"", { q: query })}</p>
+          <p className="text-sm text-center py-6" style={{ color: "var(--text-secondary)" }}>{t("No item called \"{q}\"", { q: query })}</p>
         )}
       </div>
 
