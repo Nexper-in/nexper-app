@@ -135,6 +135,29 @@ const toRemove = (await q(
 await db.exec(`delete from game_session_orders where id = '${toRemove}'`);
 t.ok((await q(`select * from game_session_orders where id = '${toRemove}'`)).length === 0, "play_area staff can remove an unbilled order they're not the owner of");
 
+// --- update: migration 052 -- the qty stepper (PR #35) and reassigning a
+// removed player's orders back to shared (removePlayer) both update an
+// unbilled order's row in place, which migration 051 never gave a policy for.
+await as(db, ownerA);
+const stepperOrder = (await q(
+  `insert into game_session_orders (shop_id, session_id, player_id, shop_product_id, name, price, qty) values
+   ('${shopA}', '${otherSession.id}', null, '${teaSp}', 'Tea', 10, 1) returning id`
+))[0].id;
+await db.exec(`update game_session_orders set qty = 2 where id = '${stepperOrder}'`);
+t.ok(Number((await q(`select qty from game_session_orders where id = '${stepperOrder}'`))[0].qty) === 2, "play_area staff can change an unbilled order's quantity (the qty stepper)");
+
+await db.exec(`update game_session_orders set player_id = null where id = '${stepperOrder}'`);
+t.ok((await q(`select player_id from game_session_orders where id = '${stepperOrder}'`))[0].player_id === null, "an order can be reassigned to shared when its player is removed");
+
+// A billed order is history -- the update policy excludes it, same as delete.
+await db.exec(`update game_session_orders set qty = 99 where id = '${rahulOrder}'`);
+t.ok(Number((await q(`select qty from game_session_orders where id = '${rahulOrder}'`))[0].qty) !== 99, "a billed order's quantity can no longer be changed");
+
+await as(db, ownerB);
+await db.exec(`update game_session_orders set qty = 5 where id = '${stepperOrder}'`);
+await as(db, ownerA);
+t.ok(Number((await q(`select qty from game_session_orders where id = '${stepperOrder}'`))[0].qty) !== 5, "another shop's owner cannot update shop A's order quantity");
+
 await as(db, ownerB);
 t.ok(await fails(`select attach_game_orders_to_bill('${session.id}', '${billId}')`), "another shop's owner cannot attach shop A's session to a bill");
 

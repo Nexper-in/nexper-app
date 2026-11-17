@@ -188,39 +188,46 @@ export default function usePlayArea() {
   // tiles, instead of piling up separate rows. Stock isn't touched here -- it's
   // deducted later, like any other line, once the session's orders are billed.
   async function addOrder(sessionId, playerId, item, qty = 1) {
-    const existing = orders.find(
-      (o) => o.session_id === sessionId && (o.player_id || null) === (playerId || null) && o.shop_product_id === item.id
-    );
-    if (existing) {
+    try {
+      const existing = orders.find(
+        (o) => o.session_id === sessionId && (o.player_id || null) === (playerId || null) && o.shop_product_id === item.id
+      );
+      if (existing) {
+        const { data, error: err } = await supabase
+          .from("game_session_orders")
+          .update({ qty: Number(existing.qty) + qty })
+          .eq("id", existing.id)
+          .select()
+          .single();
+        if (err) throw err;
+        setOrders((prev) => prev.map((o) => (o.id === existing.id ? data : o)));
+        return data;
+      }
       const { data, error: err } = await supabase
         .from("game_session_orders")
-        .update({ qty: Number(existing.qty) + qty })
-        .eq("id", existing.id)
+        .insert({
+          shop_id: activeShopId,
+          session_id: sessionId,
+          player_id: playerId || null,
+          shop_product_id: item.id,
+          name: item.name,
+          price: item.price,
+          gst: item.gst || 0,
+          qty,
+        })
         .select()
         .single();
-      if (err) throw new Error(err.message);
-      setOrders((prev) => prev.map((o) => (o.id === existing.id ? data : o)));
+      if (err) throw err;
+      setOrders((prev) => [...prev, data]);
       return data;
+    } catch (e) {
+      // Surfaced here (not left for the caller) so a stepper tap that fails
+      // -- say, blocked by RLS -- never just sits there looking like nothing
+      // happened; the shopkeeper sees why instead of tapping "+" over and over.
+      showToast(e.message || t("Couldn't add — try again"), "err");
+      return null;
     }
-    const { data, error: err } = await supabase
-      .from("game_session_orders")
-      .insert({
-        shop_id: activeShopId,
-        session_id: sessionId,
-        player_id: playerId || null,
-        shop_product_id: item.id,
-        name: item.name,
-        price: item.price,
-        gst: item.gst || 0,
-        qty,
-      })
-      .select()
-      .single();
-    if (err) throw new Error(err.message);
-    setOrders((prev) => [...prev, data]);
-    return data;
   }
-
   // Removes an order that hasn't been billed yet (a tap added the wrong thing).
   // Once it's on a bill, RLS simply won't let the delete through.
   async function removeOrder(orderId) {
