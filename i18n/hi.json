@@ -1036,5 +1036,6 @@
   "Player": "खिलाड़ी",
   "Order": "ऑर्डर",
   "No one tagged yet": "अभी तक कोई नहीं जोड़ा",
-  "Couldn't remove — try again": "हटा नहीं पाए — फिर से कोशिश करें"
+  "Couldn't remove — try again": "हटा नहीं पाए — फिर से कोशिश करें",
+  "Couldn't add — try again": "जोड़ नहीं पाए — फिर से कोशिश करें"
 }
