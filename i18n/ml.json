@@ -1037,5 +1037,12 @@
   "Order": "ഓർഡർ",
   "No one tagged yet": "ഇതുവരെ ആരെയും ചേർത്തിട്ടില്ല",
   "Couldn't remove — try again": "നീക്കം ചെയ്യാനായില്ല — വീണ്ടും ശ്രമിക്കൂ",
-  "Couldn't add — try again": "ചേർക്കാനായില്ല — വീണ്ടും ശ്രമിക്കൂ"
+  "Couldn't add — try again": "ചേർക്കാനായില്ല — വീണ്ടും ശ്രമിക്കൂ",
+  "Split by player": "കളിക്കാർ അനുസരിച്ച് വിഭജിക്കൂ",
+  "Back to one bill": "ഒരു ബില്ലിലേക്ക് തിരികെ",
+  "Each player gets their own bill, paid however they like.": "ഓരോ കളിക്കാരനും സ്വന്തം ബിൽ കിട്ടും, അവർക്ക് ഇഷ്ടമുള്ള രീതിയിൽ പണം നൽകാം.",
+  "Save {n} bills": "{n} ബില്ലുകൾ സേവ് ചെയ്യൂ",
+  "Add a phone number for {name}'s udhaar share": "{name} ന്റെ കടം വിഹിതത്തിന് ഫോൺ നമ്പർ ചേർക്കൂ",
+  "{n} bills saved": "{n} ബില്ലുകൾ സേവ് ആയി",
+  "{n} bills saved — udhaar added for {names}": "{n} ബില്ലുകൾ സേവ് ആയി — {names} ന് കടം ചേർന്നു"
 }

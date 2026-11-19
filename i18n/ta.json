@@ -1037,5 +1037,12 @@
   "Order": "ஆர்டர்",
   "No one tagged yet": "இன்னும் யாரும் சேர்க்கப்படவில்லை",
   "Couldn't remove — try again": "அகற்ற முடியவில்லை — மீண்டும் முயற்சிக்கவும்",
-  "Couldn't add — try again": "சேர்க்க முடியவில்லை — மீண்டும் முயற்சிக்கவும்"
+  "Couldn't add — try again": "சேர்க்க முடியவில்லை — மீண்டும் முயற்சிக்கவும்",
+  "Split by player": "வீரர் வாரியாக பிரிக்கவும்",
+  "Back to one bill": "ஒரே பில்லுக்குத் திரும்பு",
+  "Each player gets their own bill, paid however they like.": "ஒவ்வொரு வீரருக்கும் தனி பில் வரும், அவர்கள் விரும்பியபடி பணம் செலுத்தலாம்.",
+  "Save {n} bills": "{n} பில்களைச் சேமி",
+  "Add a phone number for {name}'s udhaar share": "{name} கடன் பங்குக்கு தொலைபேசி எண்ணைச் சேருங்கள்",
+  "{n} bills saved": "{n} பில்கள் சேமிக்கப்பட்டன",
+  "{n} bills saved — udhaar added for {names}": "{n} பில்கள் சேமிக்கப்பட்டன — {names} க்கு கடன் சேர்ந்தது"
 }

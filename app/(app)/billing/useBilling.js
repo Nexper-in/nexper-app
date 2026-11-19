@@ -50,6 +50,10 @@ export function useBilling() {
   // Shared so both the "Play area" button and the Play area category chip
   // (desktop) can open the same picker.
   const [gamePicker, setGamePicker] = useState(false);
+  // Splitting a play-area table's bill one-per-player (see generateSplitBills
+  // below) instead of the one-bill-for-everyone path above.
+  const [splitMode, setSplitMode] = useState(false);
+  const [splitPayments, setSplitPayments] = useState({}); // group key -> { billType, paymentMethod, customer }
   // Phones: hide the floating checkout bar while the Save bill button is on screen.
   const [billInView, setBillInView] = useState(false);
   useEffect(() => {
@@ -468,6 +472,139 @@ export function useBilling() {
     }
   }
 
+  // --- Splitting a play-area table's bill one per player ---
+  // Only offered once the cart has at least two distinctly-named players on
+  // it (see PlayAreaParts' order picker, which tags each line with
+  // player_name). Anything with no player_name -- a shared/untagged order,
+  // or the table's own time charge -- becomes its own "Shared" group rather
+  // than being divided fractionally across the named players: that would
+  // mean billing a fractional quantity of a real stock item, which the
+  // database has no way to represent, let alone deduct correctly.
+  const SHARED_GROUP = "__shared__";
+  const splitGroups = useMemo(() => {
+    const map = new Map();
+    for (const c of cart) {
+      const key = c.player_name || SHARED_GROUP;
+      if (!map.has(key)) map.set(key, { key, label: c.player_name || t("Shared"), lines: [] });
+      map.get(key).lines.push(c);
+    }
+    return [...map.values()].map((g) => ({ ...g, subtotal: g.lines.reduce((s, c) => s + c.qty * c.price, 0) }));
+  }, [cart, t]);
+  const canSplitBill = splitGroups.filter((g) => g.key !== SHARED_GROUP).length >= 2;
+
+  function splitPaymentFor(key) {
+    if (splitPayments[key]) return splitPayments[key];
+    const group = splitGroups.find((g) => g.key === key);
+    return { billType: "cash", paymentMethod: "cash", customer: { name: group && group.key !== SHARED_GROUP ? group.label : "", phone: "" } };
+  }
+  function setSplitPayment(key, patch) {
+    setSplitPayments((prev) => ({ ...prev, [key]: { ...splitPaymentFor(key), ...patch } }));
+  }
+
+  // Each group becomes its own ordinary bill, saved one after another (not in
+  // parallel, so bill numbers come out in a predictable sequence). A group's
+  // lines leave the cart the moment ITS bill is saved, so if a later group
+  // fails, nothing already billed gets re-billed on retry -- only the failed
+  // group (and whichever come after it) is still sitting in the cart.
+  async function generateSplitBills() {
+    if (splitGroups.length === 0) return;
+    for (const g of splitGroups) {
+      const p = splitPaymentFor(g.key);
+      if (p.billType === "credit" && !(p.customer.phone || "").replace(/\D/g, "")) {
+        return showToast(t("Add a phone number for {name}'s udhaar share", { name: g.label }), "err");
+      }
+    }
+    setGenerating(true);
+    let savedCount = 0;
+    const udhaarNames = [];
+    try {
+      let billNoOffset = 0;
+      for (const g of splitGroups) {
+        const p = splitPaymentFor(g.key);
+        const phone = (p.customer.phone || "").replace(/\D/g, "");
+        const billItems = g.lines.map(({ shop_product_id, code, name, price, mrp, unit, gst, qty, player_name }) => {
+          const inv = items.find((i) => i.id === shop_product_id);
+          return {
+            shop_product_id: shop_product_id || null, code, name, price, mrp: mrp || null, unit, gst, qty,
+            cost_price: inv?.cost_price ?? null,
+            ...(player_name ? { player_name } : {}),
+          };
+        });
+        const gSubtotal = g.lines.reduce((s, c) => s + c.qty * c.price, 0);
+        const bill = {
+          id: crypto.randomUUID(),
+          shop_id: activeShopId,
+          bill_no: `KS-${1000 + totalBills + billNoOffset + 1}`,
+          customer_name: p.customer.name || (g.key !== SHARED_GROUP ? g.label : null),
+          customer_phone: phone || null,
+          items: billItems,
+          subtotal: gSubtotal,
+          discount_amount: 0,
+          total: gSubtotal,
+          payment_type: p.billType,
+          payment_method: p.billType === "credit" ? "cash" : p.paymentMethod,
+          date: new Date().toISOString(),
+        };
+
+        const { data, error: err } = await supabase.rpc("save_bill", {
+          p_bill: { ...bill, credit_id: p.billType === "credit" ? crypto.randomUUID() : null },
+        });
+        if (err) throw new Error(`${g.label}: ${err.message}`);
+        if (data?.bill_no) bill.bill_no = data.bill_no;
+        billNoOffset += 1;
+
+        // Marks the live rows this group covers as billed, so they can't be
+        // picked up again -- best-effort, same as the non-split path above:
+        // the bill itself is already saved either way.
+        const orderIds = g.lines.filter((c) => c.order_id).map((c) => c.order_id);
+        const sessionIds = [...new Set(g.lines.filter((c) => c.session_id && !c.order_id).map((c) => c.session_id))];
+        await Promise.all(
+          [
+            orderIds.length
+              ? supabase
+                  .rpc("attach_specific_orders_to_bill", { p_order_ids: orderIds, p_bill: bill.id })
+                  .then(({ error: attachErr }) => attachErr && console.error("attach_specific_orders_to_bill", attachErr))
+              : null,
+            ...sessionIds.map((sid) =>
+              supabase
+                .rpc("attach_game_session_to_bill", { p_session: sid, p_bill: bill.id })
+                .then(({ error: attachErr }) => attachErr && console.error("attach_game_session_to_bill", attachErr))
+            ),
+          ].filter(Boolean)
+        );
+
+        setCart((prev) => prev.filter((c) => !g.lines.includes(c)));
+        setItems((prev) =>
+          prev.map((it) => {
+            if (it.track_stock === false) return it;
+            const line = g.lines.find((c) => c.shop_product_id === it.id);
+            return line ? { ...it, stock: Math.max(0, it.stock - line.qty) } : it;
+          })
+        );
+        setBills((prev) => [bill, ...prev]);
+        setTotalBills((n) => n + 1);
+        setSplitPayments((prev) => {
+          const next = { ...prev };
+          delete next[g.key];
+          return next;
+        });
+        savedCount += 1;
+        if (p.billType === "credit") udhaarNames.push(bill.customer_name || t("customer"));
+      }
+      setSplitMode(false);
+      setShowDetails(false);
+      showToast(
+        udhaarNames.length
+          ? t("{n} bills saved — udhaar added for {names}", { n: savedCount, names: udhaarNames.join(", ") })
+          : t("{n} bills saved", { n: savedCount })
+      );
+    } catch (err) {
+      showToast(err.message, "err");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
   function handleVoiceBillingConfirm(voiceCart, voiceBillType) {
     setCart(voiceCart.map(({ item, qty }) => ({
       shop_product_id: item.id,
@@ -591,5 +728,6 @@ export function useBilling() {
     generateBill, handleVoiceBillingConfirm, startBarcodeScanner, printBill, addToCart,
     showHandwritten, setShowHandwritten, addMatched,
     addGameCharge, removeGameCharge, removeOrderLine, fetchUnbilledGameSessions, fetchUnbilledGameOrders, gamePicker, setGamePicker,
+    splitMode, setSplitMode, splitGroups, canSplitBill, splitPaymentFor, setSplitPayment, generateSplitBills,
   };
 }
