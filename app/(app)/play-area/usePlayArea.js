@@ -118,6 +118,18 @@ export default function usePlayArea() {
     setStations((prev) => prev.map((s) => (s.id === id ? data : s)));
   }
 
+  // Blocked only while this station has a game running or a stopped game
+  // still waiting to be billed (migration 053) -- once every session on it
+  // is billed (or it was never started at all), it can go. A station still
+  // mid-use is left for "Hide this station" instead. The database raises a
+  // plain-English reason when that's the case; everything else is
+  // unexpected, so it gets a generic message instead of a raw error string.
+  async function deleteStation(id) {
+    const { error: err } = await supabase.rpc("delete_station", { p_station: id });
+    if (err) throw new Error(/running or a charge/i.test(err.message) ? t("This station still has a game running or a charge waiting to be billed — finish that first, or hide the station instead.") : t("Couldn't delete — try again"));
+    setStations((prev) => prev.filter((s) => s.id !== id));
+  }
+
   async function startStation(stationId) {
     setBusy(stationId);
     try {
@@ -262,7 +274,7 @@ export default function usePlayArea() {
 
   return {
     t, TYPES, loading, error, busy, cards, items,
-    addStation, updateStation, startStation, stopStation,
+    addStation, updateStation, deleteStation, startStation, stopStation,
     addPlayer, removePlayer, addOrder, removeOrder, decrementOrder,
     reload: load,
   };

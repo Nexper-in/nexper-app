@@ -190,6 +190,7 @@ function PlayAreaScreen() {
           types={vm.TYPES}
           onClose={() => setStationModal(null)}
           onSave={(fields) => (stationModal.station ? vm.updateStation(stationModal.station.id, fields) : vm.addStation(fields))}
+          onDelete={stationModal.station ? () => vm.deleteStation(stationModal.station.id) : undefined}
         />
       )}
 

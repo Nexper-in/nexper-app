@@ -1037,5 +1037,9 @@
   "Order": "ഓർഡർ",
   "No one tagged yet": "ഇതുവരെ ആരെയും ചേർത്തിട്ടില്ല",
   "Couldn't remove — try again": "നീക്കം ചെയ്യാനായില്ല — വീണ്ടും ശ്രമിക്കൂ",
-  "Couldn't add — try again": "ചേർക്കാനായില്ല — വീണ്ടും ശ്രമിക്കൂ"
+  "Couldn't add — try again": "ചേർക്കാനായില്ല — വീണ്ടും ശ്രമിക്കൂ",
+  "Delete this station": "ഈ സ്റ്റേഷൻ ഇല്ലാതാക്കുക",
+  "Delete this station? This can't be undone.": "ഈ സ്റ്റേഷൻ ഇല്ലാതാക്കണോ? ഇത് തിരികെ കൊണ്ടുവരാനാകില്ല.",
+  "This station still has a game running or a charge waiting to be billed — finish that first, or hide the station instead.": "ഈ സ്റ്റേഷനിൽ ഇപ്പോഴും കളി നടക്കുന്നു അല്ലെങ്കിൽ ബിൽ ചെയ്യാനുള്ള തുക ബാക്കിയുണ്ട് — ആദ്യം അത് പൂർത്തിയാക്കൂ, അല്ലെങ്കിൽ സ്റ്റേഷൻ മറയ്ക്കൂ.",
+  "Couldn't delete — try again": "ഇല്ലാതാക്കാനായില്ല — വീണ്ടും ശ്രമിക്കൂ"
 }

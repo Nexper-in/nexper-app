@@ -122,5 +122,43 @@ t.ok(
   "a line naming a shop_product_id that doesn't exist is still refused, not silently skipped"
 );
 
+// --- delete_station: migration 053 -- blocked only while something on the station is still unbilled or running ---
+await as(db, ownerA);
+const chessId = (await q(`select id from game_stations where shop_id = '${shopA}' and name = 'Chess Set'`))[0].id;
+const carrom2Id = (await q(`select id from game_stations where shop_id = '${shopA}' and name = 'Carrom Table 2'`))[0].id;
+
+// carromId has both started (billed) and started2 (stopped, never billed) against it -- the unbilled one alone is enough to block it.
+t.ok(await fails(`select delete_station('${carromId}')`), "a station with an unbilled charge against it cannot be deleted");
+await db.exec(`select delete_station('${chessId}')`);
+t.ok((await q(`select * from game_stations where id = '${chessId}'`)).length === 0, "a station that was never started can be deleted outright");
+await asService(db);
+t.ok((await q(`select count(*)::int c from deleted_rows where table_name = 'game_stations' and row_id = '${chessId}'`))[0].c === 1, "and is kept in the 30-day trash like anything else deleted");
+
+await as(db, biller);
+t.ok(await fails(`select delete_station('${carrom2Id}')`), "billing-only staff cannot delete a station");
+
+await as(db, helper);
+await db.exec(`select delete_station('${carrom2Id}')`);
+t.ok((await q(`select * from game_stations where id = '${carrom2Id}'`)).length === 0, "play_area staff (not just the owner) can delete an unused station");
+
+await as(db, ownerB);
+t.ok(await fails(`select delete_station('${carromId}')`), "another shop's owner cannot delete shop A's station");
+
+// A freshly started (and still-running) station is blocked too.
+await as(db, ownerA);
+const freshId = (await q(`insert into game_stations (shop_id, name, type, hourly_rate) values ('${shopA}', 'Snooker 9', 'snooker', 60) returning id`))[0].id;
+const freshSession = (await q(`select * from start_game_session('${freshId}')`))[0];
+t.ok(await fails(`select delete_station('${freshId}')`), "a station that's currently running cannot be deleted");
+
+// But once that session is stopped and billed -- nothing left waiting on it -- the station can go, history and all.
+await db.exec(`select stop_game_session('${freshSession.id}')`);
+t.ok(await fails(`select delete_station('${freshId}')`), "stopped but still unbilled still blocks it");
+await db.exec(`select attach_game_session_to_bill('${freshSession.id}', '${billId}')`);
+await db.exec(`select delete_station('${freshId}')`);
+t.ok((await q(`select * from game_stations where id = '${freshId}'`)).length === 0, "a station can be deleted once every session on it is billed, even though it has real history");
+t.ok((await q(`select * from game_sessions where id = '${freshSession.id}'`)).length === 0, "its now-history-only session goes with it (the bill line itself is unaffected, stored separately)");
+await asService(db);
+t.ok((await q(`select count(*)::int c from deleted_rows where table_name = 'game_stations' and row_id = '${freshId}'`))[0].c === 1, "and it too lands in the 30-day trash");
+
 console.log(`${t.pass} passed, ${t.fail} failed (game rentals)`);
 process.exit(t.fail ? 1 : 0);

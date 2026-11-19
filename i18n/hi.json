@@ -1037,5 +1037,9 @@
   "Order": "ऑर्डर",
   "No one tagged yet": "अभी तक कोई नहीं जोड़ा",
   "Couldn't remove — try again": "हटा नहीं पाए — फिर से कोशिश करें",
-  "Couldn't add — try again": "जोड़ नहीं पाए — फिर से कोशिश करें"
+  "Couldn't add — try again": "जोड़ नहीं पाए — फिर से कोशिश करें",
+  "Delete this station": "यह स्टेशन मिटाएँ",
+  "Delete this station? This can't be undone.": "यह स्टेशन मिटाएँ? इसे वापस नहीं लाया जा सकता।",
+  "This station still has a game running or a charge waiting to be billed — finish that first, or hide the station instead.": "इस स्टेशन पर अभी खेल चल रहा है या कोई बिल बाकी है — पहले उसे पूरा करें, या स्टेशन को छुपाएँ।",
+  "Couldn't delete — try again": "मिटा नहीं पाए — फिर से कोशिश करें"
 }
