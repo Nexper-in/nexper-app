@@ -1037,5 +1037,9 @@
   "Order": "ఆర్డర్",
   "No one tagged yet": "ఇంకా ఎవరూ జోడించలేదు",
   "Couldn't remove — try again": "తీసివేయలేకపోయాం — మళ్ళీ ప్రయత్నించండి",
-  "Couldn't add — try again": "జోడించలేకపోయాం — మళ్ళీ ప్రయత్నించండి"
+  "Couldn't add — try again": "జోడించలేకపోయాం — మళ్ళీ ప్రయత్నించండి",
+  "Delete this station": "ఈ స్టేషన్‌ని తొలగించండి",
+  "Delete this station? This can't be undone.": "ఈ స్టేషన్‌ని తొలగించాలా? దీన్ని వెనక్కి తీసుకోలేరు.",
+  "This station has been used before — hide it instead so past games still show correctly.": "ఈ స్టేషన్ ఇంతకు ముందు వాడారు — దీన్ని దాచండి, అప్పుడు పాత ఆటలు సరిగ్గా కనిపిస్తాయి.",
+  "Couldn't delete — try again": "తొలగించలేకపోయాం — మళ్ళీ ప్రయత్నించండి"
 }

@@ -1037,5 +1037,9 @@
   "Order": "ஆர்டர்",
   "No one tagged yet": "இன்னும் யாரும் சேர்க்கப்படவில்லை",
   "Couldn't remove — try again": "அகற்ற முடியவில்லை — மீண்டும் முயற்சிக்கவும்",
-  "Couldn't add — try again": "சேர்க்க முடியவில்லை — மீண்டும் முயற்சிக்கவும்"
+  "Couldn't add — try again": "சேர்க்க முடியவில்லை — மீண்டும் முயற்சிக்கவும்",
+  "Delete this station": "இந்த நிலையத்தை நீக்கவும்",
+  "Delete this station? This can't be undone.": "இந்த நிலையத்தை நீக்கவா? இதை மீண்டும் செய்ய முடியாது.",
+  "This station has been used before — hide it instead so past games still show correctly.": "இந்த நிலையம் ஏற்கெனவே பயன்படுத்தப்பட்டுள்ளது — அதற்குப் பதிலாக இதை மறையுங்கள், அப்போது பழைய விளையாட்டுகள் சரியாகத் தெரியும்.",
+  "Couldn't delete — try again": "நீக்க முடியவில்லை — மீண்டும் முயற்சிக்கவும்"
 }

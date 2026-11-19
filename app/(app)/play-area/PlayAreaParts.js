@@ -21,7 +21,7 @@ export function clock(totalSeconds) {
   return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
 }
 
-export function StationModal({ station, types, onSave, onClose }) {
+export function StationModal({ station, types, onSave, onDelete, onClose }) {
   const t = useT();
   const [name, setName] = useState(station?.name || "");
   const [type, setType] = useState(station?.type || "carrom");
@@ -34,6 +34,19 @@ export function StationModal({ station, types, onSave, onClose }) {
     setError("");
     try {
       await onSave(fields);
+      onClose();
+    } catch (e) {
+      setError(e.message);
+      setSaving(false);
+    }
+  }
+
+  async function del() {
+    if (!window.confirm(t("Delete this station? This can't be undone."))) return;
+    setSaving(true);
+    setError("");
+    try {
+      await onDelete();
       onClose();
     } catch (e) {
       setError(e.message);
@@ -70,9 +83,14 @@ export function StationModal({ station, types, onSave, onClose }) {
           {t("Save")}
         </button>
         {station && (
-          <button disabled={saving} onClick={() => submit({ active: !station.active })} className="ks-btn-outline w-full text-sm">
-            {station.active ? t("Hide this station") : t("Show this station again")}
-          </button>
+          <>
+            <button disabled={saving} onClick={() => submit({ active: !station.active })} className="ks-btn-outline w-full text-sm">
+              {station.active ? t("Hide this station") : t("Show this station again")}
+            </button>
+            <button disabled={saving} onClick={del} className="w-full text-sm py-2.5 rounded-xl font-semibold" style={{ color: "var(--danger)" }}>
+              {t("Delete this station")}
+            </button>
+          </>
         )}
       </div>
     </Modal>

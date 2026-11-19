@@ -118,6 +118,17 @@ export default function usePlayArea() {
     setStations((prev) => prev.map((s) => (s.id === id ? data : s)));
   }
 
+  // Only removes a station with no session ever against it (migration 053) --
+  // one that's actually been played on is left for "Hide this station"
+  // instead, so a past charge keeps showing the right name. The database
+  // raises a plain-English reason when that's the case; everything else is
+  // unexpected, so it gets a generic message instead of a raw error string.
+  async function deleteStation(id) {
+    const { error: err } = await supabase.rpc("delete_station", { p_station: id });
+    if (err) throw new Error(/used before/i.test(err.message) ? t("This station has been used before — hide it instead so past games still show correctly.") : t("Couldn't delete — try again"));
+    setStations((prev) => prev.filter((s) => s.id !== id));
+  }
+
   async function startStation(stationId) {
     setBusy(stationId);
     try {
@@ -262,7 +273,7 @@ export default function usePlayArea() {
 
   return {
     t, TYPES, loading, error, busy, cards, items,
-    addStation, updateStation, startStation, stopStation,
+    addStation, updateStation, deleteStation, startStation, stopStation,
     addPlayer, removePlayer, addOrder, removeOrder, decrementOrder,
     reload: load,
   };

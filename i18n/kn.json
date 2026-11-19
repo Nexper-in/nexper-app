@@ -1037,5 +1037,9 @@
   "Order": "ಆರ್ಡರ್",
   "No one tagged yet": "ಇನ್ನೂ ಯಾರನ್ನೂ ಸೇರಿಸಿಲ್ಲ",
   "Couldn't remove — try again": "ತೆಗೆಯಲು ಆಗಲಿಲ್ಲ — ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ",
-  "Couldn't add — try again": "ಸೇರಿಸಲು ಆಗಲಿಲ್ಲ — ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ"
+  "Couldn't add — try again": "ಸೇರಿಸಲು ಆಗಲಿಲ್ಲ — ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ",
+  "Delete this station": "ಈ ಸ್ಟೇಷನ್ ಅಳಿಸಿ",
+  "Delete this station? This can't be undone.": "ಈ ಸ್ಟೇಷನ್ ಅಳಿಸಬೇಕೇ? ಇದನ್ನು ಹಿಂತಿರುಗಿಸಲು ಆಗುವುದಿಲ್ಲ.",
+  "This station has been used before — hide it instead so past games still show correctly.": "ಈ ಸ್ಟೇಷನ್ ಅನ್ನು ಈ ಮೊದಲು ಬಳಸಲಾಗಿದೆ — ಬದಲಿಗೆ ಅದನ್ನು ಮರೆಮಾಡಿ, ಆಗ ಹಳೆಯ ಆಟಗಳು ಸರಿಯಾಗಿ ಕಾಣುತ್ತಲೇ ಇರುತ್ತವೆ.",
+  "Couldn't delete — try again": "ಅಳಿಸಲು ಆಗಲಿಲ್ಲ — ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ"
 }

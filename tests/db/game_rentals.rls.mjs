@@ -122,5 +122,33 @@ t.ok(
   "a line naming a shop_product_id that doesn't exist is still refused, not silently skipped"
 );
 
+// --- delete_station: migration 053 -- only a station with no session ever ---
+await as(db, ownerA);
+const chessId = (await q(`select id from game_stations where shop_id = '${shopA}' and name = 'Chess Set'`))[0].id;
+const carrom2Id = (await q(`select id from game_stations where shop_id = '${shopA}' and name = 'Carrom Table 2'`))[0].id;
+
+t.ok(await fails(`select delete_station('${carromId}')`), "a station with a session (even just an unbilled one) cannot be deleted");
+await db.exec(`select delete_station('${chessId}')`);
+t.ok((await q(`select * from game_stations where id = '${chessId}'`)).length === 0, "a station that was never started can be deleted outright");
+await asService(db);
+t.ok((await q(`select count(*)::int c from deleted_rows where table_name = 'game_stations' and row_id = '${chessId}'`))[0].c === 1, "and is kept in the 30-day trash like anything else deleted");
+
+await as(db, biller);
+t.ok(await fails(`select delete_station('${carrom2Id}')`), "billing-only staff cannot delete a station");
+
+await as(db, helper);
+await db.exec(`select delete_station('${carrom2Id}')`);
+t.ok((await q(`select * from game_stations where id = '${carrom2Id}'`)).length === 0, "play_area staff (not just the owner) can delete an unused station");
+
+await as(db, ownerB);
+t.ok(await fails(`select delete_station('${carromId}')`), "another shop's owner cannot delete shop A's station");
+
+// A freshly started (and still-running) station already counts as "used" --
+// no need for a separate running-session check, the history check covers it.
+await as(db, ownerA);
+const freshId = (await q(`insert into game_stations (shop_id, name, type, hourly_rate) values ('${shopA}', 'Snooker 9', 'snooker', 60) returning id`))[0].id;
+await db.exec(`select start_game_session('${freshId}')`);
+t.ok(await fails(`select delete_station('${freshId}')`), "a station that's currently running cannot be deleted either");
+
 console.log(`${t.pass} passed, ${t.fail} failed (game rentals)`);
 process.exit(t.fail ? 1 : 0);
