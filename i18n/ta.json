@@ -1048,5 +1048,14 @@
   "Save {n} bills": "{n} பில்களைச் சேமி",
   "Add a phone number for {name}'s udhaar share": "{name} கடன் பங்குக்கு தொலைபேசி எண்ணைச் சேருங்கள்",
   "{n} bills saved": "{n} பில்கள் சேமிக்கப்பட்டன",
-  "{n} bills saved — udhaar added for {names}": "{n} பில்கள் சேமிக்கப்பட்டன — {names} க்கு கடன் சேர்ந்தது"
+  "{n} bills saved — udhaar added for {names}": "{n} பில்கள் சேமிக்கப்பட்டன — {names} க்கு கடன் சேர்ந்தது",
+  "Pieces per pack (optional)": "ஒரு பாக்கெட்டில் எத்தனை பீஸ் (விருப்பத்தேர்வு)",
+  "e.g. 20 for a pack of cigarettes": "உதா. சிகரெட் பாக்கெட்டில் 20",
+  "Only if this comes in fixed-count packs — lets Stock in take \"packets × pieces\" instead of a raw count.": "இது குறிப்பிட்ட எண்ணிக்கையில் பாக்கெட்டாக வந்தால் மட்டும் — ஸ்டாக் இன்-ல் நேரடி எண்ணிக்கைக்கு பதிலாக \"பாக்கெட் × பீஸ்\" உள்ளிடலாம்.",
+  "Packets × pieces per packet": "பாக்கெட் × ஒரு பாக்கெட்டில் பீஸ்",
+  "Enter a plain count instead": "நேரடி எண்ணிக்கையை உள்ளிடவும்",
+  "Packets received": "எத்தனை பாக்கெட் வந்தது",
+  "Pieces per packet": "ஒரு பாக்கெட்டில் பீஸ்",
+  "= {n} {unit}": "= {n} {unit}",
+  "Enter as packets instead": "பாக்கெட்டாக உள்ளிடவும்"
 }

@@ -119,7 +119,12 @@ export function useStock() {
     showToast(t("{name} added to stock", { name: merged.name }));
   }
 
-  async function savePrice(item, { price, mrp, cost_price, track_stock }) {
+  async function savePrice(item, { price, mrp, cost_price, track_stock, pack_size }) {
+    // pack_size lives on the shared product (same place "unit" does), not
+    // shop_products -- update it first so the joined select below already
+    // carries the new value.
+    const { error: packErr } = await supabase.from("products").update({ pack_size }).eq("id", item.product_id);
+    if (packErr) throw packErr;
     const { data, error } = await supabase
       .from("shop_products")
       .update({ price, mrp, cost_price, track_stock })

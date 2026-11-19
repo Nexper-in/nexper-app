@@ -1048,5 +1048,14 @@
   "Save {n} bills": "{n} ബില്ലുകൾ സേവ് ചെയ്യൂ",
   "Add a phone number for {name}'s udhaar share": "{name} ന്റെ കടം വിഹിതത്തിന് ഫോൺ നമ്പർ ചേർക്കൂ",
   "{n} bills saved": "{n} ബില്ലുകൾ സേവ് ആയി",
-  "{n} bills saved — udhaar added for {names}": "{n} ബില്ലുകൾ സേവ് ആയി — {names} ന് കടം ചേർന്നു"
+  "{n} bills saved — udhaar added for {names}": "{n} ബില്ലുകൾ സേവ് ആയി — {names} ന് കടം ചേർന്നു",
+  "Pieces per pack (optional)": "ഒരു പാക്കറ്റിൽ എത്ര പീസ് (ഓപ്ഷണൽ)",
+  "e.g. 20 for a pack of cigarettes": "ഉദാ. സിഗരറ്റ് പാക്കറ്റിൽ 20",
+  "Only if this comes in fixed-count packs — lets Stock in take \"packets × pieces\" instead of a raw count.": "ഇത് സ്ഥിരം എണ്ണം പാക്കറ്റുകളായി വരുമ്പോൾ മാത്രം — സ്റ്റോക്ക് ഇൻ-ൽ നേരിട്ടുള്ള എണ്ണത്തിന് പകരം \"പാക്കറ്റ് × പീസ്\" നൽകാം.",
+  "Packets × pieces per packet": "പാക്കറ്റ് × ഒരു പാക്കറ്റിൽ പീസ്",
+  "Enter a plain count instead": "നേരിട്ടുള്ള എണ്ണം നൽകൂ",
+  "Packets received": "എത്ര പാക്കറ്റ് കിട്ടി",
+  "Pieces per packet": "ഒരു പാക്കറ്റിൽ പീസ്",
+  "= {n} {unit}": "= {n} {unit}",
+  "Enter as packets instead": "പാക്കറ്റായി നൽകൂ"
 }

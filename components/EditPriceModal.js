@@ -12,6 +12,7 @@ export default function EditPriceModal({ item, onClose, onSave }) {
   const [mrp, setMrp] = useState(item.mrp != null ? String(item.mrp) : "");
   const [costPrice, setCostPrice] = useState(item.cost_price != null ? String(item.cost_price) : "");
   const [trackStock, setTrackStock] = useState(item.track_stock !== false);
+  const [packSize, setPackSize] = useState(item.pack_size != null ? String(item.pack_size) : "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const valid = Number(price) > 0 && (mrp === "" || Number(mrp) > Number(price));
@@ -25,6 +26,7 @@ export default function EditPriceModal({ item, onClose, onSave }) {
         mrp: mrp !== "" ? Number(mrp) : null,
         cost_price: costPrice !== "" ? Number(costPrice) : null,
         track_stock: trackStock,
+        pack_size: packSize !== "" ? Number(packSize) : null,
       });
     } catch (err) {
       setError(err.message);
@@ -54,6 +56,19 @@ export default function EditPriceModal({ item, onClose, onSave }) {
         )}
         <Field label={t("Purchase price (₹, optional)")}>
           <input type="number" className="ks-input" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} />
+        </Field>
+        <Field label={t("Pieces per pack (optional)")}>
+          <input
+            type="number"
+            min="1"
+            className="ks-input"
+            placeholder={t("e.g. 20 for a pack of cigarettes")}
+            value={packSize}
+            onChange={(e) => setPackSize(e.target.value)}
+          />
+          <p className="text-[11px] mt-1" style={{ color: "var(--text-secondary)" }}>
+            {t("Only if this comes in fixed-count packs — lets Stock in take \"packets × pieces\" instead of a raw count.")}
+          </p>
         </Field>
         <label className="flex items-start gap-2 text-xs text-[var(--text-secondary)] cursor-pointer">
           <input
