@@ -1041,5 +1041,12 @@
   "Delete this station": "ഈ സ്റ്റേഷൻ ഇല്ലാതാക്കുക",
   "Delete this station? This can't be undone.": "ഈ സ്റ്റേഷൻ ഇല്ലാതാക്കണോ? ഇത് തിരികെ കൊണ്ടുവരാനാകില്ല.",
   "This station still has a game running or a charge waiting to be billed — finish that first, or hide the station instead.": "ഈ സ്റ്റേഷനിൽ ഇപ്പോഴും കളി നടക്കുന്നു അല്ലെങ്കിൽ ബിൽ ചെയ്യാനുള്ള തുക ബാക്കിയുണ്ട് — ആദ്യം അത് പൂർത്തിയാക്കൂ, അല്ലെങ്കിൽ സ്റ്റേഷൻ മറയ്ക്കൂ.",
-  "Couldn't delete — try again": "ഇല്ലാതാക്കാനായില്ല — വീണ്ടും ശ്രമിക്കൂ"
+  "Couldn't delete — try again": "ഇല്ലാതാക്കാനായില്ല — വീണ്ടും ശ്രമിക്കൂ",
+  "Split by player": "കളിക്കാർ അനുസരിച്ച് വിഭജിക്കൂ",
+  "Back to one bill": "ഒരു ബില്ലിലേക്ക് തിരികെ",
+  "Each player gets their own bill, paid however they like.": "ഓരോ കളിക്കാരനും സ്വന്തം ബിൽ കിട്ടും, അവർക്ക് ഇഷ്ടമുള്ള രീതിയിൽ പണം നൽകാം.",
+  "Save {n} bills": "{n} ബില്ലുകൾ സേവ് ചെയ്യൂ",
+  "Add a phone number for {name}'s udhaar share": "{name} ന്റെ കടം വിഹിതത്തിന് ഫോൺ നമ്പർ ചേർക്കൂ",
+  "{n} bills saved": "{n} ബില്ലുകൾ സേവ് ആയി",
+  "{n} bills saved — udhaar added for {names}": "{n} ബില്ലുകൾ സേവ് ആയി — {names} ന് കടം ചേർന്നു"
 }

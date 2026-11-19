@@ -161,5 +161,61 @@ t.ok(Number((await q(`select qty from game_session_orders where id = '${stepperO
 await as(db, ownerB);
 t.ok(await fails(`select attach_game_orders_to_bill('${session.id}', '${billId}')`), "another shop's owner cannot attach shop A's session to a bill");
 
+// --- migration 054: attach_specific_orders_to_bill -- billing one player's
+// orders at a time (useBilling.js's generateSplitBills), leaving every other
+// player's still-unbilled orders on the same session untouched.
+await as(db, ownerA);
+const splitStation = (await q(`insert into game_stations (shop_id, name, type, hourly_rate) values ('${shopA}', 'Carrom 9', 'carrom', 40) returning id`))[0].id;
+const splitSession = (await q(`select * from start_game_session('${splitStation}')`))[0];
+const arjun = (await q(`insert into game_session_players (shop_id, session_id, name) values ('${shopA}', '${splitSession.id}', 'Arjun') returning id`))[0].id;
+const kiran = (await q(`insert into game_session_players (shop_id, session_id, name) values ('${shopA}', '${splitSession.id}', 'Kiran') returning id`))[0].id;
+const arjunOrder = (await q(
+  `insert into game_session_orders (shop_id, session_id, player_id, shop_product_id, name, price, qty) values
+   ('${shopA}', '${splitSession.id}', '${arjun}', '${teaSp}', 'Tea', 10, 1) returning id`
+))[0].id;
+const kiranOrder = (await q(
+  `insert into game_session_orders (shop_id, session_id, player_id, shop_product_id, name, price, qty) values
+   ('${shopA}', '${splitSession.id}', '${kiran}', '${cigSp}', 'Cigarette', 15, 1) returning id`
+))[0].id;
+const splitSharedOrder = (await q(
+  `insert into game_session_orders (shop_id, session_id, player_id, shop_product_id, name, price, qty) values
+   ('${shopA}', '${splitSession.id}', null, '${teaSp}', 'Tea', 10, 1) returning id`
+))[0].id;
+
+await as(db, biller);
+t.ok(await fails(`select attach_specific_orders_to_bill(array['${arjunOrder}']::uuid[], '${billId}')`), "billing-only staff (no play_area permission) cannot attach orders");
+
+await as(db, ownerB);
+t.ok(await fails(`select attach_specific_orders_to_bill(array['${arjunOrder}']::uuid[], '${billId}')`), "another shop's owner cannot attach shop A's orders");
+t.ok(await fails(`select attach_specific_orders_to_bill(array['${crypto.randomUUID()}']::uuid[], '${billId}')`), "a list of order ids that don't exist at all is refused, not a silent no-op");
+
+await as(db, ownerA);
+const arjunBillId = crypto.randomUUID();
+await db.exec(`select save_bill('${JSON.stringify({
+  id: arjunBillId, shop_id: shopA, bill_no: "KS-9102",
+  items: [{ shop_product_id: teaSp, name: "Tea", qty: 1, price: 10, unit: "pcs", gst: 0, player_name: "Arjun" }],
+  subtotal: 10, discount_amount: 0, total: 10, payment_type: "cash", payment_method: "cash",
+}).replace(/'/g, "''")}')`);
+t.ok(await fails(`select attach_specific_orders_to_bill(array['${arjunOrder}']::uuid[], '${crypto.randomUUID()}')`), "a bill id that doesn't exist is refused");
+
+await db.exec(`select attach_specific_orders_to_bill(array['${arjunOrder}']::uuid[], '${arjunBillId}')`);
+t.ok((await q(`select bill_id from game_session_orders where id = '${arjunOrder}'`))[0].bill_id === arjunBillId, "Arjun's order is marked billed under his own split bill");
+t.ok((await q(`select bill_id from game_session_orders where id = '${kiranOrder}'`))[0].bill_id === null, "Kiran's order on the same session is untouched");
+t.ok((await q(`select bill_id from game_session_orders where id = '${splitSharedOrder}'`))[0].bill_id === null, "the shared order on the same session is untouched");
+t.ok((await q(`select * from unbilled_game_orders('${shopA}', '${splitSession.id}')`)).length === 2, "only Kiran's and the shared order are still waiting to be billed");
+
+// Calling it again with the same (now-billed) order id, mixed with a still-unbilled
+// one, only claims the unbilled one -- "and bill_id is null" guards re-billing.
+const kiranBillId = crypto.randomUUID();
+await db.exec(`select save_bill('${JSON.stringify({
+  id: kiranBillId, shop_id: shopA, bill_no: "KS-9103",
+  items: [{ shop_product_id: cigSp, name: "Cigarette", qty: 1, price: 15, unit: "pcs", gst: 0, player_name: "Kiran" }],
+  subtotal: 15, discount_amount: 0, total: 15, payment_type: "cash", payment_method: "cash",
+}).replace(/'/g, "''")}')`);
+await db.exec(`select attach_specific_orders_to_bill(array['${arjunOrder}', '${kiranOrder}']::uuid[], '${kiranBillId}')`);
+t.ok((await q(`select bill_id from game_session_orders where id = '${arjunOrder}'`))[0].bill_id === arjunBillId, "a re-sent already-billed order id keeps its original bill, not the new one");
+t.ok((await q(`select bill_id from game_session_orders where id = '${kiranOrder}'`))[0].bill_id === kiranBillId, "Kiran's order is now marked billed under his split bill");
+t.ok((await q(`select * from unbilled_game_orders('${shopA}', '${splitSession.id}')`)).length === 1, "only the shared order is left unbilled");
+
 console.log(`${t.pass} passed, ${t.fail} failed (game session players/orders)`);
 process.exit(t.fail ? 1 : 0);

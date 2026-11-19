@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import {
-  Search, FileText, Plus, Minus, X, Mic, Printer, MessageCircle, CheckCircle2, Loader2, ScanLine, Banknote, QrCode, CreditCard, Landmark, BookOpen, ChevronDown, Gamepad2, Play, Square,
+  Search, FileText, Plus, Minus, X, Mic, Printer, MessageCircle, CheckCircle2, Loader2, ScanLine, Banknote, QrCode, CreditCard, Landmark, BookOpen, ChevronDown, Gamepad2, Play, Square, Users,
 } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import QtyPickerModal from "@/components/QtyPickerModal";
@@ -140,6 +140,7 @@ export function BillPanel({ vm, wide, alwaysDetails }) {
     manualDiscount, setManualDiscount, lastBill, showDetails, setShowDetails, generating, cleanPhone, previousVisits,
     isLoyal, updateQty, total, discountAmount, clearanceSavings, cartGst, clearCart, cartQty, pay, choosePay,
     generateBill, printBill, removeGameCharge, removeOrderLine, gamePicker, setGamePicker,
+    splitMode, setSplitMode, splitGroups, canSplitBill, splitPaymentFor, setSplitPayment, generateSplitBills,
   } = vm;
   const detailsOpen = showDetails || alwaysDetails;
   return (
@@ -254,161 +255,252 @@ export function BillPanel({ vm, wide, alwaysDetails }) {
             <span className="ks-display text-3xl font-extrabold ks-mono">{rupee(total)}</span>
           </div>
 
-          {/* How they pay */}
-          <div className="grid grid-cols-3 gap-2 mb-3">
-            {[
-              { id: "cash", label: t("Cash"), icon: Banknote },
-              { id: "upi", label: t("UPI"), icon: QrCode },
-              { id: "udhaar", label: t("Udhaar"), icon: BookOpen },
-            ].map((m) => {
-              const on = pay === m.id || (m.id === "cash" && (pay === "card" || pay === "bank"));
-              const tone = m.id === "udhaar" ? "var(--udhaar)" : "var(--accent-soft-text)";
-              return (
-                <button
-                  key={m.id}
-                  onClick={() => choosePay(m.id)}
-                  aria-pressed={on}
-                  className="flex flex-col items-center gap-1 py-3 rounded-xl text-sm font-semibold transition-colors"
-                  style={
-                    on
-                      ? { background: m.id === "udhaar" ? "var(--udhaar-soft)" : "var(--accent-soft-bg)", color: tone, border: `1.5px solid ${tone}` }
-                      : { background: "var(--bg-surface-alt)", color: "var(--text-secondary)", border: "1.5px solid transparent" }
-                  }
-                >
-                  <m.icon size={18} />
-                  {m.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {billType === "cash" && paymentMethod === "upi" && total > 0 && (
-            <div className="mb-3">
-              {activeShop?.upi_id ? (
-                <UpiQrCard upiId={activeShop.upi_id} payeeName={activeShop.name} amount={total} note="Checkout" />
-              ) : (
-                <p className="text-[11px] font-medium text-center py-1" style={{ color: "var(--warn)" }}>
-                  {t("Add your UPI ID in Store settings to show a QR here.")}
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* Customer, discount and other payment types, folded away */}
-          {!alwaysDetails && (
+          {canSplitBill && (
             <button
-              onClick={() => setShowDetails((v) => !v)}
-              aria-expanded={showDetails}
-              className="w-full flex items-center justify-between text-sm font-semibold py-2"
-              style={{ color: "var(--text-secondary)" }}
+              type="button"
+              onClick={() => setSplitMode((v) => !v)}
+              className="w-full mb-3 text-xs font-semibold py-2 rounded-xl flex items-center justify-center gap-1.5"
+              style={
+                splitMode
+                  ? { background: "var(--accent-soft-bg)", color: "var(--accent-soft-text)" }
+                  : { background: "var(--bg-surface-alt)", color: "var(--text-secondary)" }
+              }
             >
-              <span>
-                {customer.name || cleanPhone ? t("Customer: {name}", { name: customer.name || cleanPhone }) : t("+ Customer, discount")}
-                {discountAmount > 0 ? ` · −${rupee(discountAmount)}` : ""}
-              </span>
-              <ChevronDown size={16} className={`transition-transform ${showDetails ? "rotate-180" : ""}`} />
+              <Users size={13} /> {splitMode ? t("Back to one bill") : t("Split by player")}
             </button>
           )}
 
-          {detailsOpen && (
-            <div className="space-y-2 pb-2 ks-fade-up">
-              <input
-                className="ks-input"
-                placeholder={t("Customer name")}
-                value={customer.name}
-                onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
-              />
-              <input
-                className="ks-input"
-                placeholder={billType === "credit" ? t("Phone number (needed for udhaar)") : t("Phone number (for WhatsApp bill)")}
-                inputMode="tel"
-                value={customer.phone}
-                onChange={(e) => setCustomer({ ...customer, phone: e.target.value })}
-              />
-              {isLoyal && (
-                <div className="rounded-xl px-3 py-2 flex items-center justify-between gap-2" style={{ background: "var(--warn-soft)" }}>
-                  <span className="text-xs font-semibold text-[var(--warn)]">{t("⭐ Regular customer · visit #{n}", { n: previousVisits + 1 })}</span>
-                  <button
-                    onClick={() => setLoyaltyDiscount((v) => !v)}
-                    className="text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0"
-                    style={{ background: loyaltyDiscount ? "var(--warn-solid)" : "var(--bg-surface)", color: loyaltyDiscount ? "#fff" : "var(--warn)" }}
-                  >
-                    {loyaltyDiscount ? t("5% off ✓") : t("Give 5% off")}
-                  </button>
-                </div>
-              )}
-              <div className="flex gap-1.5 items-center">
-                <div className="flex p-0.5 rounded-full shrink-0" style={{ background: "var(--bg-surface-alt)" }}>
-                  {[
-                    ["pct", "%"],
-                    ["amt", "₹"],
-                  ].map(([t, label]) => (
+          {splitMode ? (
+            <SplitPaymentBlock vm={vm} />
+          ) : (
+            <>
+              {/* How they pay */}
+              <div className="grid grid-cols-3 gap-2 mb-3">
+                {[
+                  { id: "cash", label: t("Cash"), icon: Banknote },
+                  { id: "upi", label: t("UPI"), icon: QrCode },
+                  { id: "udhaar", label: t("Udhaar"), icon: BookOpen },
+                ].map((m) => {
+                  const on = pay === m.id || (m.id === "cash" && (pay === "card" || pay === "bank"));
+                  const tone = m.id === "udhaar" ? "var(--udhaar)" : "var(--accent-soft-text)";
+                  return (
                     <button
-                      key={t}
-                      onClick={() => setManualDiscount((d) => ({ ...d, type: t }))}
-                      className="text-xs font-bold w-8 py-1.5 rounded-full"
-                      style={{ background: manualDiscount.type === t ? "var(--strong)" : "transparent", color: manualDiscount.type === t ? "var(--on-strong)" : "var(--text-secondary)" }}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-                <input
-                  type="number"
-                  min="0"
-                  inputMode="decimal"
-                  placeholder={t("Discount")}
-                  value={manualDiscount.value}
-                  onChange={(e) => setManualDiscount((d) => ({ ...d, value: e.target.value }))}
-                  className="ks-input text-sm flex-1"
-                />
-              </div>
-              {billType === "cash" && (
-                <div className="flex gap-1.5 items-center text-xs" style={{ color: "var(--text-secondary)" }}>
-                  {t("Paid by")}
-                  {[
-                    ["card", t("Card"), CreditCard],
-                    ["bank", t("Bank transfer"), Landmark],
-                  ].map(([id, label, Icon]) => (
-                    <button
-                      key={id}
-                      onClick={() => choosePay(paymentMethod === id ? "cash" : id)}
-                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-full font-semibold"
+                      key={m.id}
+                      onClick={() => choosePay(m.id)}
+                      aria-pressed={on}
+                      className="flex flex-col items-center gap-1 py-3 rounded-xl text-sm font-semibold transition-colors"
                       style={
-                        paymentMethod === id
-                          ? { background: "var(--accent-soft-bg)", color: "var(--accent-soft-text)" }
-                          : { background: "var(--bg-surface-alt)" }
+                        on
+                          ? { background: m.id === "udhaar" ? "var(--udhaar-soft)" : "var(--accent-soft-bg)", color: tone, border: `1.5px solid ${tone}` }
+                          : { background: "var(--bg-surface-alt)", color: "var(--text-secondary)", border: "1.5px solid transparent" }
                       }
                     >
-                      <Icon size={12} /> {label}
+                      <m.icon size={18} />
+                      {m.label}
                     </button>
-                  ))}
+                  );
+                })}
+              </div>
+
+              {billType === "cash" && paymentMethod === "upi" && total > 0 && (
+                <div className="mb-3">
+                  {activeShop?.upi_id ? (
+                    <UpiQrCard upiId={activeShop.upi_id} payeeName={activeShop.name} amount={total} note="Checkout" />
+                  ) : (
+                    <p className="text-[11px] font-medium text-center py-1" style={{ color: "var(--warn)" }}>
+                      {t("Add your UPI ID in Store settings to show a QR here.")}
+                    </p>
+                  )}
                 </div>
               )}
-            </div>
-          )}
 
-          {billType === "credit" && !cleanPhone && (
-            <p className="text-xs font-medium mb-2" style={{ color: "var(--danger)" }}>{t("Add the customer's phone number for udhaar.")}</p>
-          )}
+              {/* Customer, discount and other payment types, folded away */}
+              {!alwaysDetails && (
+                <button
+                  onClick={() => setShowDetails((v) => !v)}
+                  aria-expanded={showDetails}
+                  className="w-full flex items-center justify-between text-sm font-semibold py-2"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  <span>
+                    {customer.name || cleanPhone ? t("Customer: {name}", { name: customer.name || cleanPhone }) : t("+ Customer, discount")}
+                    {discountAmount > 0 ? ` · −${rupee(discountAmount)}` : ""}
+                  </span>
+                  <ChevronDown size={16} className={`transition-transform ${showDetails ? "rotate-180" : ""}`} />
+                </button>
+              )}
 
-          <button
-            id="save-bill"
-            disabled={cart.length === 0 || generating}
-            onClick={generateBill}
-            className="ks-btn-primary w-full flex items-center justify-center gap-2 py-3.5 text-base mt-1 disabled:opacity-40"
-          >
-            {generating ? <Loader2 size={17} className="animate-spin" /> : <CheckCircle2 size={17} />}
-            {billType === "credit" ? t("Save udhaar bill") : t("Save bill")}
-            {total > 0 ? ` · ${rupee(total)}` : ""}
-          </button>
-          {cart.length > 0 && (
-            <button onClick={clearCart} className="w-full text-sm text-center pt-2.5" style={{ color: "var(--text-secondary)" }}>
-              {t("Clear bill")}
-            </button>
+              {detailsOpen && (
+                <div className="space-y-2 pb-2 ks-fade-up">
+                  <input
+                    className="ks-input"
+                    placeholder={t("Customer name")}
+                    value={customer.name}
+                    onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
+                  />
+                  <input
+                    className="ks-input"
+                    placeholder={billType === "credit" ? t("Phone number (needed for udhaar)") : t("Phone number (for WhatsApp bill)")}
+                    inputMode="tel"
+                    value={customer.phone}
+                    onChange={(e) => setCustomer({ ...customer, phone: e.target.value })}
+                  />
+                  {isLoyal && (
+                    <div className="rounded-xl px-3 py-2 flex items-center justify-between gap-2" style={{ background: "var(--warn-soft)" }}>
+                      <span className="text-xs font-semibold text-[var(--warn)]">{t("⭐ Regular customer · visit #{n}", { n: previousVisits + 1 })}</span>
+                      <button
+                        onClick={() => setLoyaltyDiscount((v) => !v)}
+                        className="text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0"
+                        style={{ background: loyaltyDiscount ? "var(--warn-solid)" : "var(--bg-surface)", color: loyaltyDiscount ? "#fff" : "var(--warn)" }}
+                      >
+                        {loyaltyDiscount ? t("5% off ✓") : t("Give 5% off")}
+                      </button>
+                    </div>
+                  )}
+                  <div className="flex gap-1.5 items-center">
+                    <div className="flex p-0.5 rounded-full shrink-0" style={{ background: "var(--bg-surface-alt)" }}>
+                      {[
+                        ["pct", "%"],
+                        ["amt", "₹"],
+                      ].map(([t, label]) => (
+                        <button
+                          key={t}
+                          onClick={() => setManualDiscount((d) => ({ ...d, type: t }))}
+                          className="text-xs font-bold w-8 py-1.5 rounded-full"
+                          style={{ background: manualDiscount.type === t ? "var(--strong)" : "transparent", color: manualDiscount.type === t ? "var(--on-strong)" : "var(--text-secondary)" }}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    <input
+                      type="number"
+                      min="0"
+                      inputMode="decimal"
+                      placeholder={t("Discount")}
+                      value={manualDiscount.value}
+                      onChange={(e) => setManualDiscount((d) => ({ ...d, value: e.target.value }))}
+                      className="ks-input text-sm flex-1"
+                    />
+                  </div>
+                  {billType === "cash" && (
+                    <div className="flex gap-1.5 items-center text-xs" style={{ color: "var(--text-secondary)" }}>
+                      {t("Paid by")}
+                      {[
+                        ["card", t("Card"), CreditCard],
+                        ["bank", t("Bank transfer"), Landmark],
+                      ].map(([id, label, Icon]) => (
+                        <button
+                          key={id}
+                          onClick={() => choosePay(paymentMethod === id ? "cash" : id)}
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-full font-semibold"
+                          style={
+                            paymentMethod === id
+                              ? { background: "var(--accent-soft-bg)", color: "var(--accent-soft-text)" }
+                              : { background: "var(--bg-surface-alt)" }
+                          }
+                        >
+                          <Icon size={12} /> {label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {billType === "credit" && !cleanPhone && (
+                <p className="text-xs font-medium mb-2" style={{ color: "var(--danger)" }}>{t("Add the customer's phone number for udhaar.")}</p>
+              )}
+
+              <button
+                id="save-bill"
+                disabled={cart.length === 0 || generating}
+                onClick={generateBill}
+                className="ks-btn-primary w-full flex items-center justify-center gap-2 py-3.5 text-base mt-1 disabled:opacity-40"
+              >
+                {generating ? <Loader2 size={17} className="animate-spin" /> : <CheckCircle2 size={17} />}
+                {billType === "credit" ? t("Save udhaar bill") : t("Save bill")}
+                {total > 0 ? ` · ${rupee(total)}` : ""}
+              </button>
+              {cart.length > 0 && (
+                <button onClick={clearCart} className="w-full text-sm text-center pt-2.5" style={{ color: "var(--text-secondary)" }}>
+                  {t("Clear bill")}
+                </button>
+              )}
+            </>
           )}
         </>
       )}
+    </div>
+  );
+}
+
+// One row per player (plus "Shared" for untagged orders and the table's own
+// time charge, if any) -- each becomes its own bill once "Save N bills" is
+// pressed. Shown instead of the usual single Cash/UPI/Udhaar footer while
+// splitMode is on.
+function SplitPaymentBlock({ vm }) {
+  const { t, splitGroups, splitPaymentFor, setSplitPayment, generateSplitBills, generating } = vm;
+  return (
+    <div className="space-y-3 ks-fade-up">
+      <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
+        {t("Each player gets their own bill, paid however they like.")}
+      </p>
+      {splitGroups.map((g) => {
+        const p = splitPaymentFor(g.key);
+        return (
+          <div key={g.key} className="rounded-xl p-3" style={{ background: "var(--bg-surface-alt)" }}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-bold truncate">{g.label}</span>
+              <span className="ks-mono text-sm font-semibold shrink-0">{rupee(g.subtotal)}</span>
+            </div>
+            <div className="grid grid-cols-3 gap-1.5 mb-2">
+              {[
+                { id: "cash", label: t("Cash"), icon: Banknote },
+                { id: "upi", label: t("UPI"), icon: QrCode },
+                { id: "udhaar", label: t("Udhaar"), icon: BookOpen },
+              ].map((m) => {
+                const on = m.id === "udhaar" ? p.billType === "credit" : p.billType === "cash" && p.paymentMethod === m.id;
+                const tone = m.id === "udhaar" ? "var(--udhaar)" : "var(--accent-soft-text)";
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => setSplitPayment(g.key, m.id === "udhaar" ? { billType: "credit" } : { billType: "cash", paymentMethod: m.id })}
+                    aria-pressed={on}
+                    className="flex flex-col items-center gap-0.5 py-2 rounded-lg text-xs font-semibold"
+                    style={
+                      on
+                        ? { background: m.id === "udhaar" ? "var(--udhaar-soft)" : "var(--accent-soft-bg)", color: tone, border: `1.5px solid ${tone}` }
+                        : { background: "var(--bg-surface)", color: "var(--text-secondary)", border: "1.5px solid transparent" }
+                    }
+                  >
+                    <m.icon size={14} />
+                    {m.label}
+                  </button>
+                );
+              })}
+            </div>
+            {p.billType === "credit" && (
+              <input
+                className="ks-input text-sm"
+                placeholder={t("Phone number (needed for udhaar)")}
+                inputMode="tel"
+                value={p.customer.phone}
+                onChange={(e) => setSplitPayment(g.key, { customer: { ...p.customer, phone: e.target.value } })}
+              />
+            )}
+          </div>
+        );
+      })}
+      <button
+        disabled={generating}
+        onClick={generateSplitBills}
+        className="ks-btn-primary w-full flex items-center justify-center gap-2 py-3.5 text-base disabled:opacity-40"
+      >
+        {generating ? <Loader2 size={17} className="animate-spin" /> : <CheckCircle2 size={17} />}
+        {t("Save {n} bills", { n: splitGroups.length })}
+      </button>
     </div>
   );
 }
