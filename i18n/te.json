@@ -1048,5 +1048,14 @@
   "Save {n} bills": "{n} బిల్లులు సేవ్ చేయండి",
   "Add a phone number for {name}'s udhaar share": "{name} అప్పు వాటా కోసం ఫోన్ నంబర్ ఇవ్వండి",
   "{n} bills saved": "{n} బిల్లులు సేవ్ అయ్యాయి",
-  "{n} bills saved — udhaar added for {names}": "{n} బిల్లులు సేవ్ అయ్యాయి — {names} కి అప్పు జోడైంది"
+  "{n} bills saved — udhaar added for {names}": "{n} బిల్లులు సేవ్ అయ్యాయి — {names} కి అప్పు జోడైంది",
+  "Pieces per pack (optional)": "ఒక ప్యాకెట్‌లో పీసులు (ఐచ్ఛికం)",
+  "e.g. 20 for a pack of cigarettes": "ఉదా. సిగరెట్ ప్యాకెట్‌లో 20",
+  "Only if this comes in fixed-count packs — lets Stock in take \"packets × pieces\" instead of a raw count.": "ఇది స్థిర సంఖ్యలో ప్యాకెట్లలో వస్తే మాత్రమే — స్టాక్ ఇన్‌లో నేరుగా లెక్క బదులు \"ప్యాకెట్లు × పీసులు\" ఎంటర్ చేయొచ్చు.",
+  "Packets × pieces per packet": "ప్యాకెట్లు × ఒక ప్యాకెట్‌లో పీసులు",
+  "Enter a plain count instead": "నేరుగా లెక్క ఎంటర్ చేయండి",
+  "Packets received": "ఎన్ని ప్యాకెట్లు వచ్చాయి",
+  "Pieces per packet": "ఒక ప్యాకెట్‌లో పీసులు",
+  "= {n} {unit}": "= {n} {unit}",
+  "Enter as packets instead": "ప్యాకెట్లలో ఎంటర్ చేయండి"
 }

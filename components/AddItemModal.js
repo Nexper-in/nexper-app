@@ -29,6 +29,7 @@ export default function AddItemModal({ items, onClose, onAdd }) {
     image_url: "",
     barcode: "",
     madeToOrder: false,
+    pack_size: "",
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -143,6 +144,7 @@ export default function AddItemModal({ items, onClose, onAdd }) {
         cost_price: form.cost_price !== "" ? Number(form.cost_price) : null,
         gst: form.gst !== "" ? Number(form.gst) : null,
         hsn_code: form.hsn_code.trim() || null,
+        pack_size: form.pack_size !== "" ? Number(form.pack_size) : null,
         stock: form.madeToOrder ? 0 : Number(form.stock),
         low_at: form.madeToOrder ? 0 : Number(form.low_at) || 5,
         track_stock: !form.madeToOrder,
@@ -377,6 +379,20 @@ export default function AddItemModal({ items, onClose, onAdd }) {
             <input type="number" className="ks-input" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
           </Field>
         </div>
+
+        <Field label={t("Pieces per pack (optional)")}>
+          <input
+            type="number"
+            min="1"
+            className="ks-input"
+            placeholder={t("e.g. 20 for a pack of cigarettes")}
+            value={form.pack_size}
+            onChange={(e) => setForm({ ...form, pack_size: e.target.value })}
+          />
+          <p className="text-[11px] mt-1" style={{ color: "var(--text-secondary)" }}>
+            {t("Only if this comes in fixed-count packs — lets Stock in take \"packets × pieces\" instead of a raw count.")}
+          </p>
+        </Field>
 
         <div className="grid grid-cols-2 gap-3">
           <Field label={t("MRP (₹, optional)")}>

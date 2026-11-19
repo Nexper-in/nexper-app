@@ -200,6 +200,17 @@ for (const [name, c] of Object.entries(T)) {
   if (!c.ownerRead) continue;
   t.ok((await q(`select count(*)::int c from ${name} where ${c.a}`))[0].c >= 1, `${name}: shop A's owner can read their own rows`);
 }
+// ---------- migration 055: products.pack_size (pieces-per-pack restocking hint) ----------
+await as(db, ownerA);
+const packId = (await q(`insert into products (owner_id, name, pack_size) values ('${ownerA}', 'Gold Flake Kings', 20) returning id`))[0].id;
+t.ok((await q(`select pack_size from products where id = '${packId}'`))[0].pack_size === 20, "a positive pack_size is stored");
+const noPackId = (await q(`insert into products (owner_id, name) values ('${ownerA}', 'Chakli') returning id`))[0].id;
+t.ok((await q(`select pack_size from products where id = '${noPackId}'`))[0].pack_size === null, "pack_size defaults to null when the item isn't bought in fixed packs");
+t.ok(await fails(`update products set pack_size = 0 where id = '${packId}'`), "a zero pack_size is refused");
+t.ok(await fails(`update products set pack_size = -5 where id = '${packId}'`), "a negative pack_size is refused");
+await db.exec(`update products set pack_size = 10 where id = '${packId}'`);
+t.ok((await q(`select pack_size from products where id = '${packId}'`))[0].pack_size === 10, "a restock can use a different pack size later (e.g. 10s instead of the usual 20s)");
+
 await as(db, null);
 console.log(`${t.pass} passed, ${t.fail} failed (${Object.keys(T).length + Object.keys(PUBLIC_READ).length} tables)`);
 process.exit(t.fail ? 1 : 0);

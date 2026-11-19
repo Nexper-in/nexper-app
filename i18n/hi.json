@@ -1048,5 +1048,14 @@
   "Save {n} bills": "{n} बिल सेव करें",
   "Add a phone number for {name}'s udhaar share": "{name} के उधार हिस्से के लिए फोन नंबर डालें",
   "{n} bills saved": "{n} बिल सेव हुए",
-  "{n} bills saved — udhaar added for {names}": "{n} बिल सेव हुए — {names} के लिए उधार जुड़ा"
+  "{n} bills saved — udhaar added for {names}": "{n} बिल सेव हुए — {names} के लिए उधार जुड़ा",
+  "Pieces per pack (optional)": "एक पैकेट में पीस (वैकल्पिक)",
+  "e.g. 20 for a pack of cigarettes": "जैसे सिगरेट के पैकेट में 20",
+  "Only if this comes in fixed-count packs — lets Stock in take \"packets × pieces\" instead of a raw count.": "सिर्फ अगर यह तय गिनती के पैकेट में आता है — तो स्टॉक इन में सीधे गिनती की जगह \"पैकेट × पीस\" डाल सकते हैं।",
+  "Packets × pieces per packet": "पैकेट × एक पैकेट में पीस",
+  "Enter a plain count instead": "सीधे गिनती डालें",
+  "Packets received": "कितने पैकेट आए",
+  "Pieces per packet": "एक पैकेट में पीस",
+  "= {n} {unit}": "= {n} {unit}",
+  "Enter as packets instead": "पैकेट में डालें"
 }
