@@ -1057,5 +1057,11 @@
   "Packets received": "ಎಷ್ಟು ಪ್ಯಾಕೆಟ್ ಬಂದವು",
   "Pieces per packet": "ಒಂದು ಪ್ಯಾಕೆಟ್‌ನಲ್ಲಿ ಪೀಸ್",
   "= {n} {unit}": "= {n} {unit}",
-  "Enter as packets instead": "ಪ್ಯಾಕೆಟ್‌ಗಳಲ್ಲಿ ಎಂಟರ್ ಮಾಡಿ"
+  "Enter as packets instead": "ಪ್ಯಾಕೆಟ್‌ಗಳಲ್ಲಿ ಎಂಟರ್ ಮಾಡಿ",
+  "Show cost price": "ಖರೀದಿ ಬೆಲೆ ತೋರಿಸಿ",
+  "Hide cost price": "ಖರೀದಿ ಬೆಲೆ ಮರೆಮಾಡಿ",
+  "New price per {unit}": "ಪ್ರತಿ {unit}ಗೆ ಹೊಸ ಬೆಲೆ",
+  "New price for {name}": "{name} ಗೆ ಹೊಸ ಬೆಲೆ",
+  "Cost {cost}/{unit} · Sale {sale}/{unit} · Margin {margin} ({pct}%)": "ಖರೀದಿ {cost}/{unit} · ಮಾರಾಟ {sale}/{unit} · ಲಾಭ {margin} ({pct}%)",
+  "Sale {sale}/{unit} — no purchase price set for this item": "ಮಾರಾಟ {sale}/{unit} — ಈ ವಸ್ತುವಿಗೆ ಖರೀದಿ ಬೆಲೆ ಹಾಕಿಲ್ಲ"
 }

@@ -1057,5 +1057,11 @@
   "Packets received": "എത്ര പാക്കറ്റ് കിട്ടി",
   "Pieces per packet": "ഒരു പാക്കറ്റിൽ പീസ്",
   "= {n} {unit}": "= {n} {unit}",
-  "Enter as packets instead": "പാക്കറ്റായി നൽകൂ"
+  "Enter as packets instead": "പാക്കറ്റായി നൽകൂ",
+  "Show cost price": "വാങ്ങിയ വില കാണിക്കുക",
+  "Hide cost price": "വാങ്ങിയ വില മറയ്ക്കുക",
+  "New price per {unit}": "ഓരോ {unit}ന്റെയും പുതിയ വില",
+  "New price for {name}": "{name}ന്റെ പുതിയ വില",
+  "Cost {cost}/{unit} · Sale {sale}/{unit} · Margin {margin} ({pct}%)": "വാങ്ങിയ വില {cost}/{unit} · വിറ്റ വില {sale}/{unit} · ലാഭം {margin} ({pct}%)",
+  "Sale {sale}/{unit} — no purchase price set for this item": "വിറ്റ വില {sale}/{unit} — ഈ ഇനത്തിന് വാങ്ങിയ വില ഇട്ടിട്ടില്ല"
 }

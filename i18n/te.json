@@ -1057,5 +1057,11 @@
   "Packets received": "ఎన్ని ప్యాకెట్లు వచ్చాయి",
   "Pieces per packet": "ఒక ప్యాకెట్‌లో పీసులు",
   "= {n} {unit}": "= {n} {unit}",
-  "Enter as packets instead": "ప్యాకెట్లలో ఎంటర్ చేయండి"
+  "Enter as packets instead": "ప్యాకెట్లలో ఎంటర్ చేయండి",
+  "Show cost price": "కొనుగోలు రేటు చూపించు",
+  "Hide cost price": "కొనుగోలు రేటు దాచు",
+  "New price per {unit}": "ప్రతి {unit}కి కొత్త రేటు",
+  "New price for {name}": "{name} కి కొత్త రేటు",
+  "Cost {cost}/{unit} · Sale {sale}/{unit} · Margin {margin} ({pct}%)": "కొనుగోలు {cost}/{unit} · అమ్మకం {sale}/{unit} · లాభం {margin} ({pct}%)",
+  "Sale {sale}/{unit} — no purchase price set for this item": "అమ్మకం {sale}/{unit} — ఈ వస్తువుకి కొనుగోలు రేటు పెట్టలేదు"
 }

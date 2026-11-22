@@ -1057,5 +1057,11 @@
   "Packets received": "कितने पैकेट आए",
   "Pieces per packet": "एक पैकेट में पीस",
   "= {n} {unit}": "= {n} {unit}",
-  "Enter as packets instead": "पैकेट में डालें"
+  "Enter as packets instead": "पैकेट में डालें",
+  "Show cost price": "खरीद भाव दिखाएं",
+  "Hide cost price": "खरीद भाव छुपाएं",
+  "New price per {unit}": "नया भाव प्रति {unit}",
+  "New price for {name}": "{name} का नया भाव",
+  "Cost {cost}/{unit} · Sale {sale}/{unit} · Margin {margin} ({pct}%)": "खरीद {cost}/{unit} · बिक्री {sale}/{unit} · मुनाफा {margin} ({pct}%)",
+  "Sale {sale}/{unit} — no purchase price set for this item": "बिक्री {sale}/{unit} — इस आइटम का खरीद भाव नहीं डाला गया"
 }
