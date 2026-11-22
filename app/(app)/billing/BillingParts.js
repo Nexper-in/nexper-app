@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  Search, FileText, Plus, Minus, X, Mic, Printer, MessageCircle, CheckCircle2, Loader2, ScanLine, Banknote, QrCode, CreditCard, Landmark, BookOpen, ChevronDown, Gamepad2, Play, Square, Users,
+  Search, FileText, Plus, Minus, X, Mic, Printer, MessageCircle, CheckCircle2, Loader2, ScanLine, Banknote, QrCode, CreditCard, Landmark, BookOpen, ChevronDown, Gamepad2, Play, Square, Users, Eye, EyeOff, Pencil,
 } from "lucide-react";
+import { useShop } from "@/components/ShopContext";
 import Modal from "@/components/ui/Modal";
 import QtyPickerModal from "@/components/QtyPickerModal";
 import UpiQrCard from "@/components/UpiQrCard";
@@ -138,11 +139,34 @@ export function BillPanel({ vm, wide, alwaysDetails }) {
   const {
     t, activeShop, cart, customer, setCustomer, billType, paymentMethod, loyaltyDiscount, setLoyaltyDiscount,
     manualDiscount, setManualDiscount, lastBill, showDetails, setShowDetails, generating, cleanPhone, previousVisits,
-    isLoyal, updateQty, total, discountAmount, clearanceSavings, cartGst, clearCart, cartQty, pay, choosePay,
+    isLoyal, updateQty, updatePrice, pricedItems, total, discountAmount, clearanceSavings, cartGst, clearCart, cartQty, pay, choosePay,
     generateBill, printBill, removeGameCharge, removeOrderLine, gamePicker, setGamePicker,
     splitMode, setSplitMode, splitGroups, canSplitBill, splitPaymentFor, setSplitPayment, generateSplitBills,
   } = vm;
+  const { isOwner } = useShop();
   const detailsOpen = showDetails || alwaysDetails;
+
+  // A bulk buyer haggles on the per-unit price, and the owner needs the
+  // purchase price in view to know how far they can go — but that margin is
+  // nobody else's business (a customer facing the counter, or staff), so it
+  // stays hidden until the owner taps to reveal it, and hides itself again
+  // once the bill is saved.
+  const [showMargin, setShowMargin] = useState(false);
+  const [editingPrice, setEditingPrice] = useState(null); // shop_product_id being edited, or null
+  const [priceInput, setPriceInput] = useState("");
+  useEffect(() => {
+    if (lastBill) {
+      setShowMargin(false);
+      setEditingPrice(null);
+    }
+  }, [lastBill]);
+  const costById = useMemo(() => new Map(pricedItems.map((i) => [i.id, i.cost_price])), [pricedItems]);
+  function commitPrice(id) {
+    const value = parseFloat(priceInput);
+    if (!isNaN(value) && value >= 0) updatePrice(id, value);
+    setEditingPrice(null);
+  }
+
   return (
     <div id="bill-panel" className={`ks-card p-4 sm:p-5 sticky top-20 scroll-mt-20 ${wide ? "max-h-[calc(100vh-6.5rem)] overflow-y-auto ks-scroll" : ""}`}>
       {lastBill && cart.length === 0 ? (
@@ -183,7 +207,21 @@ export function BillPanel({ vm, wide, alwaysDetails }) {
               {t("Tap an item to add it to the bill")}
             </div>
           ) : (
-            <div className={`space-y-2.5 mb-3 ${wide ? "max-h-[42vh]" : "max-h-60"} overflow-y-auto ks-scroll`}>
+            <>
+              {isOwner && cart.some((c) => c.shop_product_id) && (
+                <div className="flex justify-end mb-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setShowMargin((v) => !v)}
+                    className="flex items-center gap-1 text-[11px] font-semibold"
+                    style={{ color: "var(--text-secondary)" }}
+                  >
+                    {showMargin ? <EyeOff size={12} /> : <Eye size={12} />}
+                    {showMargin ? t("Hide cost price") : t("Show cost price")}
+                  </button>
+                </div>
+              )}
+              <div className={`space-y-2.5 mb-3 ${wide ? "max-h-[42vh]" : "max-h-60"} overflow-y-auto ks-scroll`}>
               {cart.map((c) =>
                 c.order_id ? (
                   <div key={`order-${c.order_id}`} className="flex items-center gap-2 pl-5">
@@ -205,22 +243,80 @@ export function BillPanel({ vm, wide, alwaysDetails }) {
                     </button>
                   </div>
                 ) : (
-                  <div key={c.shop_product_id} className="flex items-center gap-2">
-                    <span className="text-sm flex-1 font-medium truncate">{c.name}</span>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <button onClick={() => updateQty(c.shop_product_id, c.qty - 1)} className="ks-qtybtn" aria-label={t("One less {name}", { name: c.name })} style={{ width: 30, height: 30 }}>
-                        <Minus size={13} />
-                      </button>
-                      <span className="ks-mono w-6 text-center text-sm font-bold">{c.qty}</span>
-                      <button onClick={() => updateQty(c.shop_product_id, c.qty + 1)} className="ks-qtybtn" aria-label={t("One more {name}", { name: c.name })} style={{ width: 30, height: 30 }}>
-                        <Plus size={13} />
-                      </button>
+                  <div key={c.shop_product_id}>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm flex-1 font-medium truncate">{c.name}</span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button onClick={() => updateQty(c.shop_product_id, c.qty - 1)} className="ks-qtybtn" aria-label={t("One less {name}", { name: c.name })} style={{ width: 30, height: 30 }}>
+                          <Minus size={13} />
+                        </button>
+                        <span className="ks-mono w-6 text-center text-sm font-bold">{c.qty}</span>
+                        <button onClick={() => updateQty(c.shop_product_id, c.qty + 1)} className="ks-qtybtn" aria-label={t("One more {name}", { name: c.name })} style={{ width: 30, height: 30 }}>
+                          <Plus size={13} />
+                        </button>
+                      </div>
+                      <span className="ks-mono text-sm font-semibold w-16 text-right shrink-0">{rupee(c.qty * c.price)}</span>
                     </div>
-                    <span className="ks-mono text-sm font-semibold w-16 text-right shrink-0">{rupee(c.qty * c.price)}</span>
+                    {isOwner && showMargin && (
+                      editingPrice === c.shop_product_id ? (
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <span className="text-[11px] shrink-0" style={{ color: "var(--text-secondary)" }}>
+                            {t("New price per {unit}", { unit: c.unit })}
+                          </span>
+                          <input
+                            autoFocus
+                            type="number"
+                            inputMode="decimal"
+                            min="0"
+                            step="0.01"
+                            className="ks-input py-1 text-sm w-24"
+                            value={priceInput}
+                            onChange={(e) => setPriceInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") commitPrice(c.shop_product_id);
+                              if (e.key === "Escape") setEditingPrice(null);
+                            }}
+                            aria-label={t("New price for {name}", { name: c.name })}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => commitPrice(c.shop_product_id)}
+                            className="text-xs font-semibold px-2 py-1 rounded-lg"
+                            style={{ background: "var(--accent-soft-bg)", color: "var(--accent-soft-text)" }}
+                          >
+                            {t("Done")}
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingPrice(c.shop_product_id);
+                            setPriceInput(String(c.price));
+                          }}
+                          className="flex items-center gap-1 mt-1 text-[11px]"
+                          style={{ color: costById.get(c.shop_product_id) != null && c.price < costById.get(c.shop_product_id) ? "var(--danger)" : "var(--text-secondary)" }}
+                        >
+                          <span>
+                            {costById.get(c.shop_product_id) != null
+                              ? t("Cost {cost}/{unit} · Sale {sale}/{unit} · Margin {margin} ({pct}%)", {
+                                  cost: rupee(costById.get(c.shop_product_id)),
+                                  unit: c.unit,
+                                  sale: rupee(c.price),
+                                  margin: rupee(c.price - costById.get(c.shop_product_id)),
+                                  pct: c.price > 0 ? Math.round(((c.price - costById.get(c.shop_product_id)) / c.price) * 100) : 0,
+                                })
+                              : t("Sale {sale}/{unit} — no purchase price set for this item", { sale: rupee(c.price), unit: c.unit })}
+                          </span>
+                          <Pencil size={11} className="shrink-0" />
+                        </button>
+                      )
+                    )}
                   </div>
                 )
               )}
-            </div>
+              </div>
+            </>
           )}
           {isModuleEnabled(activeShop, "play_area") && hasFeature(activeShop, "play_area") && (
             <button

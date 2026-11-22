@@ -1057,5 +1057,11 @@
   "Packets received": "எத்தனை பாக்கெட் வந்தது",
   "Pieces per packet": "ஒரு பாக்கெட்டில் பீஸ்",
   "= {n} {unit}": "= {n} {unit}",
-  "Enter as packets instead": "பாக்கெட்டாக உள்ளிடவும்"
+  "Enter as packets instead": "பாக்கெட்டாக உள்ளிடவும்",
+  "Show cost price": "கொள்முதல் விலையைக் காட்டு",
+  "Hide cost price": "கொள்முதல் விலையை மறை",
+  "New price per {unit}": "ஒரு {unit}க்கு புதிய விலை",
+  "New price for {name}": "{name}க்கு புதிய விலை",
+  "Cost {cost}/{unit} · Sale {sale}/{unit} · Margin {margin} ({pct}%)": "கொள்முதல் {cost}/{unit} · விற்பனை {sale}/{unit} · லாபம் {margin} ({pct}%)",
+  "Sale {sale}/{unit} — no purchase price set for this item": "விற்பனை {sale}/{unit} — இந்த பொருளுக்கு கொள்முதல் விலை போடப்படவில்லை"
 }

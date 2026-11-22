@@ -328,6 +328,14 @@ export function useBilling() {
     else setCart((prev) => prev.map((c) => (c.shop_product_id === id ? { ...c, qty } : c)));
   }
 
+  // A bulk-sale price agreed at the counter (owner only, see BillPanel) — just
+  // for this bill, the catalog price is never touched. Negative prices refused;
+  // zero is allowed (a freebie thrown in), same as a manual whole-bill discount.
+  function updatePrice(id, price) {
+    if (!(price >= 0)) return;
+    setCart((prev) => prev.map((c) => (c.shop_product_id === id ? { ...c, price } : c)));
+  }
+
   const subtotal = cart.reduce((s, c) => s + c.qty * c.price, 0);
   const loyaltyDiscountAmount = loyaltyDiscount ? Math.round(subtotal * 0.05) : 0;
   const manualDiscountAmount = (() => {
@@ -723,7 +731,7 @@ export function useBilling() {
     loyaltyDiscount, setLoyaltyDiscount, manualDiscount, setManualDiscount, lastBill, scannerActive,
     activeCategory, setActiveCategory, categories, pickerItem, setPickerItem, generating,
     showVoiceBilling, setShowVoiceBilling, showDetails, setShowDetails, billInView,
-    pricedItems, cleanPhone, previousVisits, isLoyal, updateQty, total, discountAmount, clearanceSavings,
+    pricedItems, cleanPhone, previousVisits, isLoyal, updateQty, updatePrice, total, discountAmount, clearanceSavings,
     cartGst, nextBillNo, clearCart, quickItems, cartQty, pay, choosePay, displayItems, browsing,
     generateBill, handleVoiceBillingConfirm, startBarcodeScanner, printBill, addToCart,
     showHandwritten, setShowHandwritten, addMatched,
