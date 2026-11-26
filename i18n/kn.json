@@ -1063,5 +1063,13 @@
   "New price per {unit}": "ಪ್ರತಿ {unit}ಗೆ ಹೊಸ ಬೆಲೆ",
   "New price for {name}": "{name} ಗೆ ಹೊಸ ಬೆಲೆ",
   "Cost {cost}/{unit} · Sale {sale}/{unit} · Margin {margin} ({pct}%)": "ಖರೀದಿ {cost}/{unit} · ಮಾರಾಟ {sale}/{unit} · ಲಾಭ {margin} ({pct}%)",
-  "Sale {sale}/{unit} — no purchase price set for this item": "ಮಾರಾಟ {sale}/{unit} — ಈ ವಸ್ತುವಿಗೆ ಖರೀದಿ ಬೆಲೆ ಹಾಕಿಲ್ಲ"
+  "Sale {sale}/{unit} — no purchase price set for this item": "ಮಾರಾಟ {sale}/{unit} — ಈ ವಸ್ತುವಿಗೆ ಖರೀದಿ ಬೆಲೆ ಹಾಕಿಲ್ಲ",
+  "{name} deleted": "{name} ಅಳಿಸಲಾಗಿದೆ",
+  "Delete this item": "ಈ ಸರಕನ್ನು ಅಳಿಸಿ",
+  "Delete {name}? This can't be undone.": "{name} ಅಳಿಸಬೇಕೇ? ಇದನ್ನು ಹಿಂತಿರುಗಿಸಲು ಆಗುವುದಿಲ್ಲ.",
+  "{qty} units, {date}, cost {amt}": "{qty} ಯೂನಿಟ್, {date}, ವೆಚ್ಚ {amt}",
+  "{qty} units, {date}": "{qty} ಯೂನಿಟ್, {date}",
+  "Undo this stock-in ({detail})? This removes the batch and takes the stock it added back off. This can't be undone.": "ಈ ಸ್ಟಾಕ್-ಇನ್ ಅನ್ನು ಹಿಂತೆಗೆದುಕೊಳ್ಳಬೇಕೇ ({detail})? ಇದರಿಂದ ಈ ಬ್ಯಾಚ್ ತೆಗೆದುಹಾಕಲ್ಪಡುತ್ತದೆ ಮತ್ತು ಇದು ಸೇರಿಸಿದ ಸ್ಟಾಕ್ ಮತ್ತೆ ಕಡಿಮೆಯಾಗುತ್ತದೆ. ಇದನ್ನು ಹಿಂತಿರುಗಿಸಲು ಆಗುವುದಿಲ್ಲ.",
+  "Undo this stock-in": "ಈ ಸ್ಟಾಕ್-ಇನ್ ಅನ್ನು ಹಿಂತೆಗೆದುಕೊಳ್ಳಿ",
+  "Stock-in undone — {qty} taken back off {name}": "ಸ್ಟಾಕ್-ಇನ್ ಹಿಂತೆಗೆದುಕೊಳ್ಳಲಾಗಿದೆ — {name} ನಿಂದ {qty} ಕಡಿಮೆಯಾಯಿತು"
 }

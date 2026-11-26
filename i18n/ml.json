@@ -1063,5 +1063,13 @@
   "New price per {unit}": "ഓരോ {unit}ന്റെയും പുതിയ വില",
   "New price for {name}": "{name}ന്റെ പുതിയ വില",
   "Cost {cost}/{unit} · Sale {sale}/{unit} · Margin {margin} ({pct}%)": "വാങ്ങിയ വില {cost}/{unit} · വിറ്റ വില {sale}/{unit} · ലാഭം {margin} ({pct}%)",
-  "Sale {sale}/{unit} — no purchase price set for this item": "വിറ്റ വില {sale}/{unit} — ഈ ഇനത്തിന് വാങ്ങിയ വില ഇട്ടിട്ടില്ല"
+  "Sale {sale}/{unit} — no purchase price set for this item": "വിറ്റ വില {sale}/{unit} — ഈ ഇനത്തിന് വാങ്ങിയ വില ഇട്ടിട്ടില്ല",
+  "{name} deleted": "{name} ഇല്ലാതാക്കി",
+  "Delete this item": "ഈ സാധനം ഇല്ലാതാക്കുക",
+  "Delete {name}? This can't be undone.": "{name} ഇല്ലാതാക്കണോ? ഇത് തിരികെ കൊണ്ടുവരാനാകില്ല.",
+  "{qty} units, {date}, cost {amt}": "{qty} യൂണിറ്റ്, {date}, ചെലവ് {amt}",
+  "{qty} units, {date}": "{qty} യൂണിറ്റ്, {date}",
+  "Undo this stock-in ({detail})? This removes the batch and takes the stock it added back off. This can't be undone.": "ഈ സ്റ്റോക്ക്-ഇൻ തിരികെയെടുക്കണോ ({detail})? ഇതിനാൽ ഈ ബാച്ച് നീങ്ങുകയും ഇത് ചേർത്ത സ്റ്റോക്ക് വീണ്ടും കുറയുകയും ചെയ്യും. ഇത് തിരികെ കൊണ്ടുവരാനാകില്ല.",
+  "Undo this stock-in": "ഈ സ്റ്റോക്ക്-ഇൻ തിരികെയെടുക്കൂ",
+  "Stock-in undone — {qty} taken back off {name}": "സ്റ്റോക്ക്-ഇൻ തിരികെയെടുത്തു — {name}-ൽ നിന്ന് {qty} കുറഞ്ഞു"
 }

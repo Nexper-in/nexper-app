@@ -1063,5 +1063,13 @@
   "New price per {unit}": "ஒரு {unit}க்கு புதிய விலை",
   "New price for {name}": "{name}க்கு புதிய விலை",
   "Cost {cost}/{unit} · Sale {sale}/{unit} · Margin {margin} ({pct}%)": "கொள்முதல் {cost}/{unit} · விற்பனை {sale}/{unit} · லாபம் {margin} ({pct}%)",
-  "Sale {sale}/{unit} — no purchase price set for this item": "விற்பனை {sale}/{unit} — இந்த பொருளுக்கு கொள்முதல் விலை போடப்படவில்லை"
+  "Sale {sale}/{unit} — no purchase price set for this item": "விற்பனை {sale}/{unit} — இந்த பொருளுக்கு கொள்முதல் விலை போடப்படவில்லை",
+  "{name} deleted": "{name} நீக்கப்பட்டது",
+  "Delete this item": "இந்தப் பொருளை நீக்கவும்",
+  "Delete {name}? This can't be undone.": "{name}-ஐ நீக்கவா? இதை மீண்டும் செய்ய முடியாது.",
+  "{qty} units, {date}, cost {amt}": "{qty} யூனிட், {date}, விலை {amt}",
+  "{qty} units, {date}": "{qty} யூனிட், {date}",
+  "Undo this stock-in ({detail})? This removes the batch and takes the stock it added back off. This can't be undone.": "இந்த ஸ்டாக்-இன்னை திரும்பப் பெறவா ({detail})? இதனால் இந்த பேட்ச் நீக்கப்பட்டு, இது சேர்த்த ஸ்டாக் மீண்டும் குறையும். இதை மீண்டும் செய்ய முடியாது.",
+  "Undo this stock-in": "இந்த ஸ்டாக்-இன்னை திரும்பப் பெறு",
+  "Stock-in undone — {qty} taken back off {name}": "ஸ்டாக்-இன் திரும்பப் பெறப்பட்டது — {name}-இலிருந்து {qty} குறைந்தது"
 }
