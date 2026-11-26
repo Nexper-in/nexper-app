@@ -6,7 +6,7 @@ import Modal from "@/components/ui/Modal";
 import Field from "@/components/ui/Field";
 
 import { useT } from "@/lib/i18n";
-export default function EditPriceModal({ item, onClose, onSave }) {
+export default function EditPriceModal({ item, onClose, onSave, onDelete }) {
   const t = useT();
   const [price, setPrice] = useState(String(item.price ?? ""));
   const [mrp, setMrp] = useState(item.mrp != null ? String(item.mrp) : "");
@@ -28,6 +28,18 @@ export default function EditPriceModal({ item, onClose, onSave }) {
         track_stock: trackStock,
         pack_size: packSize !== "" ? Number(packSize) : null,
       });
+    } catch (err) {
+      setError(err.message);
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!window.confirm(t("Delete {name}? This can't be undone.", { name: item.name }))) return;
+    setSaving(true);
+    setError("");
+    try {
+      await onDelete();
     } catch (err) {
       setError(err.message);
       setSaving(false);
@@ -86,6 +98,11 @@ export default function EditPriceModal({ item, onClose, onSave }) {
           {saving && <Loader2 size={16} className="animate-spin" />}
           {t("Save price")}
         </button>
+        {onDelete && (
+          <button disabled={saving} onClick={handleDelete} className="w-full text-sm py-2.5 rounded-xl font-semibold" style={{ color: "var(--danger)" }}>
+            {t("Delete this item")}
+          </button>
+        )}
       </div>
     </Modal>
   );

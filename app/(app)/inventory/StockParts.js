@@ -109,7 +109,7 @@ export function InsightsPanel({ vm }) {
 
 export function StockModals({ vm }) {
   const {
-    t, supabase, activeShopId, showToast, items, suppliers, load, addItem, savePrice, logMovement,
+    t, supabase, activeShopId, showToast, items, suppliers, load, addItem, savePrice, deleteItem, logMovement,
     showAdd, setShowAdd, adjustItem, setAdjustItem, editPriceItem, setEditPriceItem,
     showScanBill, setShowScanBill, showBulkImport, setShowBulkImport, showBulkPrice, setShowBulkPrice,
     showCatalogPicker, setShowCatalogPicker, showScanUpgrade, setShowScanUpgrade,
@@ -148,6 +148,7 @@ export function StockModals({ vm }) {
         item={editPriceItem}
         onClose={() => setEditPriceItem(null)}
         onSave={(fields) => savePrice(editPriceItem, fields)}
+        onDelete={() => deleteItem(editPriceItem)}
       />
     )}
     {showScanBill && (

@@ -138,6 +138,16 @@ export function useStock() {
     showToast(t("{name}'s price updated", { name: merged.name }));
   }
 
+  async function deleteItem(item) {
+    const { error } = await supabase.rpc("delete_shop_product", { p_item: item.id });
+    if (error) {
+      throw new Error(/does not exist|schema cache/i.test(error.message) ? t("This needs the latest database update. Ask your admin.") : error.message);
+    }
+    setItems((prev) => prev.filter((p) => p.id !== item.id));
+    setEditPriceItem(null);
+    showToast(t("{name} deleted", { name: item.name }));
+  }
+
   async function logMovement(item, type, qty, reason, supplier, expiryDate) {
     const result = await runQueued({
       type: "rpc",
@@ -186,6 +196,6 @@ export function useStock() {
     showAdd, setShowAdd, adjustItem, setAdjustItem, editPriceItem, setEditPriceItem,
     showScanBill, setShowScanBill, showInsights, setShowInsights, showBulkImport, setShowBulkImport, showBulkPrice, setShowBulkPrice,
     showCatalogPicker, setShowCatalogPicker, showTools, setShowTools, showScanUpgrade, setShowScanUpgrade,
-    expiryDays, addItem, savePrice, logMovement, load,
+    expiryDays, addItem, savePrice, deleteItem, logMovement, load,
   };
 }

@@ -1063,5 +1063,13 @@
   "New price per {unit}": "ప్రతి {unit}కి కొత్త రేటు",
   "New price for {name}": "{name} కి కొత్త రేటు",
   "Cost {cost}/{unit} · Sale {sale}/{unit} · Margin {margin} ({pct}%)": "కొనుగోలు {cost}/{unit} · అమ్మకం {sale}/{unit} · లాభం {margin} ({pct}%)",
-  "Sale {sale}/{unit} — no purchase price set for this item": "అమ్మకం {sale}/{unit} — ఈ వస్తువుకి కొనుగోలు రేటు పెట్టలేదు"
+  "Sale {sale}/{unit} — no purchase price set for this item": "అమ్మకం {sale}/{unit} — ఈ వస్తువుకి కొనుగోలు రేటు పెట్టలేదు",
+  "{name} deleted": "{name} తొలగించారు",
+  "Delete this item": "ఈ సరుకుని తొలగించండి",
+  "Delete {name}? This can't be undone.": "{name} ను తొలగించాలా? దీన్ని వెనక్కి తీసుకోలేరు.",
+  "{qty} units, {date}, cost {amt}": "{qty} యూనిట్లు, {date}, ఖరీదు {amt}",
+  "{qty} units, {date}": "{qty} యూనిట్లు, {date}",
+  "Undo this stock-in ({detail})? This removes the batch and takes the stock it added back off. This can't be undone.": "ఈ స్టాక్-ఇన్‌ని వెనక్కి తీసుకోవాలా ({detail})? దీనివల్ల ఈ బ్యాచ్ తీసివేయబడి, ఇది జోడించిన స్టాక్ తిరిగి తగ్గుతుంది. దీన్ని వెనక్కి తీసుకోలేరు.",
+  "Undo this stock-in": "ఈ స్టాక్-ఇన్‌ని వెనక్కి తీసుకోండి",
+  "Stock-in undone — {qty} taken back off {name}": "స్టాక్-ఇన్ వెనక్కి తీసుకున్నారు — {name} నుండి {qty} తగ్గింది"
 }

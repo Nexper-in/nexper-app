@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Loader2, Layers } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import { rupee } from "@/lib/format";
+import { useShop } from "@/components/ShopContext";
 
 import { useT } from "@/lib/i18n";
 const daysUntil = (dateStr) => Math.ceil((new Date(dateStr) - new Date()) / (1000 * 60 * 60 * 24));
@@ -22,27 +23,47 @@ function expiryTag(expiryDate, t) {
 // but kept for the cost history, shown last and greyed out.
 export default function BatchesModal({ item, supabase, activeShopId, onClose }) {
   const t = useT();
+  const { showToast } = useShop();
   const [batches, setBatches] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [undoingId, setUndoingId] = useState(null);
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    let active = true;
-    supabase
+  const reload = useCallback(async () => {
+    const { data } = await supabase
       .from("stock_batches")
       .select("*")
       .eq("shop_id", activeShopId)
       .eq("shop_product_id", item.id)
-      .order("received_date", { ascending: true })
-      .then(({ data }) => {
-        if (active) {
-          setBatches(data || []);
-          setLoading(false);
-        }
-      });
-    return () => {
-      active = false;
-    };
+      .order("received_date", { ascending: true });
+    setBatches(data || []);
+    setLoading(false);
   }, [supabase, activeShopId, item.id]);
+
+  useEffect(() => {
+    reload();
+  }, [reload]);
+
+  // Only a batch nothing has sold or used from yet (qty_remaining = qty_received)
+  // can be undone outright — migration 056's undo_batch refuses anything else,
+  // so the button only shows where it would actually work.
+  async function undo(b) {
+    const date = new Date(b.received_date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+    const detail = b.cost_price != null ? t("{qty} units, {date}, cost {amt}", { qty: b.qty_received, date, amt: rupee(b.cost_price) }) : t("{qty} units, {date}", { qty: b.qty_received, date });
+    if (!window.confirm(t("Undo this stock-in ({detail})? This removes the batch and takes the stock it added back off. This can't be undone.", { detail }))) return;
+    setUndoingId(b.id);
+    setError("");
+    try {
+      const { error: err } = await supabase.rpc("undo_batch", { p_shop_id: activeShopId, p_batch_id: b.id });
+      if (err) throw new Error(/does not exist|schema cache/i.test(err.message) ? t("This needs the latest database update. Ask your admin.") : err.message);
+      await reload();
+      showToast(t("Stock-in undone — {qty} taken back off {name}", { qty: b.qty_received, name: item.name }));
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setUndoingId(null);
+    }
+  }
 
   const sorted = [...batches].sort((a, b) => {
     if ((a.qty_remaining > 0) !== (b.qty_remaining > 0)) return a.qty_remaining > 0 ? -1 : 1;
@@ -55,6 +76,7 @@ export default function BatchesModal({ item, supabase, activeShopId, onClose }) 
         <p className="text-xs text-[var(--text-secondary)] flex items-center gap-1.5">
           <Layers size={13} /> {t("Oldest batch sells first (FIFO).")}
         </p>
+        {error && <p className="text-sm text-[var(--danger)] bg-[var(--danger-soft)] border border-[var(--danger-line)] rounded-lg px-3 py-2">{error}</p>}
         {loading && (
           <div className="flex items-center gap-2 text-sm text-muted py-6 justify-center">
             <Loader2 size={16} className="animate-spin" /> {t("Loading batches…")}
@@ -97,6 +119,17 @@ export default function BatchesModal({ item, supabase, activeShopId, onClose }) 
                     >
                       {tag.text}
                     </span>
+                  )}
+                  {b.qty_remaining === b.qty_received && (
+                    <button
+                      disabled={undoingId === b.id}
+                      onClick={() => undo(b)}
+                      className="mt-2 text-xs font-semibold flex items-center gap-1.5"
+                      style={{ color: "var(--danger)" }}
+                    >
+                      {undoingId === b.id && <Loader2 size={12} className="animate-spin" />}
+                      {t("Undo this stock-in")}
+                    </button>
                   )}
                 </div>
               );
